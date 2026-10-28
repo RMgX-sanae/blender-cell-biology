@@ -2,7 +2,7 @@
 
 这组入口把核苷酸交换单独实现为一个可重建的机制示例：SOS 接近、Ras 开口、旧 GDP 释放、无核苷酸复合物、新 GTP 装载、SOS 离开。两个核苷酸身份不同，原有共价键不变。GEF 不是把结合的 GDP 磷酸化为 GTP。
 
-另一个可执行入口覆盖 **p120GAP 促进的水解**：GAP 接近、反应构象调整、γ-磷酸键断裂、水中氧进入 Pi、蛋白结合 Pi、Pi 释放与 GDP 构象复位。两段分别重建和检查；单独的交换或水解视频都不能称为完整 Ras 信号通路。两段尚需在同一场景内衔接并检查身份交接，才能作为连续的状态循环。
+另一个入口覆盖 **p120GAP 促进的水解**：GAP 接近、反应构象调整、γ-磷酸键断裂、水中氧进入 Pi、蛋白结合 Pi、Pi 释放与 GDP 构象复位。两段可独立重建，也可用下方的组合入口生成同一镜头中的 **GDP→GTP→GDP 状态序列**。它包含核苷酸交换和水解关闭，不是包含膜募集、效应器和所有上游受体的完整 Ras 信号通路。
 
 ## 来源与构建体
 
@@ -42,7 +42,7 @@ done
   --ffmpeg "$FFMPEG" --fps 24 --frames 576 --output "$PROJECT/scene/video-check"
 ```
 
-`--mode continuous` 去掉交换阶段之间的停留，仍完整保留事件。它从 Ras–GDP 到 Ras–GTP，**不是化学闭环**；不能在最后一帧把 GTP 重置成 GDP。衔接下方水解入口时，水解的 GTP 必须是交换进入的同一个分子。首轮离开的旧 GDP 与水解形成的新 GDP 身份不同，状态循环不等于封闭物质循环。
+`--mode continuous` 去掉交换阶段之间的停留，仍完整保留事件。单独交换从 Ras–GDP 到 Ras–GTP，**不是化学闭环**；不能在最后一帧把 GTP 重置成 GDP。组合入口让交换进入的同一个 GTP 接着水解。首轮离开的旧 GDP 与水解形成的新 GDP 身份不同，状态循环不等于封闭物质循环。
 
 ## 重建 GAP 水解动画
 
@@ -77,6 +77,45 @@ done
 - `ras-gap-route.json` 保存来源哈希、整体接近路径和 Lys949/Arg903 的侧链转角。两个侧链随路径调整，其余 GAP 原子保持刚体几何；这些转角是避免穿插的示意安排，不是实测 rotamer 动力学。全部原子保留，检查侧链与其余 GAP 的内部接触。
 - 全时序检查 Ras、GAP、核苷酸骨架、磷酸、水中氧和 Mg 的相关原子对。Mg–磷酸氧的特定短距离配位按源结构处理；不得把全局 0.20 nm 阈值降下来。需要时记录局部平滑的 GAP 刚体绕行和单个 Mg 位移，端点位移与速度均为零，再检查所有伙伴。
 - 从保存的工程重新读取形变坐标、双视图变换和反应键；独立核对 CCD 图、34 个身份、反应前连通分量 32/1/1 与产物 28/5/1、Pi 释放时的刚体几何、GDP 终点和逐帧字幕。几何检查通过后仍需查看编码视频，尤其是水中氧遮挡和 Pi 离开方向。
+
+## 重建连续状态序列
+
+`prepare_ras_cycle_motion.py` 使用前两段的准备坐标与验证记录，合成一份连续时序；不拼接已有视频，不输入旧 `.blend`。两段必须来自同一个资产目录、相同 fps 和相同动画模式。下面使用连续模式；把两处 `continuous` 同时改成 `teaching` 可保留教学停顿。默认合计 1152 帧、48 秒。
+
+```bash
+"$PYTHON" "$SKILL/scripts/prepare_ras_exchange_motion.py" \
+  --asset-dir "$PROJECT/assets" --output "$PROJECT/cycle-exchange-motion" \
+  --mode continuous --frames 576 --fps 24
+"$PYTHON" "$SKILL/scripts/prepare_ras_hydrolysis_motion.py" \
+  --asset-dir "$PROJECT/assets" --sources "$PROJECT/sources" \
+  --output "$PROJECT/cycle-hydrolysis-motion" --mode continuous --frames 576 --fps 24
+"$PYTHON" "$SKILL/scripts/prepare_ras_cycle_motion.py" \
+  --exchange-dir "$PROJECT/cycle-exchange-motion" \
+  --hydrolysis-dir "$PROJECT/cycle-hydrolysis-motion" --output "$PROJECT/state-cycle-motion"
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_ras_hydrolysis_scene.py" -- \
+  --motion-dir "$PROJECT/state-cycle-motion" --output "$PROJECT/state-cycle-scene" \
+  --font-zh "$FONT_ZH" --font-en "$FONT_EN" --width 1280 --engine eevee --samples 32 --render
+"$BLENDER" -b "$PROJECT/state-cycle-scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_ras_hydrolysis_scene.py" -- \
+  --output "$PROJECT/state-cycle-scene/scene-audit.json"
+"$BLENDER" -b "$PROJECT/state-cycle-scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/state-cycle-scene/frames" --frames all
+"$PYTHON" "$SKILL/scripts/encode_video.py" "$PROJECT/state-cycle-scene" --ffmpeg "$FFMPEG"
+"$PYTHON" "$SKILL/scripts/audit_video.py" "$PROJECT/state-cycle-scene/preview.mp4" \
+  --ffmpeg "$FFMPEG" --fps 24 --frames 1152 --output "$PROJECT/state-cycle-scene/video-check"
+```
+
+组合时保持以下条件：
+
+- 两段交接处 Ras、GTP 骨架、γ-磷酸与 Mg 的坐标必须一致，不能用淡入淡出遮住坐标跳变。统一镜头，两个视图共享同一批形变坐标；γ-磷酸始终来自新进入的 GTP。
+- 共 63 个化学重原子：旧 GDP_A 28、新 GTP_B 32、水中氧 1、Mg_A/Mg_B 各 1。GDP_A 保持完整并离开；GTP_B 生成 GDP_B 和 Pi_B，Pi_B 的第四个氧来自水。最终 Ras 回到同一 GDP 构象，但绑定的是另一个 GDP 分子。没有在循环接缝凭空补磷酸或重置分子身份。
+- 催化水中氧在 GTP 装载后沿示意曲线进入；它不能提前停在会排斥该位置的 GDP/GEF 构象中。路径须同时通过伙伴接触检查和相机检查，不能从镜头近裁剪面突然出现。远处 GAP 在其到达前、离开后应完整退出画面，不能残留在分隔线旁。
+- 合并后重新检查九类对象的全部 36 组伙伴对，并保留源结构允许的特定配位/反应键例外。单独两段通过不等于合并后的旧 GDP、水、SOS、GAP 与新产物之间也通过。
+- 最终工程核对 63 个身份、反应前后连通分量、SOS 原始网格与逐帧刚体变换、Ras/GAP 形变、字幕覆盖、无核苷酸阶段的两个视图，以及水中氧的可见进入。成功解码后，仍抽看真实编码帧与交接前后的连续片段。
+
+该入口只完成一次开放底物池中的状态循环。要重复多轮，下一轮必须接收上一轮的 GDP_B，并给新进入的 GTP_C、水和 Mg 分配新身份；不得直接把 48 秒视频首尾重复并宣称分子身份连续。
 
 ## 几何、化学与画面验收
 
