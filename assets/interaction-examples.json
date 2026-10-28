@@ -1,0 +1,9 @@
+{
+  "version":1,
+  "examples":[
+    {"id":"barnase-barstar","pdb":"1BRS","anchor":["A"],"moving":["D"],"anchor_label":"Barnase","moving_label":"Barstar","interaction":"enzyme-inhibitor binding","ligands":[],"source":"https://www.rcsb.org/structure/1BRS","doi":"10.1021/bi00196a004","limits":"The primary paper describes the C40A/C82A barstar construct; preserve unresolved regions. Binding/release teaching motion does not represent measured affinity or rates."},
+    {"id":"mdm2-p53","pdb":"1YCR","anchor":["A"],"moving":["B"],"anchor_label":"MDM2 domain","moving_label":"p53 peptide","interaction":"domain-motif recognition","ligands":[],"source":"https://www.rcsb.org/structure/1YCR","limits":"Domain and peptide fragments, not full-length proteins. This binding model alone does not show E3 ubiquitin transfer or p53 degradation."},
+    {"id":"trypsin-bpti","pdb":"2PTC","anchor":["E"],"moving":["I"],"anchor_label":"Trypsin","moving_label":"BPTI","interaction":"protease-inhibitor binding","ligands":["CA"],"source":"https://www.rcsb.org/structure/2PTC","limits":"BPTI is an inhibitor; do not turn this docking cycle into cleavage of a freely turning-over substrate."},
+    {"id":"ras-gap","pdb":"1WQ1","anchor":["R"],"moving":["G"],"anchor_label":"H-Ras","moving_label":"RasGAP domain","interaction":"regulator recruitment to a GTPase","ligands":["GDP","AF3","MG"],"source":"https://www.rcsb.org/structure/1WQ1","limits":"GDP/aluminum fluoride transition-state analog complex; not an actual GTP hydrolysis movie. Preserved analogs must remain identified in metadata."}
+  ]
+}

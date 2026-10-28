@@ -1,0 +1,20 @@
+{
+  "name": "Detailed teaching studio",
+  "reference": "Procedural mitochondrion cutaway in the user's workspace; no third-party image redistributed",
+  "observations": ["Clear membrane cutaway", "Warm interior, cool exterior", "Soft broad highlights", "Continuous geometry visible at several detail scales"],
+  "implementation_assumptions": ["Roughness and light energies are authored settings, not recovered original values"],
+  "palette": {"receptor": "DCA96B", "alpha": "6CAEB5", "beta": "6684B1", "gamma": "C7A4CC", "heads": "A7CAC9", "tails": "D1BDA4", "dna1": "C78F69", "dna2": "65ABB6", "rna": "B9B777", "protein": "CFA77B", "accent": "B27789"},
+  "background": "E9EDEB",
+  "world": "A7BDD0",
+  "roughness": 0.48,
+  "bump": 0.008,
+  "view_transform": "AgX",
+  "exposure": 0.4,
+  "camera": {},
+  "lighting": [
+    {"name": "Broad upper-left key", "position": [-12,-18,26], "power": 8500, "color": "FFF0DA", "size": 16},
+    {"name": "Soft front fill", "position": [18,-18,4], "power": 4800, "color": "D9EBFF", "size": 18},
+    {"name": "Separating rim", "position": [0,12,18], "power": 9500, "color": "DAEEFF", "size": 12}
+  ],
+  "compositor": {"preset": "clean", "contrast": 0}
+}

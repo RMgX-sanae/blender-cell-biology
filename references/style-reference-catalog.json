@@ -1,0 +1,227 @@
+{
+  "reviewed_on": "2026-10-28",
+  "sources": [
+    {
+      "id": "goodsell",
+      "page_url": "https://pdb101.rcsb.org/sci-art/goodsell-gallery/biosites-cytoplasm",
+      "image_url": "https://cdn.rcsb.org/pdb101/goodsell/png-800/biosites-cytoplasm.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "0e551dc7e935390f350788566e8eeb5137c25a314daa69bf2122ce4c1f29cc66",
+      "bytes": 1889622,
+      "inspected": true,
+      "attribution": "David S. Goodsell, Biosites: Cytoplasm (2005), doi:10.2210/rcsb_pdb/goodsell-gallery-006",
+      "license_note": "Use the individual illustration acknowledgement and source terms; do not infer artwork rights from wwPDB coordinate CC0."
+    },
+    {
+      "id": "molstar",
+      "page_url": "https://molstar.org/viewer-docs/tips/illustrative-style/",
+      "image_url": "https://molstar.org/viewer-docs/tips/illustrative-style/5YH2.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "14fc12fe689b3b396a5d884866205593f56c00a7fbfa2257368cea8f091f1053",
+      "bytes": 292589,
+      "inspected": true,
+      "attribution": "See original official page",
+      "license_note": "Public access is not a blanket redistribution licence; original images excluded."
+    },
+    {
+      "id": "wehi",
+      "page_url": "https://www.wehi.edu.au/wehi-tv/",
+      "image_url": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "b1c8dbee3e7589f4c384c1db0442847447aa6a9021150f885d1e288a499ec5e9",
+      "bytes": 476717,
+      "inspected": true,
+      "attribution": "WEHI-TV; molecular visualization reference",
+      "license_note": "Reference analysis only; check WEHI terms before reusing the original image."
+    },
+    {
+      "id": "replisome",
+      "page_url": "https://www.wehi.edu.au/wehi-tv/",
+      "image_url": "https://www.wehi.edu.au/wp-content/uploads/2023/06/dna-replisome-bjork.jpeg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "a9a5985bb9e89e43035aa1dbf7e36a7934bd7cc493fd8c7e1b8f1847498d886a",
+      "bytes": 607314,
+      "inspected": true,
+      "attribution": "WEHI-TV; molecular visualization reference",
+      "license_note": "Reference analysis only; check WEHI terms before reusing the original image."
+    },
+    {
+      "id": "allen",
+      "page_url": "https://www.allencell.org/visual-guide-tutorial.html",
+      "image_url": "https://www.allencell.org/uploads/8/1/9/9/81996008/step8-1_orig.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "bac5c4bed9f6a72ae2f7b1a0e09b6907c62d1eb5e88f0ca9bc62ebac2af323f4",
+      "bytes": 307179,
+      "inspected": true,
+      "attribution": "See original official page",
+      "license_note": "Public access is not a blanket redistribution licence; original images excluded."
+    },
+    {
+      "id": "dic",
+      "page_url": "https://www.microscopyu.com/gallery-images/hela-cell-culture",
+      "image_url": "https://www.microscopyu.com/assets/gallery-images/Comparison/DIC_heladic.jpg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "55aec91a510a678f4746304f3ad188d6e9642a7ce2289cd482af14a92bb658f8",
+      "bytes": 46869,
+      "inspected": true,
+      "attribution": "Nikon Instruments / MicroscopyU",
+      "license_note": "Copyrighted reference image; do not redistribute in the skill."
+    },
+    {
+      "id": "phase",
+      "page_url": "https://www.microscopyu.com/gallery-images/hela-cell-culture",
+      "image_url": "https://www.microscopyu.com/assets/gallery-images/Comparison/DIC_helapc.jpg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "74f4d62c16fabb1652ad35e2b824e1a61635f1eb9a540542e261c9d5f3fe5c58",
+      "bytes": 58732,
+      "inspected": true,
+      "attribution": "Nikon Instruments / MicroscopyU",
+      "license_note": "Copyrighted reference image; do not redistribute in the skill."
+    },
+    {
+      "id": "histology",
+      "page_url": "https://www.microscopyu.com/gallery-images/liver-cirrhosis-at-40x-magnification",
+      "image_url": "https://www.microscopyu.com/assets/gallery-images/pathology_cirrhosisofliver40x04.jpg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "12e9f2d9809f5d435c1d9c1ca655c76c86bde0a22f12f57b538154c4ddb2906a",
+      "bytes": 164907,
+      "inspected": true,
+      "attribution": "Nikon Instruments / MicroscopyU",
+      "license_note": "Copyrighted reference image; do not redistribute in the skill."
+    },
+    {
+      "id": "cam",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/gallery.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/gallery_samples/cam.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "8ae251b94461482f8d7513a26e0324c5e88deb110cf46a75f76ae991a392fe53",
+      "bytes": 637307,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "xray",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/gallery.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/gallery_samples/xray.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "c772ff7e7cd5e67fa0ad41c7272b14066475011ca08d50bdb20e57725e41f0b3",
+      "bytes": 274327,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "prc",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/gallery.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/gallery_samples/prc.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "1abe5c7777166238f957bae2267480a4e430012dfcd9e2dd099f18af7ba24b7e",
+      "bytes": 222620,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "switch",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/gallery.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/gallery_samples/switch.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "02521916e046b40165ed90793976399b79bef8869b984ae91419c436dca7582e",
+      "bytes": 122715,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "ambient-soft",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/features.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/feature_highlights/ambient-soft.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "033c2da68de003016d6870c68e6774ee9dd0f0975fcc6cdd91cffaec6621af78",
+      "bytes": 225024,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "fitmap",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/features.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/feature_highlights/fitmap.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "d73b296e03cb7351f4398eaca3c48ccbd4b4af83d4f22d81feec7a7ce036b197",
+      "bytes": 328693,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "multichannel",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/features.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/feature_highlights/multichannel.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "ad6f39757c88cb9ba015406293d998a0559e620b65d74b1c08a127c50911b2ac",
+      "bytes": 893223,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "style1",
+      "page_url": "https://www.rbvi.ucsf.edu/chimerax/features.html",
+      "image_url": "https://www.rbvi.ucsf.edu/chimerax/feature_highlights/style1.png",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "a2d32a323e7d007f17e295022072b3237fa5e078e096523ef10fd497c419752d",
+      "bytes": 71334,
+      "inspected": true,
+      "attribution": "UCSF RBVI / ChimeraX; multichannel example uses Allen Institute for Cell Science data",
+      "license_note": "Gallery page explicitly offers its images under CC0. Feature-highlight image rights should still be checked individually. Original images excluded regardless."
+    },
+    {
+      "id": "hku-2",
+      "page_url": "https://covid19.med.hku.hk/en/downloads/virus",
+      "image_url": "https://covid19.med.hku.hk/-/media/K2/Downloadables/The-Virus/nCoV2019-Square.jpg?h=2672&iar=0&w=2672&hash=CF032C3E3630A939930B416AADBAED75",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "bcba7bd8a216852c05e181e2548fc94ae11f916f21efe74605f5d0983ff6e4fc",
+      "bytes": 3189636,
+      "inspected": true,
+      "attribution": "HKU LKS Faculty of Medicine and Electron Microscopy Unit; TEM: John Nicholls, Leo Poon, Malik Peiris; SEM: K. Tsia, K. Lee, Q. Lai",
+      "license_note": "Publicly viewable with attribution on the source page; no blanket redistribution permission assumed."
+    },
+    {
+      "id": "hku-5",
+      "page_url": "https://covid19.med.hku.hk/en/downloads/virus",
+      "image_url": "https://covid19.med.hku.hk/-/media/K2/Downloadables/The-Virus/Vero-24-hours-12-K.jpeg?h=1920&iar=0&w=2560&hash=7A0966393BFE8875208BFD7F169E9306",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "f093306ff589c5beb2612cd0672eac9ebb106d5224f5999f131d0a26564b93ff",
+      "bytes": 2801103,
+      "inspected": true,
+      "attribution": "HKU LKS Faculty of Medicine and Electron Microscopy Unit; TEM: John Nicholls, Leo Poon, Malik Peiris; SEM: K. Tsia, K. Lee, Q. Lai",
+      "license_note": "Publicly viewable with attribution on the source page; no blanket redistribution permission assumed."
+    },
+    {
+      "id": "hku-6",
+      "page_url": "https://covid19.med.hku.hk/en/downloads/virus",
+      "image_url": "https://covid19.med.hku.hk/-/media/K2/Downloadables/The-Virus/Scanning-EM-of-Coronavirus-on-Surface.jpeg?h=1722&iar=0&w=2430&hash=EAA6A8870A0E86E2DCD5263D8E6F8374",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "0dc950f6b435a7381013a48594e04077820eca1231032a432ac478f97d1cb9c8",
+      "bytes": 1730863,
+      "inspected": true,
+      "attribution": "HKU LKS Faculty of Medicine and Electron Microscopy Unit; TEM: John Nicholls, Leo Poon, Malik Peiris; SEM: K. Tsia, K. Lee, Q. Lai",
+      "license_note": "Publicly viewable with attribution on the source page; no blanket redistribution permission assumed."
+    },
+    {
+      "id": "fluorescence",
+      "page_url": "https://www.nikonsmallworld.com/galleries/2017-photomicrography-competition/immortalized-human-skin-cells-expressing-fluorescently-tagged-keratin",
+      "image_url": "https://www.nikonsmallworld.com/images/photos/2017/_photo1600/1-HaCaT_cells.jpg",
+      "reuse": "reference analysis only; source image excluded from skill archive",
+      "sha256": "30b5052d0e2f4827776c80c38a40c41fa18d2b9e0e7fbfcef6b261fe6e270ceb",
+      "bytes": 1086669,
+      "inspected": true,
+      "attribution": "Dr. Bram van den Broek and collaborators; Nikon Small World 2017 HaCaT keratin image",
+      "license_note": "Photographer/Nikon reference image; original not redistributed.",
+      "observation": "Fine yellow-orange keratin network with local waviness and branching/overlap, blue textured nuclei, black intercellular areas; do not infer a 3D network from this single projection."
+    }
+  ],
+  "excluded_source": "XVIVO returned HTTP 403; no claim of visual inspection or style reconstruction from that page."
+}

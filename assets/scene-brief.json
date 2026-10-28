@@ -1,0 +1,19 @@
+{
+  "title": "胞内囊泡沿微管运输",
+  "organism": "Homo sapiens",
+  "cell_type": "generic interphase animal cell (schematic)",
+  "purpose": "教学：区分轨道、马达、货物和方向",
+  "style": "teaching",
+  "render_engine": "auto",
+  "compositor": "Blender clean",
+  "animation_presentation": "stepwise",
+  "coordinate_convention": "microtubule plus end at +X; camera at negative Y",
+  "scale": {"mode": "schematic", "meters_per_blender_unit": null, "exaggerations": ["motor and cargo shown for readability"]},
+  "time": {"mode": "schematic", "fps": 24, "frames": 96, "biological_seconds_per_frame": null},
+  "entities": [{"id": "cargo_01", "compartment": "vesicle_lumen", "evidence": "schematic", "source_ids": []}],
+  "events": [{"name": "transport", "frames": [1, 96], "invariant": "cargo stays in the lumen; motor connects to the track"}],
+  "distribution": {"model": "not applicable", "seed": 23},
+  "sources": [],
+  "simplifications": ["no ATP hydrolysis kinetics", "no budding or fusion in this shot"],
+  "checks": ["start/middle/end frames", "cargo continuity", "track polarity", "video playback"]
+}

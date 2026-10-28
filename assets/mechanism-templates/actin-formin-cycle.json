@@ -1,0 +1,805 @@
+{
+  "schema_version": 1,
+  "kind": "actin_mechanism_plan",
+  "route": "formin",
+  "status": "design_only",
+  "title": "mDia1/formin 直丝全过程",
+  "source_catalog": "actin-sources.json",
+  "asset_catalog": "actin-assets.json",
+  "scope": {
+    "cell_context": "哺乳动物非肌细胞机制教学综合模型；非指定单个细胞的实验重建",
+    "start": "项目选择的刺激/受体接口、单体池与既有细丝条件",
+    "end": "功能输出、终止/拆解、原亚基回收并重新进入生长",
+    "upstream_adapter_status": "project_specific_selection_required",
+    "unresolved": [
+      "具体细胞、刺激、受体与 GEF/GAP 身份",
+      "所选 isoform 的缺失结构/调控条件",
+      "真实浓度、扩散、事件概率和速率"
+    ],
+    "existing_filament_boundary": "初始成核镜头须另外构建，端部结构只作后续锚点。",
+    "not_claimed": [
+      "全部调控因素",
+      "活细胞逐原子实测轨迹",
+      "已完成全流程 Blender 动画"
+    ]
+  },
+  "required_coverage": [
+    "input",
+    "activation",
+    "monomer_supply",
+    "nucleation",
+    "elongation",
+    "hydrolysis",
+    "phosphate_release",
+    "functional_output",
+    "termination",
+    "disassembly",
+    "recycling",
+    "reentry"
+  ],
+  "presentation": {
+    "style": "select per project or infer from an inspected image",
+    "renderer": "Eevee or Cycles selected per project",
+    "compositor": "clean/reference/monochrome or documented external compositor",
+    "section_view": "whole units layered/hidden; no molecular plane cuts",
+    "duration": "按清晰度安排多镜头，不规定生物学秒数；延伸至少两轮",
+    "story_order_is_not_dependency_order": true
+  },
+  "stages": [
+    {
+      "id": "F00",
+      "name": "单体储备、交换与供给",
+      "coverage": [
+        "monomer_supply"
+      ],
+      "depends_on": [],
+      "sources": [
+        "t4_profilin",
+        "cap_exchange"
+      ],
+      "actors": [
+        "actin_001",
+        "profilin",
+        "Tbeta4",
+        "CAP",
+        "ATP_pool",
+        "ADP_pool"
+      ],
+      "before": "跟踪亚基 G-ADP；单体池存在多种结合伙伴。",
+      "after": "ADP 离开，新的 ATP 结合；profilin-actin 可供 FH1 利用。",
+      "implementation": "明确 Tbeta4 释放/竞争与 profilin 结合；分别保留核苷酸 ID。",
+      "checks": "不把所有伙伴一直留在一个 actin 上；交换不是加磷酸。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F01",
+      "name": "选择上游受体/GEF 情境",
+      "coverage": [
+        "input"
+      ],
+      "depends_on": [],
+      "sources": [
+        "p115",
+        "p115_membrane"
+      ],
+      "actors": [
+        "stimulus",
+        "receptor",
+        "Galpha13",
+        "p115RhoGEF"
+      ],
+      "before": "细胞/刺激待项目选定。",
+      "after": "明确从刺激到 RhoGEF 的膜侧连接和证据层级。",
+      "implementation": "可用 thromboxane A2 受体相关膜募集作为接口；纯化 Galpha13-GEF 活化另标。",
+      "checks": "不把不同细胞或不同实验中的箭头说成一次直接观测；Galpha12/13 不直接等同。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F02",
+      "name": "RhoA 定位与核苷酸开关",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "F01"
+      ],
+      "sources": [
+        "p115",
+        "mdia_full"
+      ],
+      "actors": [
+        "RhoA",
+        "p115RhoGEF",
+        "GDP_pool",
+        "GTP_pool",
+        "membrane"
+      ],
+      "before": "RhoA-GDP，选定定位条件。",
+      "after": "GEF 促进 GDP/GTP 交换，RhoA-GTP 可接触效应器。",
+      "implementation": "核苷酸离开/进入及膜锚定分别表现。",
+      "checks": "1Z2C 是 RhoC-GppNHp，只能作同源调控参考，不标成 RhoA-GTP 坐标。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F03",
+      "name": "展示 mDia1 自抑制",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [],
+      "sources": [
+        "mdia_reg",
+        "mdia_full"
+      ],
+      "actors": [
+        "mDia1_DID",
+        "mDia1_DAD",
+        "mDia1_FH2"
+      ],
+      "before": "全长 mDia1 受 DID-DAD 等调控。",
+      "after": "观众理解调控域与 FH1/FH2 执行部分的联系。",
+      "implementation": "全长结构缺口用明确的柔性示意连接，调控片段结构仅作局部。",
+      "checks": "不把 FH2 端部结构称为完整未激活 mDia1。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F04",
+      "name": "解除抑制与膜环境协同",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "F02",
+        "F03"
+      ],
+      "sources": [
+        "mdia_reg",
+        "mdia_full"
+      ],
+      "actors": [
+        "RhoA",
+        "mDia1",
+        "membrane",
+        "cofactors"
+      ],
+      "before": "RhoA-GTP 与受抑制 mDia1 以及选定辅因子环境。",
+      "after": "在该情境下活性 mDia1 可参与成核/延伸。",
+      "implementation": "将 Rho 结合、调控改变和功能活化分别标注，不画成一次无条件完全展开。",
+      "checks": "RhoA 单独作用于纯化全长 mDia1 的结果不支持所有情境都完全活化。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F05",
+      "name": "FH2 二聚体参与成核",
+      "coverage": [
+        "nucleation"
+      ],
+      "depends_on": [
+        "F00",
+        "F04"
+      ],
+      "sources": [
+        "formin_nature",
+        "formin_science"
+      ],
+      "actors": [
+        "mDia1_FH2",
+        "actin_seed"
+      ],
+      "before": "活性 FH2 二聚体与可用单体，尚未有长丝。",
+      "after": "出现能继续增长的极性初始丝端。",
+      "implementation": "建立成核镜头与端部资产之间的明确过渡；缺少早期结构时保留示意标记。",
+      "checks": "9B27/8RU2 是端部状态，不能仅载入它们宣称早期成核已被观测。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F06",
+      "name": "FH1 捕获 profilin-actin",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "F00",
+        "F05"
+      ],
+      "sources": [
+        "formin_nature",
+        "formin_science"
+      ],
+      "actors": [
+        "mDia1_FH1",
+        "profilin",
+        "actin_001"
+      ],
+      "before": "profilin-actin 在可用池，FH1 可接触。",
+      "after": "FH1 与 profilin 相互作用，提高端部供料机会。",
+      "implementation": "FH1 多脯氨酸区域按构建体长度/柔性资料表示；柔性轨迹注明示意。",
+      "checks": "缺失的 FH1 坐标不能伪造为 cryo-EM 完整解析；不强制所有单体走唯一轨道。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F07",
+      "name": "递送至 FH2 管理的端部",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "F06"
+      ],
+      "sources": [
+        "formin_nature",
+        "formin_science"
+      ],
+      "actors": [
+        "mDia1_FH1",
+        "mDia1_FH2",
+        "profilin",
+        "actin_001"
+      ],
+      "before": "载体上的 G-ATP-actin 尚未占据丝端。",
+      "after": "单体进入可建立新接触的端部位置。",
+      "implementation": "选一个明确的 formin 机制模型；先转向再接近接口，邻近两个 FH2 头分别检查。",
+      "checks": "9AZP 是 INF2；8RTY 是 Cdc12；借用必须标同源推断，不能改标签冒充 mDia1。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F08",
+      "name": "actin 加入与 G→F 改变",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "F07"
+      ],
+      "sources": [
+        "aging",
+        "formin_science"
+      ],
+      "actors": [
+        "actin_001",
+        "mDia1_FH2",
+        "filament"
+      ],
+      "before": "G-ATP-actin 位于端部接触位置。",
+      "after": "非共价加入并转向 F 构象，ATP 状态单独保持。",
+      "implementation": "给真正 G/F 锚点分别准备资产；插值不是实验轨迹。",
+      "checks": "不使用旧 8F8R 同一个刚体从远到近来冒充已经展示构象转换。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F09",
+      "name": "profilin 释放与 formin 重新定位",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "F08"
+      ],
+      "sources": [
+        "formin_nature",
+        "formin_science"
+      ],
+      "actors": [
+        "profilin",
+        "mDia1_FH2",
+        "filament"
+      ],
+      "before": "新亚基已建立接触，端部复合物重排。",
+      "after": "profilin 离开，formin 仍可过程性延伸。",
+      "implementation": "把 undock-and-lock 或 LERA 的选定解释写入镜头注释；不拼成一个被直接测到的轨迹。",
+      "checks": "亲缘不同的构象不能隐去来源；两个 FH2 头和 profilin 不能穿过 actin。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "相邻微步骤的确切先后依模型/体系而异；此处是分镜拆分，不宣称普适顺序。"
+    },
+    {
+      "id": "F10",
+      "name": "第二轮递送与端部生长",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "F09"
+      ],
+      "sources": [
+        "formin_science"
+      ],
+      "actors": [
+        "actin_002",
+        "profilin",
+        "mDia1_FH1",
+        "mDia1_FH2",
+        "filament"
+      ],
+      "before": "第一轮后的 formin 仍在端部。",
+      "after": "第二个新亚基加入，formin 与端部连续移动。",
+      "implementation": "延长镜头而非加快第一轮；保持亚基尺寸与已结合核心位置。",
+      "checks": "第二轮不是整丝整体缩放，也不是 formin 任意穿过已结合亚基。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F11",
+      "name": "聚合后 ATP 水解",
+      "coverage": [
+        "hydrolysis"
+      ],
+      "depends_on": [
+        "F08"
+      ],
+      "sources": [
+        "aging",
+        "pi"
+      ],
+      "actors": [
+        "actin_001",
+        "nucleotide_1",
+        "phosphate_1"
+      ],
+      "before": "F-ATP。",
+      "after": "F-ADP·Pi，磷酸仍保留。",
+      "implementation": "独立于 FH2 头部步态的化学状态特写。",
+      "checks": "不把水解等同于机械移动发生的唯一时钟；不释放 PPi。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F12",
+      "name": "磷酸释放与老化",
+      "coverage": [
+        "phosphate_release"
+      ],
+      "depends_on": [
+        "F11"
+      ],
+      "sources": [
+        "aging",
+        "pi"
+      ],
+      "actors": [
+        "actin_001",
+        "phosphate_1"
+      ],
+      "before": "F-ADP·Pi。",
+      "after": "F-ADP，Pi 成为游离产物。",
+      "implementation": "保留配体身份和清楚停顿；静态状态相减不等于真实释放轨迹。",
+      "checks": "ATP 类似物必须标类似物；Mg/Ca 条件不混用。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F13",
+      "name": "并行的 RhoA–ROCK 支路",
+      "coverage": [
+        "functional_output"
+      ],
+      "depends_on": [
+        "F02"
+      ],
+      "sources": [
+        "mdia_rock"
+      ],
+      "actors": [
+        "RhoA",
+        "ROCK",
+        "myosin_II"
+      ],
+      "before": "RhoA 活化输入可同时作用于另一效应支路。",
+      "after": "所选收缩情境下 ROCK 相关调控影响肌球蛋白活动。",
+      "implementation": "镜头从 RhoA 分出第二条支路；若讲具体磷酸位点，先补原实验来源。",
+      "checks": "不画 mDia1→ROCK；不是所有直丝都自动进入收缩网络。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F14",
+      "name": "交联、极性与力学输出",
+      "coverage": [
+        "functional_output"
+      ],
+      "depends_on": [
+        "F10"
+      ],
+      "sources": [
+        "mdia_rock"
+      ],
+      "actors": [
+        "filament",
+        "crosslinker",
+        "myosin_II",
+        "adhesion",
+        "membrane"
+      ],
+      "before": "多条直丝已形成，各有极性。",
+      "after": "按项目形成交联网络；收缩版本另需 F13 与肌球蛋白/黏附条件。",
+      "implementation": "直丝网络和收缩性应力纤维分为两种输出；crosslinker 选择需来源。",
+      "checks": "平行束不等于应力纤维；未作力学模拟时只示意形态，不报张力/应力。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F15",
+      "name": "端部竞争与封端",
+      "coverage": [
+        "termination"
+      ],
+      "depends_on": [
+        "F09"
+      ],
+      "sources": [
+        "cap_decision"
+      ],
+      "actors": [
+        "mDia1_FH2",
+        "capping_protein",
+        "filament"
+      ],
+      "before": "formin 在端部，封端蛋白可竞争。",
+      "after": "按选择条件进入共占有/解离/封端状态。",
+      "implementation": "每种占有状态单独记录，使用明确结果分支。",
+      "checks": "不能既声明封端又无限继续添 actin；也不禁止所有瞬态共占有。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F16",
+      "name": "信号关闭",
+      "coverage": [
+        "termination"
+      ],
+      "depends_on": [
+        "F04"
+      ],
+      "sources": [
+        "mdia_full",
+        "mdia_reg",
+        "rho_gap"
+      ],
+      "actors": [
+        "RhoA",
+        "Rho_GAP",
+        "mDia1",
+        "GTP_pool",
+        "GDP_pool",
+        "signal_Pi"
+      ],
+      "before": "上游活性维持。",
+      "after": "在选定 GAP/撤刺激条件下信号减弱，减少新的活化 mDia1。",
+      "implementation": "Rho GTP 水解与 actin ATP 过程分开；现有丝仍存在。",
+      "checks": "GAP 身份和反应速率需项目来源；信号关闭不等同于细丝立刻解聚。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F17",
+      "name": "formin 从端部离开",
+      "coverage": [
+        "termination"
+      ],
+      "depends_on": [
+        "F15"
+      ],
+      "sources": [
+        "cap_decision"
+      ],
+      "actors": [
+        "mDia1",
+        "filament"
+      ],
+      "before": "选定端部竞争态或生命周期条件。",
+      "after": "formin 解离，端部转入对应可用/封端状态。",
+      "implementation": "保持完整 FH2 和全长身份；不将 formin 分裂成 actin 单体。",
+      "checks": "解离与信号关闭可相关但非统一严格顺序；后续端部占有须明确。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F18",
+      "name": "Cofilin 装饰与片段产生",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "F12",
+        "F24"
+      ],
+      "sources": [
+        "cofilin"
+      ],
+      "actors": [
+        "cofilin",
+        "filament",
+        "fragment_1",
+        "fragment_2"
+      ],
+      "before": "老化的细丝区域。",
+      "after": "局部装饰与选定接口切断产生完整片段。",
+      "implementation": "装饰、构象变化、接口分离分别留出观察时间。",
+      "checks": "不切开单个 actin；cofilin 饱和不等于处处切断。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F19",
+      "name": "片段解聚回到单体",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "F18"
+      ],
+      "sources": [
+        "cap_exchange",
+        "cofilin"
+      ],
+      "actors": [
+        "fragment_1",
+        "actin_001",
+        "CAP",
+        "cofilin"
+      ],
+      "before": "有暴露端部的片段，actin_001 仍在其中。",
+      "after": "actin_001 脱离为 G-ADP。",
+      "implementation": "跟随同一 ID 到单体池；端部伙伴/加速效应按体系注明。",
+      "checks": "切断和解聚分开；对象不能消失后以同名新对象替换。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F20",
+      "name": "CAP 相关单体回收",
+      "coverage": [
+        "recycling"
+      ],
+      "depends_on": [
+        "F19"
+      ],
+      "sources": [
+        "cap_exchange",
+        "cap_network"
+      ],
+      "actors": [
+        "CAP",
+        "cofilin",
+        "actin_001"
+      ],
+      "before": "拆解后的单体带有旧核苷酸/可能的 cofilin。",
+      "after": "伙伴释放/交换进入可用单体回收步骤。",
+      "implementation": "CAP CARP 局部接口与全长多域功能分别表示。",
+      "checks": "6FM2 不提供完整全长 CAP 的所有阶段。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F21",
+      "name": "ADP 离开，新 ATP 进入",
+      "coverage": [
+        "recycling"
+      ],
+      "depends_on": [
+        "F20"
+      ],
+      "sources": [
+        "cap_exchange",
+        "t4_profilin"
+      ],
+      "actors": [
+        "actin_001",
+        "CAP",
+        "profilin",
+        "nucleotide_1",
+        "nucleotide_2"
+      ],
+      "before": "G-ADP，旧 nucleotide_1。",
+      "after": "G-ATP，来自池中的新 nucleotide_2。",
+      "implementation": "同一 actin 保持，旧 ADP 释放，已离开的 Pi 不重新飞回当 ATP。",
+      "checks": "核苷酸交换有两个不同核苷酸 ID；不是原位磷酸化。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F22",
+      "name": "回收亚基重新进入延伸",
+      "coverage": [
+        "reentry"
+      ],
+      "depends_on": [
+        "F21",
+        "F05"
+      ],
+      "sources": [
+        "cap_network"
+      ],
+      "actors": [
+        "actin_001",
+        "profilin",
+        "mDia1_FH1",
+        "mDia1_FH2",
+        "filament"
+      ],
+      "before": "回收 G-ATP 单体；另一个仍活跃/重新活化的 formin 端部可用。",
+      "after": "actin_001 再次加入，完成物质闭环。",
+      "implementation": "回到 FH1/FH2 递送镜头，至少显示再进入的端点。",
+      "checks": "若原 formin 已离开或原端部被封，明确选另一个活跃端部；不得穿过 CapZ。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F23",
+      "name": "条件支路：LIMK 使 cofilin 磷酸化",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "F13"
+      ],
+      "sources": [
+        "rock_limk",
+        "cofilin_switch"
+      ],
+      "actors": [
+        "ROCK",
+        "LIMK",
+        "cofilin",
+        "kinase_ATP",
+        "kinase_ADP"
+      ],
+      "before": "所选信号情境激活 kinase/LIMK 支路；有可磷酸化的 cofilin 池。",
+      "after": "cofilin Ser3 被磷酸化，其 actin 调控活性降低。",
+      "implementation": "作为并行调控镜头；蛋白磷酸化、actin ATP 水解、Rho GTP 循环分开记账。",
+      "checks": "ATP→ADP 的磷酰基转移不是把 cofilin 变成 ADP-actin；不强制所有细胞都走这条支路。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "F24",
+      "name": "条件支路：SSH 相关去磷酸化恢复 cofilin",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "F23"
+      ],
+      "sources": [
+        "cofilin_switch"
+      ],
+      "actors": [
+        "SSH",
+        "cofilin",
+        "regulatory_Pi"
+      ],
+      "before": "被磷酸化的 cofilin 池，满足所选 SSH 调控条件。",
+      "after": "Ser3 去磷酸化；这一份 cofilin 可再次参与周转。",
+      "implementation": "保留同一 cofilin ID，显示磷酸基的去向；SSH 活化条件需该细胞来源。",
+      "checks": "此处分支只跟踪选定调控池；原本未磷酸化的 cofilin 不必先走一遍。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    }
+  ],
+  "chemical_ledger": {
+    "protein_id": "actin_001",
+    "initial_state": "G_ADP",
+    "events": [
+      {
+        "stage": "F00",
+        "actor": "actin_001",
+        "type": "nucleotide_exchange",
+        "before": "G_ADP",
+        "after": "G_ATP",
+        "nucleotide_before": "nucleotide_0",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [
+          "ATP_1"
+        ],
+        "released_to_pool": [
+          "ADP_0"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "F08",
+        "actor": "actin_001",
+        "type": "incorporation",
+        "before": "G_ATP",
+        "after": "F_ATP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      },
+      {
+        "stage": "F11",
+        "actor": "actin_001",
+        "type": "ATP_hydrolysis",
+        "before": "F_ATP",
+        "after": "F_ADP_Pi",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [
+          "H2O"
+        ],
+        "released_to_pool": [],
+        "new_bound_product": [
+          "Pi_1"
+        ]
+      },
+      {
+        "stage": "F12",
+        "actor": "actin_001",
+        "type": "Pi_release",
+        "before": "F_ADP_Pi",
+        "after": "F_ADP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [
+          "Pi_1"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "F19",
+        "actor": "actin_001",
+        "type": "depolymerization",
+        "before": "F_ADP",
+        "after": "G_ADP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      },
+      {
+        "stage": "F21",
+        "actor": "actin_001",
+        "type": "nucleotide_exchange",
+        "before": "G_ADP",
+        "after": "G_ATP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_2",
+        "consumed_from_pool": [
+          "ATP_2"
+        ],
+        "released_to_pool": [
+          "ADP_1"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "F22",
+        "actor": "actin_001",
+        "type": "reentry",
+        "before": "G_ATP",
+        "after": "F_ATP",
+        "nucleotide_before": "nucleotide_2",
+        "nucleotide_after": "nucleotide_2",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      }
+    ],
+    "limits": "Chemical species ledger; not atomistic catalysis. ATP gamma phosphate becomes retained Pi, later free Pi; hydrogens/protonation omitted in the structural example."
+  },
+  "parallel_dependencies": [
+    "Assembly, capping, hydrolysis and network turnover can overlap; stage order is a teaching edit.",
+    "RhoA activates mDia1 and ROCK-related branches in parallel; contraction output additionally requires F13 and appropriate polarity/myosin/adhesion."
+  ],
+  "production_checks": [
+    "Resolve project-specific upstream and isoforms before claiming a particular cell pathway.",
+    "Map each actor/state to source, construct, assembly, ligands, missing regions and scale.",
+    "Check chemical ledger and stable protein/ligand IDs against the actual saved scene, not just this plan.",
+    "Recheck heavy-atom contacts for every imported partner and new conformation.",
+    "Watch approach/contact/release and two continuous elongation cycles in the exported movie.",
+    "Verify whole-unit section views, readable labels and environmental layers in actual pixels.",
+    "Report planned/built/rendered/reviewed separately. Passing the plan audit does not complete the animation."
+  ]
+}

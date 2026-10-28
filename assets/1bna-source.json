@@ -1,0 +1,555 @@
+{
+  "id": "1BNA",
+  "url": "https://files.rcsb.org/download/1BNA.pdb",
+  "entry_url": "https://www.rcsb.org/structure/1BNA",
+  "metadata_url": "https://data.rcsb.org/rest/v1/core/entry/1BNA",
+  "retrieved_utc": "2026-10-24T01:24:36.956789+00:00",
+  "sha256": "df42f1506792f191b957227b061360652adcf6f813eb69d9ec553067ea584670",
+  "bytes": 76464,
+  "assembly": null,
+  "coordinate_unit": "angstrom",
+  "evidence": "experimental_structure_model",
+  "license": "wwPDB structural data: CC0; cite entry and primary publication",
+  "license_url": "https://www.ebi.ac.uk/pdbe/about/public-data-access-statement",
+  "metadata": {
+    "audit_author": [
+      {
+        "name": "Drew, H.R.",
+        "pdbx_ordinal": 1
+      },
+      {
+        "name": "Wing, R.M.",
+        "pdbx_ordinal": 2
+      },
+      {
+        "name": "Takano, T.",
+        "pdbx_ordinal": 3
+      },
+      {
+        "name": "Broka, C.",
+        "pdbx_ordinal": 4
+      },
+      {
+        "name": "Tanaka, S.",
+        "pdbx_ordinal": 5
+      },
+      {
+        "name": "Itakura, K.",
+        "pdbx_ordinal": 6
+      },
+      {
+        "name": "Dickerson, R.E.",
+        "pdbx_ordinal": 7
+      }
+    ],
+    "cell": {
+      "Z_PDB": 8,
+      "angle_alpha": 90.0,
+      "angle_beta": 90.0,
+      "angle_gamma": 90.0,
+      "length_a": 24.87,
+      "length_b": 40.39,
+      "length_c": 66.2
+    },
+    "citation": [
+      {
+        "country": "US",
+        "id": "primary",
+        "journal_abbrev": "Proc.Natl.Acad.Sci.USA",
+        "journal_id_ASTM": "PNASA6",
+        "journal_id_CSD": "0040",
+        "journal_id_ISSN": "0027-8424",
+        "journal_volume": "78",
+        "page_first": "2179",
+        "page_last": "2183",
+        "pdbx_database_id_DOI": "10.1073/pnas.78.4.2179",
+        "pdbx_database_id_PubMed": 6941276,
+        "rcsb_authors": [
+          "Drew, H.R.",
+          "Wing, R.M.",
+          "Takano, T.",
+          "Broka, C.",
+          "Tanaka, S.",
+          "Itakura, K.",
+          "Dickerson, R.E."
+        ],
+        "rcsb_is_primary": "Y",
+        "rcsb_journal_abbrev": "Proc Natl Acad Sci U S A",
+        "title": "Structure of a B-DNA dodecamer: conformation and dynamics.",
+        "year": 1981
+      },
+      {
+        "country": "US",
+        "id": "1",
+        "journal_abbrev": "Proc.Natl.Acad.Sci.USA",
+        "journal_id_ASTM": "PNASA6",
+        "journal_id_CSD": "0040",
+        "journal_id_ISSN": "0027-8424",
+        "journal_volume": "78",
+        "page_first": "7318",
+        "page_last": "7322",
+        "rcsb_authors": [
+          "Dickerson, R.E.",
+          "Drew, H.R."
+        ],
+        "rcsb_is_primary": "N",
+        "rcsb_journal_abbrev": "Proc Natl Acad Sci U S A",
+        "title": "Kinematic Model for B-DNA",
+        "year": 1981
+      },
+      {
+        "country": "UK",
+        "id": "2",
+        "journal_abbrev": "J.Mol.Biol.",
+        "journal_id_ASTM": "JMOBAK",
+        "journal_id_CSD": "0070",
+        "journal_id_ISSN": "0022-2836",
+        "journal_volume": "149",
+        "page_first": "761",
+        "page_last": "786",
+        "rcsb_authors": [
+          "Dickerson, R.E.",
+          "Drew, H.R."
+        ],
+        "rcsb_is_primary": "N",
+        "rcsb_journal_abbrev": "J Mol Biol",
+        "title": "Structure of a B-DNA Dodecamer. II. Influence of Base Sequence on Helix Structure",
+        "year": 1981
+      },
+      {
+        "country": "UK",
+        "id": "3",
+        "journal_abbrev": "J.Mol.Biol.",
+        "journal_id_ASTM": "JMOBAK",
+        "journal_id_CSD": "0070",
+        "journal_id_ISSN": "0022-2836",
+        "journal_volume": "151",
+        "page_first": "535",
+        "page_last": "556",
+        "rcsb_authors": [
+          "Drew, H.R.",
+          "Dickerson, R.E."
+        ],
+        "rcsb_is_primary": "N",
+        "rcsb_journal_abbrev": "J Mol Biol",
+        "title": "Structure of a B-DNA Dodecamer. III. Geometry of Hydration",
+        "year": 1981
+      },
+      {
+        "country": "UK",
+        "id": "4",
+        "journal_abbrev": "Nature",
+        "journal_id_ASTM": "NATUAS",
+        "journal_id_CSD": "0006",
+        "journal_id_ISSN": "0028-0836",
+        "journal_volume": "287",
+        "page_first": "755",
+        "page_last": "758",
+        "rcsb_authors": [
+          "Wing, R.",
+          "Drew, H.R.",
+          "Takano, T.",
+          "Broka, C.",
+          "Tanaka, S.",
+          "Itakura, K.",
+          "Dickerson, R.E."
+        ],
+        "rcsb_is_primary": "N",
+        "rcsb_journal_abbrev": "Nature",
+        "title": "Crystal Structure Analysis of a Complete Turn of B-DNA",
+        "year": 1980
+      }
+    ],
+    "database_2": [
+      {
+        "database_code": "1BNA",
+        "database_id": "PDB",
+        "pdbx_DOI": "10.2210/pdb1bna/pdb",
+        "pdbx_database_accession": "pdb_00001bna"
+      },
+      {
+        "database_code": "BDL001",
+        "database_id": "RCSB"
+      },
+      {
+        "database_code": "D_1000171933",
+        "database_id": "WWPDB"
+      }
+    ],
+    "diffrn": [
+      {
+        "crystal_id": "1",
+        "id": "1"
+      }
+    ],
+    "diffrn_detector": [
+      {
+        "detector": "DIFFRACTOMETER",
+        "diffrn_id": "1"
+      }
+    ],
+    "diffrn_radiation": [
+      {
+        "diffrn_id": "1",
+        "pdbx_scattering_type": "x-ray",
+        "wavelength_id": "1"
+      }
+    ],
+    "diffrn_source": [
+      {
+        "diffrn_id": "1"
+      }
+    ],
+    "entry": {
+      "id": "1BNA"
+    },
+    "exptl": [
+      {
+        "method": "X-RAY DIFFRACTION"
+      }
+    ],
+    "exptl_crystal": [
+      {
+        "density_Matthews": 2.27,
+        "density_percent_sol": 45.79,
+        "id": "1"
+      }
+    ],
+    "exptl_crystal_grow": [
+      {
+        "crystal_id": "1",
+        "method": "VAPOR DIFFUSION",
+        "pdbx_details": "VAPOR DIFFUSION, temperature 290.00K",
+        "temp": 290.0
+      }
+    ],
+    "pdbx_audit_revision_category": [
+      {
+        "category": "chem_comp_atom",
+        "data_content_type": "Structure model",
+        "ordinal": 1,
+        "revision_ordinal": 4
+      },
+      {
+        "category": "chem_comp_bond",
+        "data_content_type": "Structure model",
+        "ordinal": 2,
+        "revision_ordinal": 4
+      },
+      {
+        "category": "database_2",
+        "data_content_type": "Structure model",
+        "ordinal": 3,
+        "revision_ordinal": 4
+      }
+    ],
+    "pdbx_audit_revision_details": [
+      {
+        "data_content_type": "Structure model",
+        "ordinal": 1,
+        "provider": "repository",
+        "revision_ordinal": 1,
+        "type": "Initial release"
+      }
+    ],
+    "pdbx_audit_revision_group": [
+      {
+        "data_content_type": "Structure model",
+        "group": "Version format compliance",
+        "ordinal": 1,
+        "revision_ordinal": 2
+      },
+      {
+        "data_content_type": "Structure model",
+        "group": "Version format compliance",
+        "ordinal": 2,
+        "revision_ordinal": 3
+      },
+      {
+        "data_content_type": "Structure model",
+        "group": "Data collection",
+        "ordinal": 3,
+        "revision_ordinal": 4
+      },
+      {
+        "data_content_type": "Structure model",
+        "group": "Database references",
+        "ordinal": 4,
+        "revision_ordinal": 4
+      }
+    ],
+    "pdbx_audit_revision_history": [
+      {
+        "data_content_type": "Structure model",
+        "major_revision": 1,
+        "minor_revision": 0,
+        "ordinal": 1,
+        "revision_date": "1981-05-21T00:00:00.000+00:00"
+      },
+      {
+        "data_content_type": "Structure model",
+        "major_revision": 1,
+        "minor_revision": 1,
+        "ordinal": 2,
+        "revision_date": "2008-05-22T00:00:00.000+00:00"
+      },
+      {
+        "data_content_type": "Structure model",
+        "major_revision": 1,
+        "minor_revision": 2,
+        "ordinal": 3,
+        "revision_date": "2011-07-13T00:00:00.000+00:00"
+      },
+      {
+        "data_content_type": "Structure model",
+        "major_revision": 1,
+        "minor_revision": 3,
+        "ordinal": 4,
+        "revision_date": "2024-02-07T00:00:00.000+00:00"
+      }
+    ],
+    "pdbx_audit_revision_item": [
+      {
+        "data_content_type": "Structure model",
+        "item": "_database_2.pdbx_DOI",
+        "ordinal": 1,
+        "revision_ordinal": 4
+      },
+      {
+        "data_content_type": "Structure model",
+        "item": "_database_2.pdbx_database_accession",
+        "ordinal": 2,
+        "revision_ordinal": 4
+      }
+    ],
+    "pdbx_database_status": {
+      "deposit_site": "BNL",
+      "pdb_format_compatible": "Y",
+      "process_site": "BNL",
+      "recvd_initial_deposition_date": "1981-01-26T00:00:00.000+00:00",
+      "status_code": "REL",
+      "status_code_sf": "REL"
+    },
+    "pdbx_vrpt_summary": {
+      "attempted_validation_steps": "molprobity,validation-pack,xtriage,eds,validation_schema,percentiles,writexml,writecif,writepdf",
+      "ligands_for_buster_report": "N",
+      "report_creation_date": "2026-03-05T14:02:00.000+00:00"
+    },
+    "pdbx_vrpt_summary_diffraction": [
+      {
+        "B_factor_type": "FULL",
+        "CCP4_version": "9.0.010 (Gargrove)",
+        "DCC_R": 0.2215,
+        "EDS_R": 0.228,
+        "EDS_R_warning": "The R factor obtained from EDS is 0.228, which does not match the depositor's R factor of 0.178. Please interpret the results in this section carefully.",
+        "EDS_res_high": 1.9,
+        "EDS_res_low": 8.0,
+        "Fo_Fc_correlation": 0.97,
+        "Padilla_Yeates_L2_mean": 0.26,
+        "Padilla_Yeates_L_mean": 0.432,
+        "Wilson_B_aniso": "[40.230,36.326,31.796,0.000,0.000,0.000]",
+        "Wilson_B_estimate": 36.702,
+        "acentric_outliers": 4,
+        "bulk_solvent_b": 100.049,
+        "bulk_solvent_k": 0.383,
+        "centric_outliers": 3,
+        "data_anisotropy": 0.234,
+        "data_completeness": 98.3,
+        "density_fitness_version": "1.0.12",
+        "exp_method": "x-ray",
+        "num_miller_indices": 5691,
+        "number_reflns_R_free": 0,
+        "percent_RSRZ_outliers": 0.0,
+        "percent_free_reflections": 0.0,
+        "trans_NCS_details": "The largest off-origin peak in the Patterson function is 10.63% of the height of the origin peak. No significant pseudotranslation is detected."
+      }
+    ],
+    "pdbx_vrpt_summary_geometry": [
+      {
+        "angles_RMSZ": 1.45,
+        "bonds_RMSZ": 0.91,
+        "clashscore": 5.28,
+        "num_H_reduce": 272,
+        "num_angles_RMSZ": 836,
+        "num_bonds_RMSZ": 544
+      }
+    ],
+    "rcsb_accession_info": {
+      "deposit_date": "1981-01-26T00:00:00.000+00:00",
+      "has_released_experimental_data": "Y",
+      "initial_release_date": "1981-05-21T00:00:00.000+00:00",
+      "major_revision": 1,
+      "minor_revision": 3,
+      "revision_date": "2024-02-07T00:00:00.000+00:00",
+      "status_code": "REL"
+    },
+    "rcsb_entry_container_identifiers": {
+      "assembly_ids": [
+        "1"
+      ],
+      "entity_ids": [
+        "1",
+        "2"
+      ],
+      "entry_id": "1BNA",
+      "model_ids": [
+        1
+      ],
+      "polymer_entity_ids": [
+        "1"
+      ],
+      "pubmed_id": 6941276,
+      "rcsb_id": "1BNA"
+    },
+    "rcsb_entry_info": {
+      "assembly_count": 1,
+      "branched_entity_count": 0,
+      "cis_peptide_count": 0,
+      "deposited_atom_count": 566,
+      "deposited_branched_entity_instance_count": 0,
+      "deposited_deuterated_water_count": 0,
+      "deposited_hydrogen_atom_count": 0,
+      "deposited_model_count": 1,
+      "deposited_modeled_polymer_monomer_count": 24,
+      "deposited_nonpolymer_entity_instance_count": 0,
+      "deposited_polymer_entity_instance_count": 2,
+      "deposited_polymer_monomer_count": 24,
+      "deposited_solvent_atom_count": 80,
+      "deposited_unmodeled_polymer_monomer_count": 0,
+      "disulfide_bond_count": 0,
+      "entity_count": 2,
+      "experimental_method": "X-ray",
+      "experimental_method_count": 1,
+      "inter_mol_covalent_bond_count": 0,
+      "inter_mol_metalic_bond_count": 0,
+      "molecular_weight": 7.33,
+      "na_polymer_entity_types": "DNA (only)",
+      "ndb_struct_conf_na_feature_combined": [
+        "b-form double helix"
+      ],
+      "nonpolymer_entity_count": 0,
+      "polymer_composition": "DNA",
+      "polymer_entity_count": 1,
+      "polymer_entity_count_DNA": 1,
+      "polymer_entity_count_RNA": 0,
+      "polymer_entity_count_nucleic_acid": 1,
+      "polymer_entity_count_nucleic_acid_hybrid": 0,
+      "polymer_entity_count_protein": 0,
+      "polymer_molecular_weight_maximum": 3.66,
+      "polymer_molecular_weight_minimum": 3.66,
+      "polymer_monomer_count_maximum": 12,
+      "polymer_monomer_count_minimum": 12,
+      "resolution_combined": [
+        1.9
+      ],
+      "selected_polymer_entity_types": "Nucleic acid (only)",
+      "software_programs_combined": [
+        "JACK-LEVITT"
+      ],
+      "solvent_entity_count": 1,
+      "structure_determination_methodology": "experimental",
+      "structure_determination_methodology_priority": 10,
+      "diffrn_resolution_high": {
+        "provenance_source": "Depositor assigned",
+        "value": 1.9
+      }
+    },
+    "rcsb_external_references": [
+      {
+        "id": "1BNA",
+        "link": "https://nakb.org/atlas=1BNA",
+        "type": "NAKB"
+      }
+    ],
+    "rcsb_primary_citation": {
+      "country": "US",
+      "id": "primary",
+      "journal_abbrev": "Proc.Natl.Acad.Sci.USA",
+      "journal_id_ASTM": "PNASA6",
+      "journal_id_CSD": "0040",
+      "journal_id_ISSN": "0027-8424",
+      "journal_volume": "78",
+      "page_first": "2179",
+      "page_last": "2183",
+      "pdbx_database_id_DOI": "10.1073/pnas.78.4.2179",
+      "pdbx_database_id_PubMed": 6941276,
+      "rcsb_ORCID_identifiers": [
+        "?",
+        "?",
+        "?",
+        "?",
+        "?",
+        "?",
+        "?"
+      ],
+      "rcsb_authors": [
+        "Drew, H.R.",
+        "Wing, R.M.",
+        "Takano, T.",
+        "Broka, C.",
+        "Tanaka, S.",
+        "Itakura, K.",
+        "Dickerson, R.E."
+      ],
+      "rcsb_journal_abbrev": "Proc Natl Acad Sci U S A",
+      "title": "Structure of a B-DNA dodecamer: conformation and dynamics.",
+      "year": 1981
+    },
+    "refine": [
+      {
+        "ls_R_factor_obs": 0.178,
+        "ls_d_res_high": 1.9,
+        "ls_d_res_low": 8.0,
+        "ls_number_reflns_obs": 2725,
+        "pdbx_diffrn_id": [
+          "1"
+        ],
+        "pdbx_ls_sigma_I": 2.0,
+        "pdbx_refine_id": "X-RAY DIFFRACTION"
+      }
+    ],
+    "refine_hist": [
+      {
+        "cycle_id": "LAST",
+        "d_res_high": 1.9,
+        "d_res_low": 8.0,
+        "number_atoms_solvent": 80,
+        "number_atoms_total": 566,
+        "pdbx_number_atoms_ligand": 0,
+        "pdbx_number_atoms_nucleic_acid": 486,
+        "pdbx_number_atoms_protein": 0,
+        "pdbx_refine_id": "X-RAY DIFFRACTION"
+      }
+    ],
+    "reflns": [
+      {
+        "d_resolution_high": 1.9,
+        "d_resolution_low": 8.0,
+        "number_obs": 5534,
+        "pdbx_diffrn_id": [
+          "1"
+        ],
+        "pdbx_ordinal": 1
+      }
+    ],
+    "software": [
+      {
+        "classification": "refinement",
+        "name": "JACK-LEVITT",
+        "pdbx_ordinal": 1
+      }
+    ],
+    "struct": {
+      "title": "STRUCTURE OF A B-DNA DODECAMER. CONFORMATION AND DYNAMICS"
+    },
+    "struct_keywords": {
+      "pdbx_keywords": "DNA",
+      "text": "B-DNA, DOUBLE HELIX, DNA"
+    },
+    "symmetry": {
+      "Int_Tables_number": 19,
+      "space_group_name_H_M": "P 21 21 21"
+    },
+    "rcsb_id": "1BNA"
+  }
+}

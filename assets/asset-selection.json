@@ -1,0 +1,17 @@
+{
+  "purpose": "Select and reuse a public asset before writing new geometry",
+  "target": {"object": "", "species": "", "state": "", "view_scale": ""},
+  "searches": [],
+  "candidates": [],
+  "selected": {
+    "entry_url": "", "accession": "", "author": "",
+    "asset_type": "coordinates", "assembly": null, "chains": [],
+    "source_species_and_construct": "", "source_state": "",
+    "evidence": "experimental_structure_model",
+    "license": "", "license_url": "", "redistribution_status": "unverified",
+    "download_url": "", "source_sha256": "", "source_units": "angstrom",
+    "cache_path": "", "selection_reason": "", "modifications": [],
+    "not_supported_by_this_asset": []
+  },
+  "fallback_if_unsuitable": "Record the specific asset gap; build only the missing schematic component"
+}

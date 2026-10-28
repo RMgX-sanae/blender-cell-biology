@@ -1,0 +1,146 @@
+{
+  "retrieved_date": "2026-10-24",
+  "use": "Primary research and original structure records; access scope is recorded. Recheck full figures/methods before residue-level or quantitative claims.",
+  "sources": {
+    "aging": {
+      "topic_or_title": "Structural basis of actin filament assembly and aging",
+      "url": "https://www.nature.com/articles/s41586-022-05241-8",
+      "access_and_limits": "原文/图与结构条目；Mg/Ca、ADP-BeF3/ADP-Pi/ADP；稳定状态并非反应轨迹"
+    },
+    "pi": {
+      "topic_or_title": "Mechanism of phosphate release from actin filaments",
+      "url": "https://www.nature.com/articles/s41594-023-01101-9",
+      "access_and_limits": "原文检索内容；cryo-EM、MD 与突变实验分开；不把突变速率移给野生型"
+    },
+    "wrc": {
+      "topic_or_title": "Structures reveal a key mechanism of WAVE regulatory complex activation by Rac1 GTPase",
+      "url": "https://www.nature.com/articles/s41467-022-33174-3",
+      "access_and_limits": "摘要、结果/构建体及 RCSB metadata；A/D 位点、工程化 Rac/WRC 需注明"
+    },
+    "arp_junction": {
+      "topic_or_title": "Structure of Arp2/3 complex at a branched actin filament junction",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9295785/",
+      "access_and_limits": "摘要及结构条目；成熟接头，不提供全部成核轨迹"
+    },
+    "arp_transition": {
+      "topic_or_title": "Transition State of Arp2/3 Complex Activation by Actin-Bound Dimeric Nucleation-Promoting Factor",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10434305/",
+      "access_and_limits": "检索正文/摘要；工程化 CapZ-CA 捕获中间态，不是天然 CapZ 激活机制"
+    },
+    "arp_aging": {
+      "topic_or_title": "Arp2/3 branch-junction nucleotide states",
+      "url": "https://www.nature.com/articles/s41467-024-46179-x",
+      "access_and_limits": "原文；裂殖酵母体系；Arp2/Arp3 核苷酸单独记录，页面含 2024 年更正"
+    },
+    "debranch": {
+      "topic_or_title": "Cofilin and GMF-dependent actin branch destabilization",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9304009/",
+      "access_and_limits": "原文检索结果；去分支区别于普通细丝切断，具体界面顺序有未决之处"
+    },
+    "renucleate": {
+      "topic_or_title": "Regeneration of actin filament branches from the same Arp2/3 complex",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10816697/",
+      "access_and_limits": "原文检索结果；纯化微流控体系，不能推为全部活细胞必经步骤"
+    },
+    "cortactin": {
+      "topic_or_title": "Cortactin stabilizes actin branches by bridging activated Arp2/3 to its nucleated actin filament",
+      "url": "https://www.nature.com/articles/s41594-023-01205-2",
+      "access_and_limits": "摘要；稳定接口；若需要完整结合动态再读图/方法"
+    },
+    "formin_nature": {
+      "topic_or_title": "Formin structures and proposed LERA elongation model",
+      "url": "https://www.nature.com/articles/s41586-024-07637-0",
+      "access_and_limits": "摘要、图 3/方法检索内容、RCSB；不同 formin 及提出的过渡模型分别标注"
+    },
+    "formin_science": {
+      "topic_or_title": "Molecular mechanism of actin filament elongation by formins",
+      "url": "https://www.rcsb.org/structure/8RU2",
+      "access_and_limits": "原文摘要及各条目 metadata；DOI 10.1126/science.adn9560；8RTY 为 Cdc12，不是 mDia1"
+    },
+    "mdia_full": {
+      "topic_or_title": "Regulation of full-length mDia1",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3416746/",
+      "access_and_limits": "结果/方法检索内容；纯化全长体系；RhoA 单独活化不充分，细胞环境需另证"
+    },
+    "mdia_reg": {
+      "topic_or_title": "Rho-dependent regulation of mDia1",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1356318/",
+      "access_and_limits": "原文检索内容/结构；1Z2C 为 RhoC-GppNHp，2BAP 是调控片段"
+    },
+    "mdia_rock": {
+      "topic_or_title": "Cooperation between mDia1 and ROCK in Rho-induced actin reorganization",
+      "url": "https://www.nature.com/articles/ncb0799_136",
+      "access_and_limits": "摘要/图；特定 HeLa 构建体体系，平行支路而非 mDia1 激活 ROCK"
+    },
+    "cap_decision": {
+      "topic_or_title": "Single-molecule visualization of a formin-capping protein decision complex",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4660045/",
+      "access_and_limits": "摘要检索；端部竞争/共占有情形；不外推完整细胞动力学"
+    },
+    "t4_profilin": {
+      "topic_or_title": "Structural basis for actin binding by thymosin-beta4 and implications for nucleotide exchange",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4217450/",
+      "access_and_limits": "摘要与方法检索；4PL7/4PL8 是工程化/杂合构建体"
+    },
+    "cap_exchange": {
+      "topic_or_title": "CAP-actin structure and nucleotide exchange",
+      "url": "https://www.nature.com/articles/s41467-018-04231-7",
+      "access_and_limits": "摘要与方法；6FM2 为 CAP CARP 片段复合物，不是全长 CAP 所有功能"
+    },
+    "cap_network": {
+      "topic_or_title": "CAP promotes actin network recycling",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10152149/",
+      "access_and_limits": "摘要；有限单体池重构体系；DOI 10.15252/embj.2022112717"
+    },
+    "cofilin": {
+      "topic_or_title": "Cofilin-decorated actin structural states",
+      "url": "https://doi.org/10.1038/s41467-018-04290-w",
+      "access_and_limits": "原结构研究；5YU8 等已结合状态不等于切断轨迹"
+    },
+    "pdgf": {
+      "topic_or_title": "PDGF activates Rac through PI3K-dependent nucleotide exchange",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0960982295000807",
+      "access_and_limits": "摘要；支持 PDGF/PI3K/Rac 关系，不指定所有细胞采用同一个 GEF"
+    },
+    "p115": {
+      "topic_or_title": "Direct stimulation of the guanine nucleotide exchange activity of p115 RhoGEF by Galpha13",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9641916/",
+      "access_and_limits": "摘要；Galpha13 直接刺激，不把 Galpha12 的作用简单等同"
+    },
+    "p115_membrane": {
+      "topic_or_title": "Receptor-dependent membrane recruitment of p115RhoGEF",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1223324/",
+      "access_and_limits": "摘要；thromboxane A2 受体相关膜募集，需区分细胞与纯化证据"
+    },
+    "tiam": {
+      "topic_or_title": "Structural basis of Rac1 activation by Tiam1",
+      "url": "https://www.rcsb.org/structure/1FOE",
+      "access_and_limits": "原摘要及条目；无核苷酸交换复合物，非 Rac1-GTP 终态；非通用 PDGF 接头"
+    },
+    "rac_gap": {
+      "topic_or_title": "Biochemical characterization of beta2-chimaerin Rac-GAP activity",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2756504/",
+      "access_and_limits": "原文检索结果；Rac1 GTP 水解实验，野生型/突变体分开；不指定所有细胞采用此 GAP"
+    },
+    "rho_gap": {
+      "topic_or_title": "Structure of RhoA and rhoGAP with a transition-state analogue",
+      "url": "https://www.nature.com/articles/39651",
+      "access_and_limits": "摘要及图例；GDP-AlF4 是过渡态类似物，不是真实 GTP 或产物 Pi"
+    },
+    "pak_limk": {
+      "topic_or_title": "Activation of LIM-kinase by Pak1 couples Rac/Cdc42 signalling to actin dynamics",
+      "url": "https://www.nature.com/articles/ncb0999_253",
+      "access_and_limits": "原摘要检索；PAK1/LIMK/磷酸化作用；未据此声称活细胞全过程"
+    },
+    "rock_limk": {
+      "topic_or_title": "Signaling from Rho to the actin cytoskeleton through ROCK and LIM-kinase",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/10436159/",
+      "access_and_limits": "原摘要；特定细胞/刺激证据，不把该支路当作每条直丝的固定步骤"
+    },
+    "cofilin_switch": {
+      "topic_or_title": "Interplay between LIM kinase and slingshot phosphatase regulates cofilin",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC548651/",
+      "access_and_limits": "原文检索；cofilin Ser3 磷酸化失活/去磷酸化再活化；具体 SSH 调控按项目补充"
+    }
+  }
+}

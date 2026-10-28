@@ -1,0 +1,24 @@
+{
+  "name": "WEHI p53 still — observed visual traits",
+  "representation": "spacefill",
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": ["Dark blue-black environment", "Golden foreground protein", "Magenta and cream nucleic acid", "Teal distant macromolecules", "Fine molecular shape dominates silhouettes", "Depth separation rather than strong glow"],
+  "implementation_assumptions": ["Heavy-atom spacefill reproduces the reference's discrete surface detail; hydrogen atoms are omitted", "Soft area lights and AgX approximate perceived contrast; original renderer and node graph are unknown", "The mechanism scene has its own composition; an isolated structure does not reproduce the reference's crowded depth"],
+  "palette": {"receptor": "DCA62E", "alpha": "27929A", "beta": "245B83", "gamma": "AD3689", "heads": "376F7C", "tails": "A8A698", "dna1": "AE2D85", "dna2": "DDCFB3", "rna": "D6592D", "protein": "DAAB38", "accent": "8DB070"},
+  "background": "263A47",
+  "world": "839BAA",
+  "roughness": 0.57,
+  "bump": 0.009,
+  "view_transform": "AgX",
+  "exposure": 0.2,
+  "camera": {},
+  "lighting": [
+    {"name": "Observed top-left soft key", "position": [-12,-18,26], "power": 8000, "color": "FFE7B8", "size": 12},
+    {"name": "Restrained cool fill", "position": [18,-18,4], "power": 2600, "color": "B4D9EE", "size": 16},
+    {"name": "Cool depth separation", "position": [0,12,18], "power": 8000, "color": "B8DEEF", "size": 10},
+    {"name": "Readable underside fill", "position": [0,-16,-12], "power": 4000, "color": "D3E2EC", "size": 16}
+  ],
+  "compositor": {"preset": "reference", "contrast": 3}
+}

@@ -1,0 +1,80 @@
+{
+  "id": "formin-elongation",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "Formin 介导的倒钩端延伸",
+  "species_selection": "按 mDia1 或 Bni1 的具体物种/构建体选择；不要混用同源因子",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/8RU2",
+      "pdb_id": "8RU2",
+      "use_and_limits": "mDia1 结合的 F-actin 倒钩端；含工程构建体，先核对 entity",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/1Y64",
+      "pdb_id": "1Y64",
+      "use_and_limits": "Bni1 FH2 / ATP-actin；酵母因子与兔 actin 的实验复合体",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "F-actin 及稳定 subunit IDs",
+    "FH2 二聚体的两个头部",
+    "游离 actin；若选 profilin 路线另加匹配来源的 profilin/FH1"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "导入来源结合终态，标记倒钩端和 FH2 两个头部",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "按所选机制建立允许加入的构象/占位；不让单体穿过封闭蛋白",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "新 actin 接近、配准并加入，保留单体身份",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "FH2 随末端推进；重复下一轮而不平移整根丝",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "以端部 actin 的局部坐标建立 rig，两个 FH2 头部分别可编辑",
+    "优先选同一研究的不同状态；状态间插值标为 schematic",
+    "复用聚合模板的单体路径和 ID 管理，不照搬其无 FH2 的空位路径"
+  ],
+  "camera_plan": [
+    "先用侧视显示末端占位，再小角度转向展示两个头部",
+    "近接触留停顿；两轮使用同一镜头尺度"
+  ],
+  "acceptance": [
+    "两个 FH2 头部与丝端关联持续可见",
+    "新加亚基完整、极性一致、原有核心不整体滑动",
+    "未提供 FH1/构象过程时不称完整 formin 生化循环"
+  ],
+  "limitations": [
+    "静态结构不直接给出步态概率、速率或 ATP 水解时间"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed",
+  "full_cycle_guidance": "../../references/actin-full-cycle.md",
+  "scope_note": "This local storyboard is one module of the complete upstream-to-downstream actin mechanism; use the full-cycle plan when requested."
+}

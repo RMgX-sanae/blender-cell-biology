@@ -1,0 +1,73 @@
+{
+  "id": "clathrin-coat-assembly",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "Clathrin 晶格/被覆装配",
+  "species_selection": "按组织、适配蛋白和实验体系选择；6WCJ 只是牛来源局部 cage 顶点",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/6WCJ",
+      "pdb_id": "6WCJ",
+      "use_and_limits": "clathrin minicoat 非对称顶点结构",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "完整 triskelion 的重/轻链",
+    "适配蛋白与膜货物",
+    "胞质侧被覆晶格",
+    "连续的质膜/囊泡颈"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "展示货物、适配蛋白与胞质侧膜面",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "完整 triskelion 在邻接位点形成局部网格",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "按证据支持的几何扩展被覆窝和曲率",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "出芽、颈切断、脱被覆拆成后续阶段，分别选择所需因子",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "局部 cage 顶点不等于完整 triskelion，要补足来源再实例化",
+    "保留多边形网格和腿部连接，不能简单复制正六边形球壳代替所有 cage",
+    "膜拓扑与被覆装配采用独立但耦合的事件表"
+  ],
+  "camera_plan": [
+    "先从胞质侧看组装，再切换侧视观察膜颈",
+    "内视图移走完整 triskelion，不直接截断分子腿"
+  ],
+  "acceptance": [
+    "被覆始终在胞质侧，货物胞内外域不翻转",
+    "封闭 cage 不自动等于膜已经切断",
+    "裂解前后保留膜腔连通性记录"
+  ],
+  "limitations": [
+    "clathrin 形状本身不能证明受体密度、曲率形成途径或 dynamin 作用步骤"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}

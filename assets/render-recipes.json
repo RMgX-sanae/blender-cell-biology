@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "scope": "Editable compositing recipes independent from geometry and material styles; subject-focus requires Cycles.",
+  "recipes": [
+    {"id": "neutral", "background": "#071f2b", "filters": []},
+    {"id": "teaching-outline", "background": "#f3f1e9", "filters": [{"type":"outline","strength":0.16,"silhouette":0.25},{"type":"contrast","amount":1.5}]},
+    {"id": "depth-layered", "background": "#071f2b", "filters": [{"type":"depth_fog","color":"#567f90","strength":0.22},{"type":"bloom","threshold":1.5,"strength":0.06}]},
+    {"id": "soft-cinema", "background": "#071f2b", "filters": [{"type":"color_balance","lift":[0.995,1.002,1.008],"gamma":[1.01,1.0,0.995],"gain":[1.025,1.005,0.98]},{"type":"bloom","threshold":1.4,"strength":0.08},{"type":"vignette","strength":0.1},{"type":"grain","amount":0.018}]},
+    {"id": "contact-relief", "background": "#e8e9e4", "filters": [{"type":"ambient_occlusion","strength":0.25},{"type":"outline","strength":0.08,"silhouette":0.18}]},
+    {"id": "fluorescent-soft", "background": "#020609", "filters": [{"type":"bloom","threshold":0.55,"strength":0.15,"size":0.22},{"type":"exposure","stops":0.15}]},
+    {"id": "warm-print", "background": "#f3eddf", "filters": [{"type":"saturation","amount":0.78},{"type":"color_balance","gain":[1.02,1.0,0.97]},{"type":"grain","amount":0.025}]},
+    {"id": "cool-duotone", "background": "#071f2b", "changes_identity_colors":true,"filters": [{"type":"duotone","shadows":"#082e43","highlights":"#f1dfb7","strength":0.8},{"type":"grain","amount":0.012}]},
+    {"id": "subject-focus", "background": "#071f2b", "engines":["cycles"],"changes_identity_colors":true,"filters": [{"type":"subject_focus","object_index":1,"background_saturation":0.2,"background_value":0.7}]},
+    {"id": "crisp-neutral", "background": "#071f2b", "filters": [{"type":"contrast","amount":2},{"type":"saturation","amount":0.92},{"type":"exposure","stops":0.1}]}
+  ]
+}

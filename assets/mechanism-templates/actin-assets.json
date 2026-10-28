@@ -1,0 +1,533 @@
+{
+  "meaning": "Candidate metadata do not prove suitability. Only prepared_with_ligands states have the new reproducible asset example.",
+  "assets": [
+    {
+      "id": "8A2R",
+      "title": "Cryo-EM structure of F-actin in the Mg2+-ADP-BeF3- nucleotide state.",
+      "url": "https://www.rcsb.org/structure/8A2R",
+      "resolution_angstrom": [
+        2.17
+      ],
+      "doi": "10.1038/s41586-022-05241-8",
+      "polymers": [
+        {
+          "name": "Actin, alpha skeletal muscle",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "organisms": [
+            "Oryctolagus cuniculus"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "prepared_with_ligands",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "ADP-BeF3 ATP-state mimic, not ATP. Rabbit skeletal alpha F-actin; not human cytoplasmic G-actin."
+    },
+    {
+      "id": "8A2S",
+      "title": "Cryo-EM structure of F-actin in the Mg2+-ADP-Pi nucleotide state.",
+      "url": "https://www.rcsb.org/structure/8A2S",
+      "resolution_angstrom": [
+        2.22
+      ],
+      "doi": "10.1038/s41586-022-05241-8",
+      "polymers": [
+        {
+          "name": "Actin, alpha skeletal muscle",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "organisms": [
+            "Oryctolagus cuniculus"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "prepared_with_ligands",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "ADP plus Pi (CCD PO4) and Mg; keep all three. F-actin subunit is not free G-actin."
+    },
+    {
+      "id": "8A2T",
+      "title": "Cryo-EM structure of F-actin in the Mg2+-ADP nucleotide state.",
+      "url": "https://www.rcsb.org/structure/8A2T",
+      "resolution_angstrom": [
+        2.24
+      ],
+      "doi": "10.1038/s41586-022-05241-8",
+      "polymers": [
+        {
+          "name": "Actin, alpha skeletal muscle",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ],
+          "organisms": [
+            "Oryctolagus cuniculus"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "prepared_with_ligands",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "ADP and Mg; do not invent bound Pi."
+    },
+    {
+      "id": "7USC",
+      "title": "Cryo-EM structure of WAVE Regulatory Complex",
+      "url": "https://www.rcsb.org/structure/7USC",
+      "resolution_angstrom": [
+        3.0
+      ],
+      "doi": "10.1038/s41467-022-33174-3",
+      "polymers": [
+        {
+          "name": "Cytoplasmic FMR1-interacting protein 1",
+          "author_chains": [
+            "A"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Nck-associated protein 1",
+          "author_chains": [
+            "B"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Wiskott-Aldrich syndrome protein family member 1",
+          "author_chains": [
+            "C"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Protein BRICK1",
+          "author_chains": [
+            "D"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Abl interactor 2",
+          "author_chains": [
+            "E"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "Five-component WRC; constructs/truncations and unresolved regions require original methods."
+    },
+    {
+      "id": "7USD",
+      "title": "Cryo-EM structure of D-site Rac1-bound WAVE Regulatory Complex",
+      "url": "https://www.rcsb.org/structure/7USD",
+      "resolution_angstrom": [
+        3.0
+      ],
+      "doi": "10.1038/s41467-022-33174-3",
+      "polymers": [
+        {
+          "name": "Cytoplasmic FMR1-interacting protein 1",
+          "author_chains": [
+            "A"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Nck-associated protein 1",
+          "author_chains": [
+            "B"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Wiskott-Aldrich syndrome protein family member 1",
+          "author_chains": [
+            "C"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Protein BRICK1",
+          "author_chains": [
+            "D"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Abl interactor 2",
+          "author_chains": [
+            "E"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Ras-related C3 botulinum toxin substrate 1",
+          "author_chains": [
+            "F"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "Rac at D site only; not sufficient to label WRC activated."
+    },
+    {
+      "id": "7USE",
+      "title": "Cryo-EM structure of WAVE regulatory complex with Rac1 bound on both A and D site",
+      "url": "https://www.rcsb.org/structure/7USE",
+      "resolution_angstrom": [
+        3.0
+      ],
+      "doi": "10.1038/s41467-022-33174-3",
+      "polymers": [
+        {
+          "name": "Cytoplasmic FMR1-interacting protein 1",
+          "author_chains": [
+            "A"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Nck-associated protein 1",
+          "author_chains": [
+            "B"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Wiskott-Aldrich syndrome protein family member 1",
+          "author_chains": [
+            "C"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Protein BRICK1",
+          "author_chains": [
+            "D"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Abl interactor 2",
+          "author_chains": [
+            "E"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Ras-related C3 botulinum toxin substrate 1",
+          "author_chains": [
+            "F"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Ras-related C3 botulinum toxin substrate 1",
+          "author_chains": [
+            "G"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "Rac at A and D sites; engineered Rac/WRC constructs and partial coordinates."
+    },
+    {
+      "id": "9B27",
+      "title": "Dia1 at the Barbed End of F-Actin",
+      "url": "https://www.rcsb.org/structure/9B27",
+      "resolution_angstrom": [
+        3.51
+      ],
+      "doi": "10.1038/s41586-024-07637-0",
+      "polymers": [
+        {
+          "name": "Actin, alpha skeletal muscle",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ],
+          "organisms": [
+            "Oryctolagus cuniculus"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Protein diaphanous homolog 1",
+          "author_chains": [
+            "G",
+            "H"
+          ],
+          "organisms": [
+            "Mus musculus"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "mDia1 barbed-end state; mouse formin / rabbit actin. Does not contain full receptor-to-formin pathway."
+    },
+    {
+      "id": "9AZP",
+      "title": "INF2 at the Barbed End of F-Actin with Incoming Profilin-Actin",
+      "url": "https://www.rcsb.org/structure/9AZP",
+      "resolution_angstrom": [
+        3.79
+      ],
+      "doi": "10.1038/s41586-024-07637-0",
+      "polymers": [
+        {
+          "name": "Actin, alpha skeletal muscle",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "I"
+          ],
+          "organisms": [
+            "Oryctolagus cuniculus"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Inverted formin-2",
+          "author_chains": [
+            "G",
+            "H"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Profilin-1",
+          "author_chains": [
+            "J"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "INF2 plus incoming profilin-actin; cannot relabel formin as mDia1."
+    },
+    {
+      "id": "8RU2",
+      "title": "Structure of the F-actin barbed end bound by formin mDia1",
+      "url": "https://www.rcsb.org/structure/8RU2",
+      "resolution_angstrom": [
+        3.49
+      ],
+      "doi": "10.1126/science.adn9560",
+      "polymers": [
+        {
+          "name": "Actin, cytoplasmic 1, N-terminally processed",
+          "author_chains": [
+            "B",
+            "C",
+            "D"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Methylated-DNA--protein-cysteine methyltransferase,Protein diaphanous homolog 1",
+          "author_chains": [
+            "E",
+            "F"
+          ],
+          "organisms": [
+            "Homo sapiens",
+            "Mus musculus"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "mDia1 barbed end; modified human cytoplasmic actin and mouse mDia1 fusion construct; not wild-type full-length assembly."
+    },
+    {
+      "id": "8RTY",
+      "title": "Structure of the F-actin barbed end bound by Cdc12 and profilin (ring complex) at a resolution of 6.3 Angstrom",
+      "url": "https://www.rcsb.org/structure/8RTY",
+      "resolution_angstrom": [
+        6.25
+      ],
+      "doi": "10.1126/science.adn9560",
+      "polymers": [
+        {
+          "name": "Actin, cytoplasmic 1, N-terminally processed",
+          "author_chains": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Methylated-DNA--protein-cysteine methyltransferase,Cell division control protein 12",
+          "author_chains": [
+            "E",
+            "F"
+          ],
+          "organisms": [
+            "Homo sapiens",
+            "Schizosaccharomyces pombe"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Phalloidin (Amanita phalloides)",
+          "author_chains": [
+            "H",
+            "I",
+            "J"
+          ],
+          "organisms": [
+            "Amanita phalloides"
+          ],
+          "mutation_field": null
+        },
+        {
+          "name": "Profilin-1",
+          "author_chains": [
+            "P"
+          ],
+          "organisms": [
+            "Homo sapiens"
+          ],
+          "mutation_field": null
+        }
+      ],
+      "status": "candidate_metadata_checked",
+      "license": "wwPDB coordinates CC0; article figures have separate rights",
+      "selection_warning": "S. pombe Cdc12 ring complex with profilin and phalloidin; not mDia1; not an unrestricted live-cell state."
+    }
+  ],
+  "additional_research_starts": [
+    {
+      "id": "1FOE",
+      "url": "https://www.rcsb.org/structure/1FOE",
+      "limit": "Tiam1/Rac1 nucleotide-free exchange intermediate; does not establish PDGF uses Tiam1 in the chosen cell."
+    },
+    {
+      "id": "1Z2C",
+      "url": "https://www.rcsb.org/structure/1Z2C",
+      "limit": "RhoC-GppNHp/mDia1 regulatory fragment, not RhoA-GTP."
+    },
+    {
+      "id": "2BAP",
+      "url": "https://www.rcsb.org/structure/2BAP",
+      "limit": "DID/DAD regulatory fragments; not complete inactive mDia1."
+    },
+    {
+      "id": "6FM2",
+      "url": "https://www.rcsb.org/structure/6FM2",
+      "limit": "CAP CARP dimer/ADP-actin; fragment boundaries and unresolved WH2 must be checked."
+    },
+    {
+      "id": "7TPT",
+      "url": "https://www.rcsb.org/structure/7TPT",
+      "limit": "Bovine mature Arp2/3 branch junction; not NPF activation sequence."
+    },
+    {
+      "id": "6VAO",
+      "url": "https://www.rcsb.org/structure/6VAO",
+      "limit": "Cofilin-bound structural endpoint, not an observed severing trajectory."
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "ftsz-treadmilling",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "FtsZ 踏车与分裂位点",
+  "species_selection": "一个明确菌种；结构示例为 S. aureus，膜锚定/细胞壁体系另外选择",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/3VO8",
+      "pdb_id": "3VO8",
+      "use_and_limits": "S. aureus FtsZ GDP 态；不是完整 Z 环",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/5MN4",
+      "pdb_id": "5MN4",
+      "use_and_limits": "截短 F138A open 构象，仅作有边界的比较候选",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "短 FtsZ 原丝及 subunit IDs",
+    "匹配物种的膜锚定因子",
+    "细胞质膜",
+    "需要时加入细胞壁合成酶/肽聚糖"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "显示膜近侧的短 FtsZ 丝及锚定关系",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "一端加入、另一端离开，内部标记亚基不跟着整体滑移",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "将局部踏车过程置于分裂位点的弧面上",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "如展示隔膜合成，用独立事件驱动，不把 FtsZ 本身变成细胞壁",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "用来源支持的纵向接口构建原丝，不把 monomer assembly 1 叫成完整丝",
+    "曲面实例沿弧长取向，GTP/GDP 示意不得替代实际结构状态",
+    "FtsZ 与 tubulin 相似性不能支持直接复用 αβ 微管或真核马达"
+  ],
+  "camera_plan": [
+    "局部端部交换与整个分裂位点采用两个镜头",
+    "保留固定亚基标记以解释踏车而非机械输送带"
+  ],
+  "acceptance": [
+    "每个单体出入可追踪，不画成整环同步旋转",
+    "胞质侧、膜锚定和细胞壁层次正确",
+    "不把不同菌种的锚定/合成组件随意合并"
+  ],
+  "limitations": [
+    "开/闭构象、核苷酸状态和实际动力学不能由单张晶体结构确定"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}

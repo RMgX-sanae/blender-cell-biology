@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blender 细胞生物学建模与动画"
+  short_description: "基于公开结构和参考图制作细胞模型与机制动画，可模仿图片风格并选择渲染与合成方案"
+  default_prompt: "使用 $blender-cell-biology，根据公开科学资料制作可编辑的 Blender 细胞模型与动画；有参考图时先分析并复现风格，再检查结构、方向和来源。"

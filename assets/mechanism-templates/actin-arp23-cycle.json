@@ -1,0 +1,802 @@
+{
+  "schema_version": 1,
+  "kind": "actin_mechanism_plan",
+  "route": "arp23",
+  "status": "design_only",
+  "title": "Arp2/3 分支网络全过程",
+  "source_catalog": "actin-sources.json",
+  "asset_catalog": "actin-assets.json",
+  "scope": {
+    "cell_context": "哺乳动物非肌细胞机制教学综合模型；非指定单个细胞的实验重建",
+    "start": "项目选择的刺激/受体接口、单体池与既有细丝条件",
+    "end": "功能输出、终止/拆解、原亚基回收并重新进入生长",
+    "upstream_adapter_status": "project_specific_selection_required",
+    "unresolved": [
+      "具体细胞、刺激、受体与 GEF/GAP 身份",
+      "所选 isoform 的缺失结构/调控条件",
+      "真实浓度、扩散、事件概率和速率"
+    ],
+    "existing_filament_boundary": "Arp2/3 母丝预先存在；若从零启动必须另解释母丝成核。",
+    "not_claimed": [
+      "全部调控因素",
+      "活细胞逐原子实测轨迹",
+      "已完成全流程 Blender 动画"
+    ]
+  },
+  "required_coverage": [
+    "input",
+    "activation",
+    "monomer_supply",
+    "nucleation",
+    "elongation",
+    "hydrolysis",
+    "phosphate_release",
+    "functional_output",
+    "termination",
+    "disassembly",
+    "recycling",
+    "reentry"
+  ],
+  "presentation": {
+    "style": "select per project or infer from an inspected image",
+    "renderer": "Eevee or Cycles selected per project",
+    "compositor": "clean/reference/monochrome or documented external compositor",
+    "section_view": "whole units layered/hidden; no molecular plane cuts",
+    "duration": "按清晰度安排多镜头，不规定生物学秒数；延伸至少两轮",
+    "story_order_is_not_dependency_order": true
+  },
+  "stages": [
+    {
+      "id": "A00",
+      "name": "单体供给与可用池",
+      "coverage": [
+        "monomer_supply"
+      ],
+      "depends_on": [],
+      "sources": [
+        "t4_profilin",
+        "cap_exchange"
+      ],
+      "actors": [
+        "actin_001",
+        "profilin",
+        "Tbeta4",
+        "CAP",
+        "ATP_pool",
+        "ADP_pool"
+      ],
+      "before": "单体可被封存或携带；跟踪亚基初始为 G-ADP。",
+      "after": "ADP 离开、新 ATP 结合；可用 G-ATP 与结合蛋白分配清楚。",
+      "implementation": "从完整单体池切到配体特写；Tbeta4 与 profilin 的占有状态分别建 rig。",
+      "checks": "旧 ADP 与新 ATP 使用不同 ID；不把 ADP 在原位磷酸化。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A01",
+      "name": "刺激接到 Rac 调控",
+      "coverage": [
+        "input"
+      ],
+      "depends_on": [],
+      "sources": [
+        "pdgf",
+        "tiam"
+      ],
+      "actors": [
+        "stimulus",
+        "receptor",
+        "PI3K",
+        "Rac_GEF",
+        "Rac1"
+      ],
+      "before": "所选细胞的受体/GEF 接口尚需项目化。",
+      "after": "明确刺激、膜位置及到 Rac 调控的已证连接。",
+      "implementation": "总览膜外刺激与膜内 PI3K/PIP3/Rac 界面；未证的 GEF 身份用文本边界，不造分子接口。",
+      "checks": "PDGF 证据不能自动指定 Tiam1；受体构象需单独资产。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "默认上游是接口方案，非某细胞全链实证。"
+    },
+    {
+      "id": "A02",
+      "name": "Rac1 定位与 GDP/GTP 交换",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "A01"
+      ],
+      "sources": [
+        "tiam",
+        "wrc"
+      ],
+      "actors": [
+        "Rac1",
+        "Rac_GEF",
+        "GDP_pool",
+        "GTP_pool",
+        "membrane"
+      ],
+      "before": "Rac1-GDP；膜定位依赖实际脂化/GDI 背景。",
+      "after": "GEF 促进 GDP 离开，GTP 结合，膜上 Rac1 可作用于效应器。",
+      "implementation": "分别显示核苷酸出口与入口；膜锚定修饰单独注明来源。",
+      "checks": "交换不是把 GDP 在 Rac 上磷酸化；1FOE 不是 GTP 终态。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "若讲 GDI 释放或特定 GAP，先补该细胞来源；不填造分子轨迹。"
+    },
+    {
+      "id": "A03",
+      "name": "WRC 保持完整并解除 WCA 抑制",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "A02"
+      ],
+      "sources": [
+        "wrc"
+      ],
+      "actors": [
+        "Rac1",
+        "WRC",
+        "WAVE"
+      ],
+      "before": "五亚基 WRC 的 WCA 受抑制；D 位点结合不等于活化。",
+      "after": "A 位点相关变构使 WCA 可参与成核。",
+      "implementation": "7USC/7USD/7USE 作为分开的构象锚点；未解析 WCA 部分明确补模。",
+      "checks": "保留 WRC 五亚基；不能把 Rac 当剪刀切掉调控亚基。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A04",
+      "name": "交代已有母丝",
+      "coverage": [
+        "nucleation"
+      ],
+      "depends_on": [],
+      "sources": [
+        "arp_junction"
+      ],
+      "actors": [
+        "mother_filament"
+      ],
+      "before": "观察区已有极性明确的母丝。",
+      "after": "母丝来源、年龄与边界条件被说明。",
+      "implementation": "镜头沿完整母丝从远景推近，保留前后不同完整单体。",
+      "checks": "不能从空白场景凭空生成母丝；若讲从零成核须另补种子机制。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A05",
+      "name": "WCA 携带 actin 并接触 Arp2/3",
+      "coverage": [
+        "nucleation"
+      ],
+      "depends_on": [
+        "A00",
+        "A03"
+      ],
+      "sources": [
+        "wrc",
+        "arp_transition"
+      ],
+      "actors": [
+        "WAVE",
+        "actin_seed",
+        "Arp23"
+      ],
+      "before": "活化 WCA、可用单体与七亚基 Arp2/3 未组成有效成核体系。",
+      "after": "NPF/actin 与 Arp2/3 形成适于活化的组合。",
+      "implementation": "分别建立 WH2-actin 与 CA-Arp2/3 接触；保留未解析柔性段。",
+      "checks": "profilin/Tbeta4 与 WH2 的相容性需按选择模型检查，不画永久多蛋白同时占同一位点。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "实验中工程化 CapZ-CA 不能当作天然 CapZ NPF；确切装配顺序可耦合。"
+    },
+    {
+      "id": "A06",
+      "name": "母丝结合和 Arp2/3 活化",
+      "coverage": [
+        "nucleation"
+      ],
+      "depends_on": [
+        "A04",
+        "A05"
+      ],
+      "sources": [
+        "arp_transition",
+        "arp_junction"
+      ],
+      "actors": [
+        "Arp23",
+        "mother_filament",
+        "WAVE",
+        "actin_seed"
+      ],
+      "before": "活化因子与母丝可用，尚无成熟子丝。",
+      "after": "Arp2/3 与母丝形成成核接口，Arp2/3 构象向活化状态变化。",
+      "implementation": "七亚基 rig 各自可编辑；来源终态配准，过渡单独标示意。",
+      "checks": "不能用整体缩放七亚基复合体替代内部相对运动；初始/末态不混标。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A07",
+      "name": "子丝起始与 NPF 释放",
+      "coverage": [
+        "nucleation"
+      ],
+      "depends_on": [
+        "A06"
+      ],
+      "sources": [
+        "arp_transition",
+        "arp_junction"
+      ],
+      "actors": [
+        "Arp23",
+        "mother_filament",
+        "daughter_filament",
+        "WAVE",
+        "actin_seed"
+      ],
+      "before": "成核接口已建立，尚非可持续长丝。",
+      "after": "首批 actin 建立子丝端；NPF 释放使后续延伸接口可用。",
+      "implementation": "先建立首个子丝接触，再展示 NPF 的退出，允许明确标注的未决先后。",
+      "checks": "7AQK/7TPT 只支持成熟接头；不能单用其复制扩展声称已做成核。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A08",
+      "name": "第一次端部加入",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "A00",
+        "A07"
+      ],
+      "sources": [
+        "aging",
+        "t4_profilin"
+      ],
+      "actors": [
+        "actin_001",
+        "daughter_filament",
+        "profilin"
+      ],
+      "before": "跟踪亚基 G-ATP 位于可用池；子丝倒钩端空位可用。",
+      "after": "actin_001 非共价加入子丝，成为 F-ATP。",
+      "implementation": "接近、转向、相容的结合蛋白释放及 G→F 构象改变分别设时点。",
+      "checks": "使用真正 G 构象或标示代理；不可只换颜色宣称 G→F 已重建。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A09",
+      "name": "第二次加入与持续生长",
+      "coverage": [
+        "elongation"
+      ],
+      "depends_on": [
+        "A08"
+      ],
+      "sources": [
+        "aging"
+      ],
+      "actors": [
+        "actin_002",
+        "daughter_filament"
+      ],
+      "before": "第一轮完成，端部位置更新。",
+      "after": "新 ID 的第二个亚基加入；旧亚基保持身份。",
+      "implementation": "保持用户认可的弧线和落位停顿，第二轮留足观察时间。",
+      "checks": "不重置整个丝，不复用已结合对象瞬移；播放时长不当作真实反应速率。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A10",
+      "name": "已加入亚基 ATP 水解",
+      "coverage": [
+        "hydrolysis"
+      ],
+      "depends_on": [
+        "A08"
+      ],
+      "sources": [
+        "aging",
+        "pi"
+      ],
+      "actors": [
+        "actin_001",
+        "nucleotide_1",
+        "phosphate_1"
+      ],
+      "before": "F-ATP。",
+      "after": "F-ADP·Pi；磷酸仍在位点。",
+      "implementation": "特写单独显示 ATP/ADP/Pi 身份；缺少反应中间态时用状态切换讲解，不伪造逐原子化学轨迹。",
+      "checks": "产物是 Pi，不是 PPi；水解与下一个亚基的加入不强制同步。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A11",
+      "name": "Pi 释放与丝老化",
+      "coverage": [
+        "phosphate_release"
+      ],
+      "depends_on": [
+        "A10"
+      ],
+      "sources": [
+        "aging",
+        "pi"
+      ],
+      "actors": [
+        "actin_001",
+        "phosphate_1"
+      ],
+      "before": "F-ADP·Pi。",
+      "after": "F-ADP 与游离 Pi。",
+      "implementation": "保留原 Pi 的 ID；出口若仅有推断需标来源模型，蛋白保持完整。",
+      "checks": "不把突变体/偏置 MD 的路径和速率说成野生型实验录像。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A12",
+      "name": "网络封端与局部稳定",
+      "coverage": [
+        "termination"
+      ],
+      "depends_on": [
+        "A09"
+      ],
+      "sources": [
+        "cortactin",
+        "cap_decision"
+      ],
+      "actors": [
+        "capping_protein",
+        "cortactin",
+        "daughter_filament",
+        "Arp23"
+      ],
+      "before": "部分端部持续可增长；分支接头有不同寿命。",
+      "after": "选定端部被封端，其他端部继续；可选 cortactin 稳定接头。",
+      "implementation": "将封端、接头稳定分别设支镜头与不同结合位点。",
+      "checks": "封端不抹去细丝；cortactin 不是每一个分支的强制组成。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "capping 与 branch stabilization 可并行，不是老化之后才统一启动。"
+    },
+    {
+      "id": "A13",
+      "name": "分支网络与膜前缘输出",
+      "coverage": [
+        "functional_output"
+      ],
+      "depends_on": [
+        "A09"
+      ],
+      "sources": [
+        "arp_junction",
+        "wrc"
+      ],
+      "actors": [
+        "mother_filament",
+        "daughter_filament",
+        "membrane"
+      ],
+      "before": "已有多个局部活跃端部与分支。",
+      "after": "总览显示网络在膜前缘的组织和形态输出。",
+      "implementation": "局部真实结构切回网络尺度，膜位移与拥挤采用明确示意参数。",
+      "checks": "分支角、网络密度、推力、位移不混为同一结构证据；未模拟力时不报力值。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A14",
+      "name": "信号衰减与停止新成核",
+      "coverage": [
+        "termination"
+      ],
+      "depends_on": [
+        "A03"
+      ],
+      "sources": [
+        "wrc",
+        "rac_gap"
+      ],
+      "actors": [
+        "Rac1",
+        "Rac_GAP",
+        "WRC",
+        "GTP_pool",
+        "GDP_pool",
+        "signal_Pi"
+      ],
+      "before": "Rac1 活化输入持续。",
+      "after": "在所选 GAP/刺激撤除条件下 GTP 水解，减少新 WRC 活化。",
+      "implementation": "GTP→GDP+Pi 与 actin 的 ATP 循环单独上色并分别记账。",
+      "checks": "关闭上游不使既有细丝瞬间消失；GAP 身份待细胞来源确定。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A15",
+      "name": "Cofilin 作用于老化区域",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "A11",
+        "A24"
+      ],
+      "sources": [
+        "cofilin"
+      ],
+      "actors": [
+        "cofilin",
+        "daughter_filament",
+        "actin_001"
+      ],
+      "before": "丝具有年龄/核苷酸状态差异。",
+      "after": "cofilin 结合形成局部装饰区及不同界面。",
+      "implementation": "采用 cofilin-bound 资产，保持完整单体与真实相对构象。",
+      "checks": "饱和装饰不等于所有界面等概率被切断；装饰终态不是切断轨迹。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A16",
+      "name": "接口切断产生片段",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "A15"
+      ],
+      "sources": [
+        "cofilin"
+      ],
+      "actors": [
+        "cofilin",
+        "daughter_filament",
+        "fragment_1",
+        "fragment_2"
+      ],
+      "before": "选定可切断接口。",
+      "after": "两个保留极性和亚基 ID 的片段。",
+      "implementation": "在单体间分离，不用布尔切割蛋白；逐帧查近端碰撞。",
+      "checks": "切断首先产生片段，而非立即产生全部游离单体。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A17",
+      "name": "去分支并记录 Arp2/3 去向",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "A07"
+      ],
+      "sources": [
+        "debranch",
+        "renucleate",
+        "arp_aging"
+      ],
+      "actors": [
+        "GMF",
+        "Arp23",
+        "daughter_filament",
+        "mother_filament"
+      ],
+      "before": "成熟分支接头。",
+      "after": "子丝脱离；Arp2/3 留在母丝或离开作为条件分支。",
+      "implementation": "独立于普通丝切断的镜头；记录接头断开位置及 Arp2/3 七亚基归属。",
+      "checks": "GMF 作用对象是 Arp2/3；Arp2/Arp3 ATP/ADP 另记，不能照搬 actin 状态。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "与 A15/A16 不强制固定先后；同一接头的去分支细节尚有未决步骤。"
+    },
+    {
+      "id": "A18",
+      "name": "片段端部解聚",
+      "coverage": [
+        "disassembly"
+      ],
+      "depends_on": [
+        "A16"
+      ],
+      "sources": [
+        "cap_exchange",
+        "cofilin"
+      ],
+      "actors": [
+        "fragment_1",
+        "actin_001",
+        "cofilin",
+        "CAP"
+      ],
+      "before": "有暴露端部的完整片段。",
+      "after": "跟踪 actin_001 回到单体态，仍为 ADP。",
+      "implementation": "先端部解离，再向回收区移动；CAP 辅助效应按所选体系表示。",
+      "checks": "不把切断和单体释放合并成一次粒子爆散。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A19",
+      "name": "CAP 相关回收与 cofilin 释放",
+      "coverage": [
+        "recycling"
+      ],
+      "depends_on": [
+        "A18"
+      ],
+      "sources": [
+        "cap_exchange",
+        "cap_network"
+      ],
+      "actors": [
+        "actin_001",
+        "cofilin",
+        "CAP"
+      ],
+      "before": "回收单体可能仍与 cofilin 结合。",
+      "after": "CAP 相关作用使单体转入可再利用池，结合伙伴被回收。",
+      "implementation": "6FM2 可用于局部 CARP-actin 接口；其他结构域/动作另取依据。",
+      "checks": "CAP 片段不能标成全长 CAP；伙伴释放不能直接删掉对象。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A20",
+      "name": "再次核苷酸交换",
+      "coverage": [
+        "recycling"
+      ],
+      "depends_on": [
+        "A19"
+      ],
+      "sources": [
+        "cap_exchange",
+        "t4_profilin"
+      ],
+      "actors": [
+        "actin_001",
+        "CAP",
+        "profilin",
+        "nucleotide_1",
+        "nucleotide_2"
+      ],
+      "before": "同一 G-ADP 亚基，旧 ADP 尚在。",
+      "after": "旧 ADP 离开，池中新 ATP 进入；得到 G-ATP。",
+      "implementation": "将旧 ADP、已释放 Pi 和新 ATP 分别跟踪，不画原位重新磷酸化。",
+      "checks": "新 ATP 的核苷酸 ID 与旧 ADP 不同。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A21",
+      "name": "原亚基进入新一轮延伸",
+      "coverage": [
+        "reentry"
+      ],
+      "depends_on": [
+        "A20",
+        "A07"
+      ],
+      "sources": [
+        "cap_network"
+      ],
+      "actors": [
+        "actin_001",
+        "daughter_filament",
+        "profilin"
+      ],
+      "before": "回收并重新装载 ATP 的 actin_001。",
+      "after": "同一亚基再次加入可用倒钩端，完成示范闭环。",
+      "implementation": "用稳定小标记连接回收前后；新的活跃端部可来自另一区域。",
+      "checks": "若旧端部封端，则明确选择另一个开放端部，不能穿过封端蛋白。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A22",
+      "name": "可选：同一个接头再次成核",
+      "coverage": [
+        "reentry"
+      ],
+      "depends_on": [
+        "A17"
+      ],
+      "sources": [
+        "renucleate"
+      ],
+      "actors": [
+        "Arp23",
+        "mother_filament",
+        "actin_seed"
+      ],
+      "before": "Arp2/3 在特定体外条件下仍留于母丝。",
+      "after": "满足条件时同一接头可再生成子丝。",
+      "implementation": "作为独立条件分支讲解，保留原 Arp2/3 ID。",
+      "checks": "不把该纯化体系结果当作全部细胞的必经回收途径。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A23",
+      "name": "条件支路：LIMK 使 cofilin 磷酸化",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "A02"
+      ],
+      "sources": [
+        "pak_limk",
+        "cofilin_switch"
+      ],
+      "actors": [
+        "PAK1",
+        "LIMK",
+        "cofilin",
+        "kinase_ATP",
+        "kinase_ADP"
+      ],
+      "before": "所选信号情境激活 kinase/LIMK 支路；有可磷酸化的 cofilin 池。",
+      "after": "cofilin Ser3 被磷酸化，其 actin 调控活性降低。",
+      "implementation": "作为并行调控镜头；蛋白磷酸化、actin ATP 水解、Rho GTP 循环分开记账。",
+      "checks": "ATP→ADP 的磷酰基转移不是把 cofilin 变成 ADP-actin；不强制所有细胞都走这条支路。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    },
+    {
+      "id": "A24",
+      "name": "条件支路：SSH 相关去磷酸化恢复 cofilin",
+      "coverage": [
+        "activation"
+      ],
+      "depends_on": [
+        "A23"
+      ],
+      "sources": [
+        "cofilin_switch"
+      ],
+      "actors": [
+        "SSH",
+        "cofilin",
+        "regulatory_Pi"
+      ],
+      "before": "被磷酸化的 cofilin 池，满足所选 SSH 调控条件。",
+      "after": "Ser3 去磷酸化；这一份 cofilin 可再次参与周转。",
+      "implementation": "保留同一 cofilin ID，显示磷酸基的去向；SSH 活化条件需该细胞来源。",
+      "checks": "此处分支只跟踪选定调控池；原本未磷酸化的 cofilin 不必先走一遍。",
+      "motion_evidence": "schematic",
+      "mechanism_limits": "播放先后为教学安排；静态状态之间的路径不是实验轨迹。"
+    }
+  ],
+  "chemical_ledger": {
+    "protein_id": "actin_001",
+    "initial_state": "G_ADP",
+    "events": [
+      {
+        "stage": "A00",
+        "actor": "actin_001",
+        "type": "nucleotide_exchange",
+        "before": "G_ADP",
+        "after": "G_ATP",
+        "nucleotide_before": "nucleotide_0",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [
+          "ATP_1"
+        ],
+        "released_to_pool": [
+          "ADP_0"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "A08",
+        "actor": "actin_001",
+        "type": "incorporation",
+        "before": "G_ATP",
+        "after": "F_ATP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      },
+      {
+        "stage": "A10",
+        "actor": "actin_001",
+        "type": "ATP_hydrolysis",
+        "before": "F_ATP",
+        "after": "F_ADP_Pi",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [
+          "H2O"
+        ],
+        "released_to_pool": [],
+        "new_bound_product": [
+          "Pi_1"
+        ]
+      },
+      {
+        "stage": "A11",
+        "actor": "actin_001",
+        "type": "Pi_release",
+        "before": "F_ADP_Pi",
+        "after": "F_ADP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [
+          "Pi_1"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "A18",
+        "actor": "actin_001",
+        "type": "depolymerization",
+        "before": "F_ADP",
+        "after": "G_ADP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_1",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      },
+      {
+        "stage": "A20",
+        "actor": "actin_001",
+        "type": "nucleotide_exchange",
+        "before": "G_ADP",
+        "after": "G_ATP",
+        "nucleotide_before": "nucleotide_1",
+        "nucleotide_after": "nucleotide_2",
+        "consumed_from_pool": [
+          "ATP_2"
+        ],
+        "released_to_pool": [
+          "ADP_1"
+        ],
+        "new_bound_product": []
+      },
+      {
+        "stage": "A21",
+        "actor": "actin_001",
+        "type": "reentry",
+        "before": "G_ATP",
+        "after": "F_ATP",
+        "nucleotide_before": "nucleotide_2",
+        "nucleotide_after": "nucleotide_2",
+        "consumed_from_pool": [],
+        "released_to_pool": [],
+        "new_bound_product": []
+      }
+    ],
+    "limits": "Chemical species ledger; not atomistic catalysis. ATP gamma phosphate becomes retained Pi, later free Pi; hydrogens/protonation omitted in the structural example."
+  },
+  "parallel_dependencies": [
+    "Assembly, capping, hydrolysis and network turnover can overlap; stage order is a teaching edit.",
+    "Cofilin severing and GMF/cofilin debranching are separate events; no universal fixed order is imposed."
+  ],
+  "production_checks": [
+    "Resolve project-specific upstream and isoforms before claiming a particular cell pathway.",
+    "Map each actor/state to source, construct, assembly, ligands, missing regions and scale.",
+    "Check chemical ledger and stable protein/ligand IDs against the actual saved scene, not just this plan.",
+    "Recheck heavy-atom contacts for every imported partner and new conformation.",
+    "Watch approach/contact/release and two continuous elongation cycles in the exported movie.",
+    "Verify whole-unit section views, readable labels and environmental layers in actual pixels.",
+    "Report planned/built/rendered/reviewed separately. Passing the plan audit does not complete the animation."
+  ]
+}

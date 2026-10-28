@@ -1,0 +1,16 @@
+{
+  "reference": "https://www.allencell.org/uploads/8/1/9/9/81996008/step8-1_orig.png",
+  "observations": ["light background", "red highlighted mitochondria", "pale lavender nucleus", "soft highlights", "background structures de-emphasized"],
+  "inferences": ["matte to satin material is a practical approximation", "original renderer and compositor are unknown", "geometry remains the generic teaching model"],
+  "palette": {
+    "membrane": [0.62, 0.65, 0.67, 1.0],
+    "nucleus": [0.46, 0.42, 0.57, 1.0],
+    "mitochondria": [0.62, 0.025, 0.012, 1.0],
+    "golgi": [0.56, 0.59, 0.62, 1.0],
+    "protein": [0.49, 0.46, 0.57, 1.0],
+    "motor": [0.58, 0.61, 0.63, 1.0]
+  },
+  "background": [1.0, 1.0, 1.0],
+  "roughness": 0.65,
+  "compositor": "clean"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "actin-bundling",
+  "template_type": "executable_blender",
+  "asset_family": "actin",
+  "operation": "bundle",
+  "title": "肌动蛋白｜平行成束",
+  "subtitle": "完整丝转向与靠拢，保持单丝长度",
+  "footer": "公开结构形状 · 教学运动 · 播放时间不等于生物学时间",
+  "fps": 24,
+  "duration_seconds": 12,
+  "seed_subunits": 13,
+  "cycles": 3,
+  "environment": true,
+  "required_sources": [
+    "8F8R"
+  ],
+  "editable_parameters": [
+    "labels",
+    "fps",
+    "duration_seconds (>=11)",
+    "cycles (1–3)",
+    "seed_subunits (actin 6–18)",
+    "environment",
+    "style profile",
+    "renderer",
+    "compositor"
+  ],
+  "limitations": [
+    "排列为示意；尚未添加 fascin 等交联因子的结合机制",
+    "形状来自指定结构，接近路径、速度与等待时间均为教学编排，不代表分子动力学。",
+    "8F8R 的 ADP F-actin 内部构象用作重复形状；游离单体是外形代理，未模拟 G→F 构象变化、ATP 水解或磷酸释放。"
+  ],
+  "acceptance": [
+    "所有亚基具有稳定 ID，保持完整网格与单位尺度。",
+    "从保存的 .blend 逐帧评估，再检查实际渲染帧。",
+    "出现穿插、文字裁切或事件不清楚时调整路径/镜头后重新检查。"
+  ]
+}

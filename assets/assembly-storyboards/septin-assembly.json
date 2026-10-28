@@ -1,0 +1,73 @@
+{
+  "id": "septin-assembly",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "Septin 杆状复合体与高阶装配",
+  "species_selection": "先选择酵母、线虫或人体系；不同体系的亚基种类与次序不能互换",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/12ZN",
+      "pdb_id": "12ZN",
+      "use_and_limits": "线虫 septin 四聚体候选；仅在物种匹配时使用",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "具有明确亚基次序的杆状复合体",
+    "G/NC 接口",
+    "膜面或芽颈等目标几何",
+    "成丝/成束或环结构"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "用每种 septin 的真实身份建立杆状复合体",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "在合适接口进行端对端装配，保持全杆亚基次序",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "将完整复合体沿局部膜面排列",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "按特定细胞周期/体系形成高阶结构；必要时另做环分裂分镜",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "不能直接将晶体对称性生成的丝当作生理接口",
+    "原研究若以实验四聚体加预测接口构建八聚体，逐段保留 evidence 标签",
+    "使用 collection instances，只有确有依据时才引入弯曲或亚基交换"
+  ],
+  "camera_plan": [
+    "先展示单个杆的亚基顺序，再缩小镜头显示膜上组织",
+    "分子内部视图隐藏完整遮挡亚基，不剖开蛋白"
+  ],
+  "acceptance": [
+    "物种、亚基排列与接口均有来源",
+    "无 actin 式未经支持的 +/− 端标记",
+    "膜曲率与分子排列分别注明数据或示意"
+  ],
+  "limitations": [
+    "候选结构不是所有 septin 环、沙漏或扩散屏障的统一模板"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}

@@ -1,0 +1,485 @@
+{
+  "schema_version": 1,
+  "color_input": "sRGB hex; converted to scene-linear shader values",
+  "profiles": {
+    "watercolor": {
+      "name_zh": "水彩分子插画",
+      "subject": "molecule",
+      "representation": "crowded_surface",
+      "material": "paint",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "ink",
+      "background": "#d5e0e3",
+      "palette": [
+        "#719bbc",
+        "#6d85bc",
+        "#99b8b7"
+      ],
+      "reference_ids": [
+        "goodsell"
+      ],
+      "observations": "正交、密集完整轮廓、蓝绿低饱和色、细深边线、轻微色块纹理；不依赖镜面高光。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.62,
+      "bump": 0,
+      "outline_strength": 0.12,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "illustrative": {
+      "name_zh": "扁平原子描边",
+      "subject": "molecule",
+      "representation": "atoms",
+      "material": "toon",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "ink",
+      "background": "#ffffff",
+      "palette": [
+        "#78a8e8",
+        "#98b6eb",
+        "#5d87c0"
+      ],
+      "reference_ids": [
+        "molstar"
+      ],
+      "observations": "原子球面清楚，弱照明、浅色内部、深色细轮廓和凹处遮蔽。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "clay": {
+      "name_zh": "柔光表面",
+      "subject": "molecule",
+      "representation": "surface",
+      "material": "clay",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#171b25",
+      "palette": [
+        "#b9c8b5",
+        "#dba6a1",
+        "#a59acb"
+      ],
+      "reference_ids": [
+        "ambient-soft"
+      ],
+      "observations": "连续平滑分子表面、宽软阴影、低光泽，凹处更暗但仍可辨。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.62,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "cinematic": {
+      "name_zh": "暗场分子环境",
+      "subject": "molecule",
+      "representation": "environment_atoms",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "filmic",
+      "background": "#081e2c",
+      "palette": [
+        "#d5aa4b",
+        "#245163",
+        "#386470"
+      ],
+      "reference_ids": [
+        "wehi",
+        "replisome"
+      ],
+      "observations": "暖色主蛋白、冷色远景、可见原子细节、多层环境和有限景深。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "teaching": {
+      "name_zh": "浅背景教学",
+      "subject": "molecule",
+      "representation": "surface",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#f2f2ef",
+      "palette": [
+        "#c65359",
+        "#b7b2c6",
+        "#b9c6c5"
+      ],
+      "reference_ids": [
+        "allen"
+      ],
+      "observations": "低饱和浅背景、主要结构单色强调、柔和高光；网站界面不属于风格。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06,
+      "view_transform": "Standard"
+    },
+    "transparent": {
+      "name_zh": "透明外壳与丝带",
+      "subject": "molecule",
+      "representation": "shell_ribbon",
+      "material": "shell",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#ffffff",
+      "palette": [
+        "#96afd2",
+        "#3f75c5",
+        "#d99776"
+      ],
+      "reference_ids": [
+        "cam"
+      ],
+      "observations": "外壳很淡且边缘可见，内部丝带保持高对比；无需切开任何单体。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06,
+      "view_transform": "Standard"
+    },
+    "ribbon": {
+      "name_zh": "二级结构丝带",
+      "subject": "molecule",
+      "representation": "ribbon",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "ink",
+      "background": "#ffffff",
+      "palette": [
+        "#549bc4",
+        "#ca8e88",
+        "#d4bf75"
+      ],
+      "reference_ids": [
+        "cam",
+        "style1"
+      ],
+      "observations": "螺旋宽带、片层箭头、细环连接，沿链连续且可见前后关系。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06,
+      "view_transform": "Standard"
+    },
+    "ball-stick": {
+      "name_zh": "球棍结构",
+      "subject": "molecule",
+      "representation": "bonds",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#f7f7f4",
+      "palette": [
+        "#87939d",
+        "#3c70ca",
+        "#cf4d47"
+      ],
+      "reference_ids": [
+        "switch",
+        "prc"
+      ],
+      "observations": "局部原子与键明确分开，原子较小、键较细；元素配色不等于真实颜色。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06,
+      "view_transform": "Standard"
+    },
+    "spacefill": {
+      "name_zh": "原子空间填充",
+      "subject": "molecule",
+      "representation": "atoms",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#eef0f1",
+      "palette": [
+        "#aeb9c2",
+        "#4b78bb",
+        "#c45e51"
+      ],
+      "reference_ids": [
+        "molstar",
+        "switch"
+      ],
+      "observations": "相接的原子球显示分子轮廓，接触暗部和柔和高光建立体积。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06,
+      "view_transform": "Standard"
+    },
+    "density-wire": {
+      "name_zh": "密度网格外壳",
+      "subject": "molecule",
+      "representation": "wire",
+      "material": "pbr",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#050a10",
+      "palette": [
+        "#718f9b",
+        "#dd9160",
+        "#c4d1d5"
+      ],
+      "reference_ids": [
+        "fitmap"
+      ],
+      "observations": "暗背景上的稀疏细网格，可同时看到内部链；阈值与线宽要分别控制。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0.012,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "density-cloud": {
+      "name_zh": "体积密度云",
+      "subject": "molecule",
+      "representation": "volume",
+      "material": "volume",
+      "engine": "CYCLES",
+      "compositor": "filmic",
+      "background": "#080d19",
+      "palette": [
+        "#5d9abb",
+        "#f2c58a",
+        "#819aaa"
+      ],
+      "reference_ids": [
+        "fitmap",
+        "xray"
+      ],
+      "observations": "参考外壳的深度叠加关系，改为可编辑密度云；这是一种拓展实现，参考图本身不是体积散射标定。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "xray": {
+      "name_zh": "暗场透明轮廓",
+      "subject": "molecule",
+      "representation": "shell_ribbon",
+      "material": "xray",
+      "engine": "CYCLES",
+      "compositor": "clean",
+      "background": "#010308",
+      "palette": [
+        "#a8baca",
+        "#ecf5fa",
+        "#e4a178"
+      ],
+      "reference_ids": [
+        "xray"
+      ],
+      "observations": "暗背景、薄白外轮廓、半透明内部，丝带保持亮而清楚；不是医学 X 射线成像。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "fluorescence": {
+      "name_zh": "荧光通道外观",
+      "subject": "cells",
+      "representation": "fibers",
+      "material": "emission",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "fluorescence",
+      "background": "#010307",
+      "palette": [
+        "#dfae32",
+        "#476bdf",
+        "#5bbba9"
+      ],
+      "reference_ids": [
+        "multichannel"
+      ],
+      "observations": "黑背景、按结构分通道、有限模糊、局部点状强度和纤维连续性；不从亮度推断分子数量。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "sem": {
+      "name_zh": "SEM 表面外观",
+      "subject": "cells",
+      "representation": "relief",
+      "material": "sem",
+      "engine": "CYCLES",
+      "compositor": "grain",
+      "background": "#414447",
+      "palette": [
+        "#b3b6b8",
+        "#9fa5a9",
+        "#c5c8ca"
+      ],
+      "reference_ids": [
+        "hku-5",
+        "hku-6"
+      ],
+      "observations": "灰度，突出边缘及表面纹理，景深较大；表面突起与高频颗粒分开。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.62,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "dic": {
+      "name_zh": "DIC 方向性明暗",
+      "subject": "cells",
+      "representation": "height",
+      "material": "height",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "dic",
+      "background": "#000000",
+      "palette": [
+        "#aaaaaa",
+        "#aaaaaa",
+        "#aaaaaa"
+      ],
+      "reference_ids": [
+        "dic"
+      ],
+      "observations": "平灰背景，相对两边呈亮暗配对，胞核和细粒有方向性起伏。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "phase": {
+      "name_zh": "相差光晕外观",
+      "subject": "cells",
+      "representation": "height",
+      "material": "height",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "phase",
+      "background": "#000000",
+      "palette": [
+        "#aaaaaa",
+        "#aaaaaa",
+        "#aaaaaa"
+      ],
+      "reference_ids": [
+        "phase"
+      ],
+      "observations": "灰背景、细胞边缘亮晕和暗边、较暗胞内颗粒；与 DIC 的单一方向梯度不同。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "histology": {
+      "name_zh": "染色切片色彩外观",
+      "subject": "cells",
+      "representation": "tissue",
+      "material": "stain",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "soft",
+      "background": "#faf4f4",
+      "palette": [
+        "#da88aa",
+        "#684071",
+        "#e8aec2"
+      ],
+      "reference_ids": [
+        "histology"
+      ],
+      "observations": "浅底粉色胞质、紫色胞核、细颗粒和白色间隙；只是色彩与纹理示意，不是病理诊断。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    },
+    "tem": {
+      "name_zh": "TEM 密度纹理外观",
+      "subject": "cells",
+      "representation": "membranes",
+      "material": "stain",
+      "engine": "BLENDER_EEVEE",
+      "compositor": "grain",
+      "background": "#d6d6d4",
+      "palette": [
+        "#b9b9b5",
+        "#545755",
+        "#303532"
+      ],
+      "reference_ids": [
+        "hku-2"
+      ],
+      "observations": "投影式灰度层次、暗膜轮廓、细颗粒、明亮腔隙；不把表面加灰滤镜称为真实薄切片。",
+      "implementation_status": "implemented; inspect fresh project renders before claiming a reference match",
+      "roughness": 0.43,
+      "bump": 0,
+      "outline_strength": 0.24,
+      "grain_amount": 0.035,
+      "blur_px": 0.6,
+      "volume_radius_nm": 0.32,
+      "volume_voxel_nm": 0.06
+    }
+  }
+}

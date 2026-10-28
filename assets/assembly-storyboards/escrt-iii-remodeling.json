@@ -1,0 +1,79 @@
+{
+  "id": "escrt-iii-remodeling",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "ESCRT-III 聚合与膜重塑",
+  "species_selection": "默认仅做 CHMP1B / IST1 膜管示例；内体反向出芽需另建对应体系",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/6TZ9",
+      "pdb_id": "6TZ9",
+      "use_and_limits": "膜结合 CHMP1B 丝",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/6TZ4",
+      "pdb_id": "6TZ4",
+      "use_and_limits": "CHMP1B + IST1 右手性装配",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "具有连续内外侧的膜管",
+    "CHMP1B 亚基",
+    "IST1 亚基",
+    "若展示拆解，另加 Vps4 与 ATP 步骤"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "定义膜曲率、法线与蛋白所在侧",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "完整 CHMP1B 沿证据支持的方向聚合",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "按所选结构加入 IST1 并展示终态膜曲率变化",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "需要拆解或切断时另建有来源的阶段；不能由静态管自动推出",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "按已有装配变换实例化完整亚基，保留螺旋手性",
+    "膜用连续双层/壳体；蛋白表面与膜不能互穿",
+    "对膜进行形变与对蛋白进行结构态转换分别记录"
+  ],
+  "camera_plan": [
+    "先显示膜管与完整外壳，再隐藏近侧完整亚基形成观察窗",
+    "保留膜腔连通关系可见"
+  ],
+  "acceptance": [
+    "CHMP1B/IST1 膜管不能直接等同内体 ILV 的全部 ESCRT 步骤",
+    "不在腔内外方向上把蛋白翻转",
+    "是否发生膜切断必须有拓扑判据"
+  ],
+  "limitations": [
+    "本模板不自动提供 Vps4 循环、自由能或裂解机制"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}

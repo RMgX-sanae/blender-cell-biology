@@ -1,0 +1,38 @@
+{
+  "id": "microtubule-growth",
+  "template_type": "executable_blender",
+  "asset_family": "tubulin",
+  "operation": "grow",
+  "title": "微管端部｜生长",
+  "subtitle": "三原丝观察窗口；完整 αβ 二聚体逐次加入",
+  "footer": "公开结构形状 · 教学运动 · 播放时间不等于生物学时间",
+  "fps": 24,
+  "duration_seconds": 12,
+  "seed_subunits": 6,
+  "cycles": 2,
+  "environment": true,
+  "required_sources": [
+    "3J6F"
+  ],
+  "editable_parameters": [
+    "labels",
+    "fps",
+    "duration_seconds (>= 2 + 4.8 * cycles; default 12)",
+    "cycles (1–3)",
+    "seed_subunits (actin 6–18)",
+    "environment",
+    "style profile",
+    "renderer",
+    "compositor"
+  ],
+  "limitations": [
+    "3J6F 的局部结构；其他原丝整体省略，未模拟 GTP 帽",
+    "形状来自指定结构，接近路径、速度与等待时间均为教学编排，不代表分子动力学。",
+    "为保持接触清楚，局部原丝依次加入或离开；顺序为教学编排，不是实测反应顺序。"
+  ],
+  "acceptance": [
+    "所有亚基具有稳定 ID，保持完整网格与单位尺度。",
+    "从保存的 .blend 逐帧评估，再检查实际渲染帧。",
+    "出现穿插、文字裁切或事件不清楚时调整路径/镜头后重新检查。"
+  ]
+}

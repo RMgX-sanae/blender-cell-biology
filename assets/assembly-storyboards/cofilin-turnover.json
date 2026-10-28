@@ -1,0 +1,81 @@
+{
+  "id": "cofilin-turnover",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "Cofilin 装饰、边界与切断",
+  "species_selection": "选择 cofilin 亚型与 actin 物种；如用 6VAO，注明人 cofilin-1 / 兔 actin",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/6VAO",
+      "pdb_id": "6VAO",
+      "use_and_limits": "cofilin 装饰丝",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/5YU8",
+      "pdb_id": "5YU8",
+      "use_and_limits": "鸡 cofilin-2 / actin 装饰丝",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "裸 actin 丝段",
+    "cofilin 分子与结合位点 ID",
+    "已装饰与未装饰区的边界",
+    "切断后的两个完整片段"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "以结构明确结合面，建立局部 cofilin 占位",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "相邻结合事件扩展装饰区；不能用透明罩代替具体分子",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "展示裸丝/装饰丝边界及所选研究支持的局部变化",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "在亚基之间断开并分离完整片段，保留 cofilin 与 actin 的归属",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "为裸丝与装饰丝保存独立来源几何和螺旋变换",
+    "若拼接两种构象，检查连接连续性与长度，不直接硬接扭转角",
+    "cofilin 使用共享 mesh；占位与片段归属以事件表驱动"
+  ],
+  "camera_plan": [
+    "同一视野同时包含装饰区、边界和裸丝",
+    "切断前后保留追踪标记，避免观众误认为单体被切碎"
+  ],
+  "acceptance": [
+    "裸/装饰区域不能仅靠颜色冒充已验证构象",
+    "不把完全饱和装饰画成处处必然切断",
+    "每个分子在切断前后保持身份与完整网格"
+  ],
+  "limitations": [
+    "协同结合、切断倾向与条件相关；无速率数据时只做顺序示意"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed",
+  "full_cycle_guidance": "../../references/actin-full-cycle.md",
+  "scope_note": "This local storyboard is one module of the complete upstream-to-downstream actin mechanism; use the full-cycle plan when requested."
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Continuous membrane cutaway — soft studio",
+  "reference": "User workspace mitochondrion_astra_20260905/hero.png",
+  "observations": ["Blue-green exterior", "Warm interior infoldings", "Soft oblique key light", "Dark quiet background", "Three levels of structural detail"],
+  "implementation_assumptions": ["Geometry reuses the procedural hierarchy; shader and studio settings are newly parameterized"],
+  "organelle_palette": {"outer":"4E9194", "inner":"CF8D6C", "protein":"E3CE9A", "dna":"8BC0C7"},
+  "background": "0E222C",
+  "world": "A7BDD0",
+  "roughness": 0.47,
+  "view_transform": "AgX",
+  "exposure": 0.45,
+  "camera": {},
+  "lighting": [
+    {"name": "Warm broad key", "position": [-12,-18,26], "power": 12500, "color": "FFF0DA", "size": 20},
+    {"name": "Front soft fill", "position": [18,-18,4], "power": 4000, "color": "D9EBFF", "size": 18},
+    {"name": "Cool separating rim", "position": [0,12,18], "power": 13000, "color": "DAEEFF", "size": 16}
+  ],
+  "compositor": {"preset": "clean", "contrast": 0}
+}

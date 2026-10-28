@@ -1,0 +1,79 @@
+{
+  "id": "copii-coat-assembly",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "COPII 内外被覆装配与 ER 输出",
+  "species_selection": "酵母作为结构参考体系；大型货物/哺乳动物体系需另核对",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/6ZGA",
+      "pdb_id": "6ZGA",
+      "use_and_limits": "膜上的 COPII 内层被覆",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/8BSH",
+      "pdb_id": "8BSH",
+      "use_and_limits": "COPII 内层被覆的另一结构候选",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "ER 连续膜及腔内/跨膜货物",
+    "Sar1",
+    "Sec23/24 内被覆",
+    "另取匹配来源的 Sec13/31 外被覆"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "确定 ER 胞质侧出口区域和货物方向",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "按匹配状态的 Sar1 膜锚定开始内层装配",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "Sec23/24 参与货物选择与内被覆形成",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "加入有来源的外被覆；膜弯曲、载体分离与脱被覆分镜分别实现",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "6ZGA 或 8BSH 的内层结构不能被复制成外层笼",
+    "共享 mesh 并按局部膜法线放置，保留内/外两层间距依据",
+    "膜载体大小与形状按货物/实验条件选择，不强制所有 COPII 为同半径球"
+  ],
+  "camera_plan": [
+    "用完整组分的前后分层同时显示货物、膜、内层与外层",
+    "近景展示绑定关系，远景展示膜形变；不要暗中改变比例尺"
+  ],
+  "acceptance": [
+    "腔内货物不会直接跨过完整脂双层",
+    "Sar1、Sec23/24、Sec13/31 身份与位置不混淆",
+    "终态载体与 ER 的连通/断开状态清楚"
+  ],
+  "limitations": [
+    "静态内层结构不提供完整出芽过程、货物选择谱或 GTP 水解轨迹"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}

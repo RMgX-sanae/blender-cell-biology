@@ -1,0 +1,79 @@
+{
+  "id": "intermediate-filament-assembly",
+  "template_type": "storyboard_requires_project_implementation",
+  "title": "Vimentin 中间丝分级装配",
+  "species_selection": "以人 vimentin 为一个示例；不自动推广到 keratin 或 lamin",
+  "asset_first": true,
+  "asset_candidates": [
+    {
+      "entry_url": "https://www.rcsb.org/structure/8RVE",
+      "pdb_id": "8RVE",
+      "use_and_limits": "成熟 vimentin 丝的结构模型",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/9A3R",
+      "pdb_id": "9A3R",
+      "use_and_limits": "相关 tetramer 模型，核对其建模证据类型",
+      "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    }
+  ],
+  "actors": [
+    "coiled-coil 二聚体",
+    "反平行四聚体",
+    "unit-length filament（ULF）",
+    "纵向连接后的丝段"
+  ],
+  "stages": [
+    {
+      "order": 1,
+      "action": "用不同颜色跟踪两条链形成二聚体",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 2,
+      "action": "按证据构建反平行四聚体，明确整体无 actin 式正负极性",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 3,
+      "action": "横向装配形成所选实验体系中的 ULF",
+      "timing": "authored; determine after storyboard review"
+    },
+    {
+      "order": 4,
+      "action": "ULF 纵向连接与径向压实，保留分子数和来源层级",
+      "timing": "authored; determine after storyboard review"
+    }
+  ],
+  "geometry_plan": [
+    "成熟丝坐标只能支持终态，早期中间体要另查证据",
+    "coiled-coil 用完整链/结构域模型，不把任意螺旋线当作原子结构",
+    "长丝按弧长放置重复单元；变形保持局部尺度"
+  ],
+  "camera_plan": [
+    "分级放大与总览分镜分开，标注各镜头比例变化",
+    "加入二聚体/四聚体/ULF 的必要标签"
+  ],
+  "acceptance": [
+    "没有把非极性中间丝画成 actin 踏车",
+    "二聚体与四聚体计数清晰，四聚体反平行",
+    "成熟结构的低复杂度区和未解析区有说明"
+  ],
+  "limitations": [
+    "ULF 数量、长度及成熟途径要按所选样本确认；不是通用固定尺寸"
+  ],
+  "style": {
+    "select_per_project": true,
+    "reference_image_analysis": "Inspect reference shapes, materials, light, depth and compositing before styling",
+    "renderer": "choose available Eevee/Cycles",
+    "compositor": "choose saved Blender branches or an actually available external compositor"
+  },
+  "delivery": [
+    "project-specific scene brief and asset provenance",
+    "editable Blender project and reproducible commands",
+    "keyframe preview and final media if requested",
+    "actual software/geometry/visual checks reported separately"
+  ],
+  "runtime_status": "Not an executable build_polymer_scene.py input; no finished animation claimed"
+}
