@@ -14,7 +14,11 @@ from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--shots',default='a03,a04,a05,a07,c01,c04,c05,f03,f04,f06')
+    p.add_argument('--threshold',type=float,default=.12,help='Atomic-center distance in nm; use .20 for the stricter contact screen')
+    p.add_argument('--fail-on-overlap',action='store_true')
     a=p.parse_args();reports=[]
+    if not np.isfinite(a.threshold) or a.threshold<=0:p.error('--threshold must be positive and finite')
+    search_radius=max(.5,a.threshold)
     for id in a.shots.split(','):
         folder=ROOT/'shots'/id
         report=json.loads((folder/'evaluated-audit.json').read_text())
@@ -40,21 +44,23 @@ def main():
                 if 'gate_atoms_delta' in assets[i]:aa=aa+assets[i]['gate_atoms_delta']*gate[f,i]
                 if 'gate_atoms_delta' in assets[j]:bb=bb+assets[j]['gate_atoms_delta']*gate[f,j]
                 aa=aa@relative[f,:3,:3].T+relative[f,:3,3]
-                if np.any(aa.min(0)-bb.max(0)>.5) or np.any(bb.min(0)-aa.max(0)>.5):continue
+                if np.any(aa.min(0)-bb.max(0)>search_radius) or np.any(bb.min(0)-aa.max(0)>search_radius):continue
                 tk=(j,round(float(sh[f,j]),6),round(float(gate[f,j]),6))
                 if tk not in trees:trees[tk]=cKDTree(bb)
-                dist,_=trees[tk].query(aa,k=1,distance_upper_bound=.5)
-                minimum=float(dist.min());count=int((dist<.12).sum());checks+=1
+                dist,_=trees[tk].query(aa,k=1,distance_upper_bound=search_radius)
+                minimum=float(dist.min());count=int((dist<a.threshold).sum());checks+=1
                 deepest=min(deepest,minimum)
                 if count:bad.append(f+1);maximum=max(maximum,count)
             if bad:
                 results.append({'a':report['molecules'][i]['name'],'b':report['molecules'][j]['name'],
                                 'sampled_overlap_states':len(bad),'first_frame':min(bad),'last_frame':max(bad),
                                 'min_center_distance_nm':deepest,'max_atoms_below_threshold':maximum})
-        result={'shot':id,'frames':len(ms),'unique_pair_checks':checks,'threshold_nm':.12,'flagged_pairs':results,
+        result={'shot':id,'frames':len(ms),'unique_pair_checks':checks,'threshold_nm':a.threshold,'flagged_pairs':results,
                 'limits':'Atomic centers only; missing atoms, ligands, environmental proteins excluded. G/F atom interpolation is a source-guided approximation.'}
         (folder/'contacts.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
         reports.append(result);print(id,len(results),'flagged pairs',flush=True)
     (ROOT/'validation/contacts-summary.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
+    if a.fail_on_overlap and any(r['flagged_pairs'] for r in reports):
+        raise SystemExit('Contact screen failed; see contacts-summary.json')
 
 if __name__=='__main__':main()

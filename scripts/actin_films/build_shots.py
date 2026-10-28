@@ -30,11 +30,30 @@ def power(m,n):return Matrix(np.linalg.matrix_power(np.array(m),n))
 def smooth(u):
     u=min(1,max(0,u));return u*u*u*(10+u*(-15+6*u))
 
+def sample_detour(fraction,repair):
+    if not repair or not repair['detour']:return np.zeros(6)
+    data=repair['detour'];first=data['first_fraction'];last=data['last_fraction']
+    if fraction<=first or fraction>=last:return np.zeros(6)
+    u=(fraction-first)/(last-first);knots=data['knots']
+    basis=[float(a<=u<b) for a,b in zip(knots,knots[1:])]
+    for degree in range(1,4):
+        updated=[]
+        for i in range(len(basis)-1):
+            left=knots[i+degree]-knots[i];right=knots[i+degree+1]-knots[i+1]
+            updated.append((0 if left==0 else (u-knots[i])/left*basis[i])
+                           +(0 if right==0 else (knots[i+degree+1]-u)/right*basis[i+1]))
+        basis=updated
+    controls=data.get('controls_nm_radians',data.get('controls_nm'))
+    value=np.array(basis)@np.array(controls)
+    return np.r_[value,np.zeros(6-len(value))]
+
 class Shot:
     def __init__(self,config,width):
         self.c=config;self.n=config['frames'];self.events=[];self.objects=[];self.counter=0
         self.width=width;self.cached={};self.groups={}
         self.plans=json.loads((ROOT/'assets/approach-plans.json').read_text()) if (ROOT/'assets/approach-plans.json').exists() else {}
+        repairs=ROOT/'assets/contact-repairs.json'
+        self.repairs=json.loads(repairs.read_text()) if repairs.exists() else {}
         self.primary=[];self.labels=[];self.scene_scale=52
         bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
         bpy.data.orphans_purge(do_recursive=True)
@@ -80,11 +99,12 @@ class Shot:
         obs=[self.asset(code,c,color=(colors or ['teal'])[i%len(colors or ['teal'])],parent=rig,main=main) for i,c in enumerate(chains)]
         return rig,obs
 
-    def oldcap(self,target,parent=None):
+    def oldcap(self,site,parent=None):
         # Residue-number correspondence is recovered from cached source mmCIF
         # in the scientific preparation helper, not guessed inside Blender.
-        tr=np.array(json.loads((ROOT/'assets/cap-fit.json').read_text())['matrix'])
-        rig=self.rig('CapZ complete heterodimer',parent=parent,matrix=target@Matrix(tr))
+        tr=self.repairs['placements'][site]['matrix']
+        rig=self.rig('CapZ complete heterodimer',parent=parent,matrix=Matrix(tr))
+        rig['placement_evidence']='Source-guided bounded rigid adjustment to a different actin structure; not an observed complex'
         out=[]
         for c in ['G','H']:
             a=np.load(OLD/'cap'/('chain_'+c+'.npz'))
@@ -114,7 +134,7 @@ class Shot:
         self.primary.append(obj);self.objects.append(obj);return obj
 
     def frame(self,t):return min(self.n,max(1,1+round(t*(self.n-1))))
-    def docking(self,obj,target,interval,offset,release=False,turn=False,far_shift=(0,0,0)):
+    def docking(self,obj,target,interval,offset,release=False,turn=False,far_shift=(0,0,0),repair=None):
         first,last=map(self.frame,interval);offset=Vector(offset)
         obj.rotation_mode='QUATERNION'
         pivot=Vector(np.mean([tuple(v) for v in obj.bound_box],axis=0)) if obj.type=='MESH' else Vector((0,0,0))
@@ -124,7 +144,14 @@ class Shot:
             d=progress if release else 1-progress
             far=max(0,(d-.5)*2)
             travel=offset*d+side*math.sin(math.pi*far)**2+Vector(far_shift)*smooth(far)
+            correction=sample_detour(d,repair)
+            travel+=Vector(correction[:3])
             mat=T(*travel)@target
+            angle=float(np.linalg.norm(correction[3:]))
+            if angle>1e-12:
+                anchor=Vector(repair['detour']['pivot_nm'])
+                rotation=Quaternion(Vector(correction[3:]/angle),angle).to_matrix().to_4x4()
+                mat=T(*travel)@T(*anchor)@rotation@T(*(-anchor))@target
             if turn:mat=mat@T(*pivot)@R(18*smooth(far),'Z')@T(*(-pivot))
             loc,quat,_=mat.decompose();obj.location=loc;obj.rotation_quaternion=quat
             obj.keyframe_insert('location',frame=f);obj.keyframe_insert('rotation_quaternion',frame=f)
@@ -489,10 +516,10 @@ def network(s,formin=False):
             groups=branch_setup(s,parent=root)
             if j==1:
                 fit=Matrix(json.loads((ROOT/'assets/actin-target-fits.json').read_text())['branch_K'])
-                cap,_=s.oldcap(fit,parent=root)
+                cap,_=s.oldcap('branch',parent=root)
                 endpoint=cap.matrix_basis.copy()
                 offset=fit.to_3x3()@Vector(s.plans['cap']['offset'])*.6
-                s.docking(cap,endpoint,(.14,.37),offset)
+                s.docking(cap,endpoint,(.14,.37),offset,repair=s.repairs['motions']['cap_branch'])
         # Membrane shown as a patch of complete lipid symbols; no protein cuts.
         p=Parts()
         for x in np.linspace(-26,26,49):
@@ -502,9 +529,9 @@ def network(s,formin=False):
                     p.tube([(x,y,16.5+sign*.42),(x+.15,y,16.5)],.08)
         mem=p.object('Membrane lipids schematic',[s.mats['dim']],s.groups['Schematics'])
         s.move(mem,Matrix.Identity(4),T(0,0,1.5),(.4,.66),(0,0,0),'membrane shape output, not simulated force')
-        s.text('膜前缘：形态示意',(0,-15,14),1.1)
-        s.text('右侧端部：CapZ 封端',(23,-18,-15),1.2)
-        s.text('接头稳定：条件性调控',(-24,-18,-15),1.2)
+        s.text('细胞膜',(0,-15,14),1.9)
+        s.text('CapZ 封端',(23,-18,-15),2.0)
+        s.text('分支接头',(-24,-18,-15),2.0)
 
 def stop_signal(s):
     s.scene_scale=45
@@ -554,41 +581,40 @@ def debranch(s):
     s.scene_scale=96
     groups=branch_setup(s)
     child,childobs=groups['daughter']
-    s.docking(child,Matrix.Identity(4),(.27,.49),s.plans['debranch']['offset'],release=True)
+    s.docking(child,Matrix.Identity(4),(.27,.49),s.plans['debranch']['offset'],release=True,repair=s.repairs['motions']['debranch'])
     gm=s.asset('4JD2','H',color='gold',main=False)
     center=np.load(ROOT/'assets/4JD2/H.npz')['atoms'].mean(0)
     s.move(gm,T(-23,-16,4)@T(*(-center)),T(-18,-16,4)@T(*(-center)),(.08,.23),(0,-3,1),'GMF stand-off symbol; not a docking trajectory')
     allobs=sum([v[1] for v in groups.values()],[])
     s.center(allobs,offset=(-2,0,0),rotation=R(-20))
-    s.text('GMF 作用于接头',(-17,-16,7),1)
-    s.text('母丝保持完整',(-13,-16,-8),1)
-    s.node('接头可保留 / 再成核',15,-9,'green',17)
+    s.text('GMF',(-17,-16,7),1.8)
+    s.text('母丝',(-13,-16,-8),1.8)
+    s.text('接头保留 / 再成核',(16,-16,-12),1.6)
 
 def cap_control(s):
     s.scene_scale=84
     core,fr,heads=formin_setup(s)
-    cap,capobs=s.oldcap(Matrix.Identity(4))
-    s.docking(fr,Matrix.Identity(4),(.12,.32),s.plans['formin_release']['offset'],release=True,far_shift=(0,16,0))
-    s.docking(cap,cap.matrix_basis.copy(),(.42,.65),s.plans['cap']['offset'])
-    s.text('本例：formin 离开 → CapZ 封端',(0,-16,8),1.1)
-    s.text('可存在短暂共占有；这里仅展示一种结果',(0,-16,-8),.9)
+    cap,capobs=s.oldcap('formin')
+    s.docking(fr,Matrix.Identity(4),(.12,.32),s.plans['formin_release']['offset'],release=True,far_shift=s.repairs['motions']['formin_release']['far_shift'],repair=s.repairs['motions']['formin_release'])
+    s.docking(cap,cap.matrix_basis.copy(),(.42,.65),s.plans['cap']['offset'],repair=s.repairs['motions']['cap_formin'])
+    s.text('formin 离开 → CapZ 封端',(0,-16,8),1.8)
 
 def recycle(s):
     s.scene_scale=60
     rig,obs=s.compound('6FM2-assembly1',['A','B','A-2','B-2'],['gold','pink','teal','pink'])
     obs[0]['biological_id']='actin_001'
-    s.docking(obs[0],Matrix.Identity(4),(.08,.28),Vector(s.plans['cap_recycle']['offset'])*.6)
+    s.docking(obs[0],Matrix.Identity(4),(.08,.28),Vector(s.plans['cap_recycle']['offset'])*.6,repair=s.repairs['motions']['cap_recycle'])
     s.center(obs,offset=(-2,0,0),rotation=R(35,'Y')@R(15,'Z'))
-    old,_=s.token('ADP',(-2,-10,-3),'blue',.85)
-    new,_=s.token('ATP',(15,-10,-5),'gold',.85)
+    old,_=s.token('ADP',(-2,-10,-3),'blue',1.15)
+    new,new_label=s.token('ATP',(15,-10,-5),'gold',1.15)
+    new_label.data.materials[0]=s.mats['dim']
     s.move(old,T(-2,-10,-3),T(-15,-10,-6),(.36,.49),(0,0,-1),'old ADP leaves pool symbol')
     s.move(new,T(15,-10,-5),T(-2,-10,-3),(.57,.72),(0,0,1),'different ATP molecule enters symbol')
-    s.text('CAP：已解析的 CARP 局部装配',(0,-16,5),.9)
-    s.text('cofilin 释放 / 伙伴回收：机制关系示意',(0,-16,-6),.76)
+    s.text('CAP–actin',(0,-16,5),1.3)
     co=s.asset('6VAO','I',color='pink')
     center=np.load(ROOT/'assets/6VAO/I.npz')['atoms'].mean(0)
-    s.move(co,T(-10,-3,-1)@T(*(-center)),T(-17,-5,2)@T(*(-center)),(.06,.24),(0,-3,1),'cofilin partner release shown at schematic stand-off positions')
-    s.text('cofilin 回收',(-13,-12,7),.9)
+    s.move(co,T(-12,-12,-1)@T(*(-center)),T(-18,-12,2)@T(*(-center)),(.06,.24),(0,-3,1),'cofilin partner release shown at schematic stand-off positions')
+    s.text('cofilin',(-13,-12,7),1.4)
 
 def closing(s):
     s.scene_scale=52
@@ -605,6 +631,8 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--shots',default='all');p.add_argument('--width',type=int,default=OPTIONS['width'])
     p.add_argument('--preview',action='store_true');a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     config=json.loads((ROOT/'storyboard.json').read_text());selected=a.shots.split(',')
+    if (selected==['all'] or set(selected)&{'a05','a07','c05','f06'}) and not (ROOT/'assets/contact-repairs.json').exists():
+        raise ValueError('Contact repair assets missing; run build_actin_films.py --steps prepare for this project first')
     methods={'a01':lambda s:input_scene(s),'f01':lambda s:input_scene(s,True),'a02':wrc_scene,
              'c01':supply_scene,'a03':nucleate_branch,'a04':branch_growth,'a08':lambda s:branch_growth(s,True),
              'f02':autoinhib,'f03':formin_seed,'f04':formin_growth,'f07':lambda s:formin_growth(s,True),

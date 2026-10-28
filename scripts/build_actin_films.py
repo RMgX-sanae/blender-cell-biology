@@ -169,6 +169,7 @@ def main():
         python(CHAPTERS/'prepare_assets.py')
         python(CHAPTERS/'prepare_head_morphs.py')
         python(CHAPTERS/'plan_clear_approaches.py')
+        python(CHAPTERS/'prepare_contact_repairs.py')
     if 'build' in stages:
         python(CHAPTERS/'write_storyboard.py')
         blender(CHAPTERS/'build_shots.py', '--shots', args.shots, *(['--preview'] if args.preview else []))
@@ -185,7 +186,7 @@ def main():
     if 'audit' in stages:
         blender(CHAPTERS/'render_chapters.py', '--shots', args.shots, '--audit-only')
         blender(CHAPTERS/'audit_saved_assets.py')
-        python(CHAPTERS/'check_contacts.py')
+        python(CHAPTERS/'check_contacts.py', *([] if args.shots=='all' else ['--shots',args.shots]))
         if args.shots == 'all':
             python(CHAPTERS/'check_final_movies.py')
     print(json.dumps({'project': str(root), 'completed_commands': len(record)-previous_commands, 'steps': stages,

@@ -26,7 +26,7 @@ def refine(points, obstacles, first, last, maximum=.45, threshold=.20):
         for i,f in enumerate(frames):
             mobile=points[f]+offset[i]
             for group,group_trees in zip(obstacles,trees):
-                distance,neighbor=group_trees[i].query(mobile)
+                distance,neighbor=group_trees[i].query(mobile,distance_upper_bound=target)
                 penetration=np.maximum(target-distance,0)
                 loss+=float(penetration@penetration)*10000
                 selected=penetration>0
