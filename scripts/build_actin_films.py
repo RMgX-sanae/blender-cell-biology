@@ -167,19 +167,13 @@ def main():
         prepare_cached(SCRIPTS/'prepare_actin_states.py', root/'assets/states', ['8A2R','8A2S','8A2T'], '--source-dir', root/'sources')
         prepare_cached(SCRIPTS/'prepare_molecular_asset.py', root/'assets/ubiquitin', ['1UBQ'], root/'sources/1UBQ.cif', '--preset', 'generic')
         python(CHAPTERS/'prepare_assets.py')
-        python(CHAPTERS/'prepare_head_morphs.py')
         python(CHAPTERS/'plan_clear_approaches.py')
         python(CHAPTERS/'prepare_contact_repairs.py')
         python(CHAPTERS/'prepare_fh2_seed.py')
+        python(CHAPTERS/'prepare_fh2_growth.py')
     if 'build' in stages:
         python(CHAPTERS/'write_storyboard.py')
         blender(CHAPTERS/'build_shots.py', '--shots', args.shots, *(['--preview'] if args.preview else []))
-        # The formin arc optimization consumes evaluated transforms from f04.
-        if args.shots == 'all' or 'f04' in args.shots.split(','):
-            blender(CHAPTERS/'render_chapters.py', '--shots', 'f04', '--audit-only')
-            python(CHAPTERS/'optimize_head_arcs.py')
-            chosen = ['f04'] + (['f07'] if args.shots == 'all' or 'f07' in args.shots.split(',') else [])
-            blender(CHAPTERS/'build_shots.py', '--shots', ','.join(chosen), *(['--preview'] if args.preview else []))
     if 'render' in stages:
         blender(CHAPTERS/'render_chapters.py', '--shots', args.shots)
     if 'encode' in stages:
@@ -188,6 +182,11 @@ def main():
         blender(CHAPTERS/'render_chapters.py', '--shots', args.shots, '--audit-only')
         blender(CHAPTERS/'audit_saved_assets.py')
         python(CHAPTERS/'check_contacts.py', *([] if args.shots=='all' else ['--shots',args.shots]))
+        repaired = ['a05','a07','c05','f03','f04','f06','f07']
+        strict = repaired if args.shots=='all' else [name for name in repaired if name in args.shots.split(',')]
+        if strict:
+            python(CHAPTERS/'check_contacts.py', '--shots', ','.join(strict),
+                   '--threshold', '.20', '--fail-on-overlap', '--summary', 'strict-contacts-summary.json')
         if args.shots == 'all':
             python(CHAPTERS/'check_final_movies.py')
     print(json.dumps({'project': str(root), 'completed_commands': len(record)-previous_commands, 'steps': stages,

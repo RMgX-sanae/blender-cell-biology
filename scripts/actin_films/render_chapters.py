@@ -46,7 +46,10 @@ def scan(folder):
                 item=linker_checks[o.name];item['maximum_curve_length_nm']=max(item['maximum_curve_length_nm'],length)
                 for label,point in [('start',points[0]),('end',points[-1])]:
                     anchor=o['linker_anchor_'+label]
-                    expected=scene.objects[anchor['object']].matrix_world@Vector(anchor['position'])
+                    parent=scene.objects[anchor['object']];local=Vector(anchor['position'])
+                    if 'alternate_position' in anchor:
+                        local=local.lerp(Vector(anchor['alternate_position']),parent.data.shape_keys.key_blocks[1].value)
+                    expected=parent.matrix_world@local
                     item['maximum_anchor_error_nm']=max(item['maximum_anchor_error_nm'],(expected-point).length)
                 if length>item['contour_upper_bound_nm']+1e-5 or item['maximum_anchor_error_nm']>1e-4:
                     raise ValueError('Saved FH2 linker exceeds its contour bound or has detached endpoints: '+o.name)

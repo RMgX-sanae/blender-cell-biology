@@ -113,15 +113,15 @@ class Shot:
             obj['atoms_file']=str(OLD/'cap'/('chain_'+c+'.npz'));out.append(obj);self.primary.append(obj)
         return rig,out
 
-    def actin(self,name,target=None,parent=None,tracked=False,g_fraction=0):
-        d=np.load(ROOT/'assets/actin_morph.npz')
+    def actin(self,name,target=None,parent=None,tracked=False,g_fraction=0,asset='actin_morph.npz'):
+        d=np.load(ROOT/'assets'/asset)
         obj=mesh(name,d['f_vertices'].tolist(),d['faces'].tolist(),[self.mats['gold' if tracked else 'teal']],self.groups['Molecules'])
         obj.shape_key_add(name='F reference')
         key=obj.shape_key_add(name='G reference guided approximation')
         key.data.foreach_set('co',d['g_vertices'].reshape(-1));key.value=g_fraction
         obj.parent=parent;obj.matrix_basis=target if target is not None else Matrix.Identity(4)
         obj['biological_id']=name;obj['geometry_evidence']='F source envelope / CA-guided G approximation; cross-isoform teaching morph'
-        obj['atoms_file']=str(ROOT/'assets/actin_morph.npz')
+        obj['atoms_file']=str(ROOT/'assets'/asset)
         self.primary.append(obj);self.objects.append(obj);return obj
 
     def profilin(self,name,parent=None,matrix=None):
@@ -271,9 +271,9 @@ class Shot:
         if hasattr(scene,'eevee') and hasattr(scene.eevee,'taa_render_samples'):
             scene.eevee.taa_render_samples=OPTIONS['samples']
         W=self.scene_scale
-        self.text(self.c['title'],(0,-75,W*.244),W*.025)
+        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if self.c['id'] in {'f04','f07'} else .025))
         for i,beat in enumerate(self.c['beats']):
-            obj=self.text(beat,(0,-75,W*.192),W*(.022 if self.c['id']=='f03' else .017))
+            obj=self.text(beat,(0,-75,W*.192),W*(.026 if self.c['id'] in {'f04','f07'} else .022 if self.c['id']=='f03' else .017))
             self.visibility(obj,i/3,1 if i==2 else (i+1)/3-1/self.n)
         # A few whole source-derived background proteins give depth; their
         # illustrative placement/density is explicitly not a cell measurement.
@@ -454,68 +454,90 @@ def formin_seed(s):
     seed=s.text('极性短丝',(-9,-40,-8),1.4);s.visibility(seed,.48,1)
 
 def formin_growth(s,reentry=False):
-    s.scene_scale=92
-    core,fr,heads=formin_setup(s)
-    step=s.step('9B27')
-    new=[]
-    # One complete FH2 dimer remains associated in the teaching model. Its
-    # advance is explicitly not a claim to an observed head-stepping trajectory.
-    for cycle in range(2):
-        target=power(step,cycle+1)
-        obj=s.actin('actin_001' if cycle==0 else 'actin_002',tracked=cycle==0,g_fraction=1)
-        p=s.profilin('profilin cycle '+str(cycle),parent=obj)
-        t=.18+cycle*.38
-        s.docking(obj,target,(t,t+.22),s.plans['formin_add_'+str(cycle+1)]['offset'],turn=True)
-        s.morph(obj,1,0,(t+.05,t+.11))
-        pc=np.load(ROOT/'assets/profilin_on_morph.npz')['atoms'].mean(0)
-        ac=np.load(ROOT/'assets/actin_morph.npz')['g_atoms'].mean(0)
-        escape=Vector(pc-ac).normalized()*8
-        s.move(p,Matrix.Identity(4),T(*escape),(t+.02,t+.07),(0,0,0),'profilin release before final flattening')
-        new.extend([obj,p])
-    # Preserve the two head identities. A trailing head advances while the
-    # other remains near its attachment, then their roles alternate. The
-    # inter-head connection and trajectories are an explicit teaching model.
-    fits=json.loads((ROOT/'assets/formin-head-fit.json').read_text())
-    arcs=json.loads((ROOT/'assets/head-arcs.json').read_text()) if (ROOT/'assets/head-arcs.json').exists() else [{'arc':[0,0,-8]},{'arc':[0,0,8]}]
-    for i,head in enumerate(heads):
-        morphfile=ROOT/'assets'/f'head_{"G" if i==0 else "H"}_morph.npz'
-        conformers=np.load(morphfile)
-        head.shape_key_add(name='source head conformation')
-        conformer=head.shape_key_add(name='source-guided alternate head conformation')
-        conformer.data.foreach_set('co',conformers['g_vertices'].reshape(-1))
-        gatekey=head.shape_key_add(name='Schematic loading gate; partner interface anchored')
-        gatekey.data.foreach_set('co',(conformers['f_vertices']+conformers['gate_vertices_delta']).reshape(-1))
-        head['atoms_file']=str(morphfile)
-        head['geometry_evidence']='Source envelope with explicit CA-guided alternate-conformer approximation; matched atom endpoints retained separately'
-        middle=step@Matrix(fits['G_to_H' if i==0 else 'H_to_G'])
-        stages=[Matrix.Identity(4),middle,step@step]
-        head.rotation_mode='QUATERNION'
+    s.scene_scale=72
+    folder=ROOT/'assets/fh2_growth'
+    record=json.loads((ROOT/'assets/fh2-growth.json').read_text())
+    if not record['passed'] or hashlib.sha256((folder/'motion.npz').read_bytes()).hexdigest()!=record['motion_sha256']:
+        raise ValueError('FH2 growth preparation failed or its motion file changed; prepare this project again')
+    with np.load(folder/'motion.npz') as data:motion={key:data[key] for key in data.files}
+    core=[s.asset('9B27',c,color='blue' if i%2 else 'teal') for i,c in enumerate('ABCDEF')]
+    monomers=[];profilins=[];heads={}
+    for i in range(2):
+        obj=s.actin('actin_001' if i==0 else 'actin_002',tracked=i==0,g_fraction=1,asset='fh2_growth/actin.npz')
+        obj['geometry_evidence']=record['conformers']['actin']['limits']
+        monomers.append(obj);prof=s.profilin('profilin cycle '+str(i+1),parent=obj)
+        prof.data.materials[0]=s.mats['cream'];profilins.append(prof)
+    for chain,partner in [('G','H'),('H','G')]:
+        data=np.load(folder/(chain+'.npz'))
+        mats=[s.mats['pink' if chain=='G' else 'green'],s.mats['green' if chain=='G' else 'pink']]
+        obj=mesh('FH2 body '+chain+' / partner lasso '+partner,data['f_vertices'].tolist(),data['faces'].tolist(),mats,s.groups['Molecules'])
+        obj.data.polygons.foreach_set('material_index',data['material_indices'].astype(np.int32))
+        obj.shape_key_add(name='Source functional lobe')
+        alternate=obj.shape_key_add(name='Source-guided alternate lobe')
+        alternate.data.foreach_set('co',data['g_vertices'].reshape(-1))
+        obj['atoms_file']=str(folder/(chain+'.npz'));obj['source_structure']='9B27'
+        obj['geometry_evidence']='Complete modeled body and partner lasso, source-guided alternate conformation; unresolved linkers are separate schematic curves'
+        heads[chain]=obj;s.primary.append(obj);s.objects.append(obj)
+    objects=monomers+list(heads.values())
+    for obj in objects:obj.rotation_mode='QUATERNION'
+    for f in range(1,s.n+1):
+        index=(f-1)/(s.n-1)*(len(motion['matrices'])-1);lo=int(index);hi=min(lo+1,len(motion['matrices'])-1);q=index-lo
+        for i,obj in enumerate(objects):
+            a,qa,_=Matrix(motion['matrices'][lo,i]).decompose();b,qb,_=Matrix(motion['matrices'][hi,i]).decompose()
+            obj.location=a.lerp(b,q);obj.rotation_quaternion=qa.slerp(qb,q)
+            obj.keyframe_insert('location',frame=f);obj.keyframe_insert('rotation_quaternion',frame=f)
+            key=obj.data.shape_keys.key_blocks[1];key.value=(1-q)*motion['g_fractions'][lo,i]+q*motion['g_fractions'][hi,i]
+            key.keyframe_insert('value',frame=f)
+        for i,obj in enumerate(profilins):
+            obj.location=(1-q)*motion['profilin_shifts'][lo,i]+q*motion['profilin_shifts'][hi,i]
+            obj.keyframe_insert('location',frame=f)
+    linkers=[]
+    for item in record['linkers']:
+        obj=path('Unresolved FH2 linker '+item['chain'],[(0,0,0)]*21,.055,
+            s.mats['pink' if item['chain']=='G' else 'green'],s.groups['Schematics'])
+        obj['geometry_evidence']=item['representation'];obj['source_linker_contour_nm']=item['contour_upper_bound_nm']
+        for label in ['start','end']:
+            anchor=item[label+'_anchor']
+            obj['linker_anchor_'+label]={'object':heads[anchor['lobe']].name,
+                'position':anchor['position'],'alternate_position':anchor['alternate_position']}
         for f in range(1,s.n+1):
-            u=(f-1)/(s.n-1);cycle=0 if u<.45 else 1
-            begins=.08+cycle*.38
-            q=smooth((u-begins-(.04 if i!=cycle else 0)) / (.10 if i!=cycle else .14))
-            a,b=stages[cycle],stages[cycle+1]
-            la,qa,_=a.decompose();lb,qb,_=b.decompose()
-            # The trailing head takes an outward arc; the near-attached head
-            # only adjusts to the next source-related end configuration.
-            outward=Vector(arcs[cycle]['arc']) if i==cycle else Vector((0,0,0))
-            phase=min(1,max(0,(u-begins)/.14))
-            head.location=la.lerp(lb,q)+outward*math.sin(math.pi*phase)**2
-            # Only the leading head opens the loading gate; its partner stays
-            # at the filament. This gate is an explicit schematic motion.
-            gatekey.value=smooth((u-(.18+cycle*.38))/.06)*(1-smooth((u-(.40+cycle*.38))/.06)) if i==cycle else 0
-            gatekey.keyframe_insert('value',frame=f)
-            head.rotation_quaternion=qa.slerp(qb,q)
-            conformer.value=q if cycle==0 else 1-q
-            conformer.keyframe_insert('value',frame=f)
-            head.keyframe_insert('location',frame=f);head.keyframe_insert('rotation_quaternion',frame=f)
-    s.events.append({'object':fr.name,'first':s.frame(.12),'last':s.frame(.59),'action':'alternating FH2 head advance; rigid fit and path are schematic, not an observed trajectory'})
-    s.center(core+heads+[o for o in new if o.type=='MESH' and 'actin_' in o.name],offset=(-3,0,-1),rotation=R(-15))
-    # FH1 is represented as an explicitly labelled flexible schematic tether.
-    s.line([(9,3,3),(14,2,6),(10,1,8),(6,0,7)],'pink',.10,'FH1 flexible schematic')
-    s.text('FH1：柔性示意',(12,-14,9),.95)
-    s.text('FH2 / 倒钩端',(14,-18,-10),1.1)
-    s.text('金色：actin_001',(-13,-18,-10),1.1)
+            bpy.context.scene.frame_set(f);bpy.context.view_layer.update();anchors=[]
+            for label in ['start','end']:
+                anchor=item[label+'_anchor'];head=heads[anchor['lobe']];g=head.data.shape_keys.key_blocks[1].value
+                local=Vector(anchor['position']).lerp(Vector(anchor['alternate_position']),g)
+                anchors.append(head.matrix_basis@local)
+            a,b=anchors;radial=Vector((0,(a.y+b.y)/2,(a.z+b.z)/2)).normalized()
+            points=[a.lerp(b,t/20)+radial*(.4*math.sin(math.pi*t/20)) for t in range(21)]
+            if sum((y-x).length for x,y in zip(points,points[1:]))>item['contour_upper_bound_nm']:
+                raise ValueError('FH2 growth linker exceeds its residue contour bound')
+            for point,position in zip(obj.data.splines[0].points,points):
+                point.co=(*position,1);point.keyframe_insert('co',frame=f)
+        linkers.append(obj)
+    s.events.append({'object':'Coupled FH2 elongation','first':1,'last':s.n,
+        'action':'Two intact monomers, profilin release and alternating complete functional lobes',
+        'limits':record['limits'],'motion_preparation':str(ROOT/'assets/fh2-growth.json')})
+    s.center(core+objects+linkers,offset=(-3,0,0),rotation=R(-50,'X')@R(-15))
+    s.text('FH2 / 倒钩端',(14,-40,-14),1.65)
+    s.text('金色：跟踪单体',(-15,-40,-14),1.65)
+    # FH1 has no resolved coordinates in this source. A timed graphic cue
+    # indicates supply via profilin without inventing an atomic tether pose.
+    center=Vector(np.load(ROOT/'assets/profilin_on_morph.npz')['vertices'].mean(0))
+    for cycle,prof in enumerate(profilins):
+        label=s.text('FH1 → profilin 供料',(26,-40,10),1.65)
+        shaft=path('FH1 supply cue '+str(cycle),[(0,0,0)]*21,.055,s.ink,s.groups['Schematics'])
+        tip=path('FH1 supply arrow '+str(cycle),[(0,0,0)]*3,.055,s.ink,s.groups['Schematics'])
+        for obj in [shaft,tip]:obj['geometry_evidence']='Graphic functional supply cue; not a physical bond or resolved FH1 structure'
+        for f in range(1,s.n+1):
+            bpy.context.scene.frame_set(f);bpy.context.view_layer.update()
+            point=prof.matrix_world@center;end=Vector((point.x,-40,point.z+1.6))
+            start=Vector((26,-40,8.7));middle=(start+end)*.5+Vector((3,0,0))
+            points=[start*(1-t/20)**2+middle*(2*(1-t/20)*(t/20))+end*(t/20)**2 for t in range(21)]
+            for control,position in zip(shaft.data.splines[0].points,points):
+                control.co=(*position,1);control.keyframe_insert('co',frame=f)
+            direction=(end-points[-2]).normalized();wing=direction.cross(Vector((0,1,0)))
+            for control,position in zip(tip.data.splines[0].points,[end-direction*.55+wing*.3,end,end-direction*.55-wing*.3]):
+                control.co=(*position,1);control.keyframe_insert('co',frame=f)
+        s.visibility([label,shaft,tip],cycle*.5,cycle*.5+.12)
 
 def chemistry(s):
     s.scene_scale=44
@@ -679,6 +701,8 @@ def main():
         raise ValueError('Contact repair assets missing; run build_actin_films.py --steps prepare for this project first')
     if (selected==['all'] or 'f03' in selected) and not (ROOT/'assets/fh2-seed-repairs.json').exists():
         raise ValueError('FH2 seed assets missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or set(selected)&{'f04','f07'}) and not (ROOT/'assets/fh2-growth.json').exists():
+        raise ValueError('FH2 growth assets missing; run build_actin_films.py --steps prepare for this project first')
     methods={'a01':lambda s:input_scene(s),'f01':lambda s:input_scene(s,True),'a02':wrc_scene,
              'c01':supply_scene,'a03':nucleate_branch,'a04':branch_growth,'a08':lambda s:branch_growth(s,True),
              'f02':autoinhib,'f03':formin_seed,'f04':formin_growth,'f07':lambda s:formin_growth(s,True),

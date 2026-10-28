@@ -131,12 +131,6 @@ def main():
     (ROOT/'assets/cap-fit.json').write_text(json.dumps({'matrix':matrix,'CA_RMSD_nm':rmsd,'source':'8F8Q chain F','target':'9B27 chain F'},indent=2))
     matrix,rmsd=fit(f,np.load(ROOT/'assets/7TPT/K.npz'))
     (ROOT/'assets/actin-target-fits.json').write_text(json.dumps({'branch_K':matrix,'CA_RMSD_nm':rmsd,'source':'9B27 chain F','target':'7TPT chain K'},indent=2))
-    head_fits={}
-    for first,second in [('G','H'),('H','G')]:
-        matrix,rmsd=fit(np.load(ROOT/'assets/9B27'/f'{first}.npz'),np.load(ROOT/'assets/9B27'/f'{second}.npz'))
-        head_fits[f'{first}_to_{second}']=matrix
-        head_fits[f'{first}_to_{second}_CA_RMSD_nm']=rmsd
-    (ROOT/'assets/formin-head-fit.json').write_text(json.dumps(head_fits,indent=2))
     (ROOT/'assets/manifest.json').write_text(json.dumps({
       'structures':list(overview),'morph':{'source_G':'2BTF bovine beta-actin, crystallographic Sr/ATP condition',
       'source_F':'9B27 rabbit skeletal alpha-actin ADP state','method':'CA-guided inverse-distance deformation of F surface; schematic state interpolation, not MD',

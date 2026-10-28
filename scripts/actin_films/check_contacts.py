@@ -16,6 +16,7 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--shots',default='a03,a04,a05,a07,c01,c04,c05,f03,f04,f06')
     p.add_argument('--threshold',type=float,default=.12,help='Atomic-center distance in nm; use .20 for the stricter contact screen')
     p.add_argument('--fail-on-overlap',action='store_true')
+    p.add_argument('--summary',default='contacts-summary.json',choices=('contacts-summary.json','strict-contacts-summary.json'))
     a=p.parse_args();reports=[]
     if not np.isfinite(a.threshold) or a.threshold<=0:p.error('--threshold must be positive and finite')
     search_radius=max(.5,a.threshold)
@@ -59,8 +60,8 @@ def main():
                 'limits':'Atomic centers only; missing atoms, ligands, environmental proteins excluded. G/F atom interpolation is a source-guided approximation.'}
         (folder/'contacts.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
         reports.append(result);print(id,len(results),'flagged pairs',flush=True)
-    (ROOT/'validation/contacts-summary.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
+    (ROOT/'validation'/a.summary).write_text(json.dumps(reports,ensure_ascii=False,indent=2)+'\n')
     if a.fail_on_overlap and any(r['flagged_pairs'] for r in reports):
-        raise SystemExit('Contact screen failed; see contacts-summary.json')
+        raise SystemExit('Contact screen failed; see '+a.summary)
 
 if __name__=='__main__':main()
