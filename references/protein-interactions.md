@@ -58,7 +58,7 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 
 磷酸转移已有独立的 [PKAc/SP20 实例](phosphotransfer.md)，包含供体、产物及原子身份变化。它与局部结合入口分别实现，不把结合视频重新命名为催化视频。
 
-[Ras/SOS 核苷酸交换](ras-switch.md) 提供联动的蛋白开口与配体进出；旧 GDP 和新 GTP 保持不同身份。它只覆盖 GEF 交换，GAP 水解仍需独立的反应原子账本和释放动作。
+[Ras/SOS 核苷酸交换及 Ras/p120GAP 水解](ras-switch.md) 提供两个独立入口：前者保留旧 GDP 与新 GTP 的不同身份，后者跟踪同一 GTP 的 γ-磷酸与水中氧形成 Pi、产物释放及 GDP 构象复位。两段均检查完整时序；把它们衔接成状态循环时还需核对同一核苷酸的身份和坐标。
 
 | 作用 | 需要额外实现的机制内容 |
 |---|---|

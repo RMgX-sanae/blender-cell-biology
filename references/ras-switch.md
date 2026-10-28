@@ -2,7 +2,7 @@
 
 这组入口把核苷酸交换单独实现为一个可重建的机制示例：SOS 接近、Ras 开口、旧 GDP 释放、无核苷酸复合物、新 GTP 装载、SOS 离开。两个核苷酸身份不同，原有共价键不变。GEF 不是把结合的 GDP 磷酸化为 GTP。
 
-当前可执行动画对应 **SOS 促进的交换**。GAP 水解还需独立实现 γ-磷酸键断裂、水中氧进入 Pi、蛋白结合 Pi、Pi 释放与构象复位；不能把交换视频称为完整 Ras 循环。资产准备保留 GAP 状态和失败的刚体路径报告，为后续开发提供可检查的起点。
+另一个可执行入口覆盖 **p120GAP 促进的水解**：GAP 接近、反应构象调整、γ-磷酸键断裂、水中氧进入 Pi、蛋白结合 Pi、Pi 释放与 GDP 构象复位。两段分别重建和检查；单独的交换或水解视频都不能称为完整 Ras 信号通路。两段尚需在同一场景内衔接并检查身份交接，才能作为连续的状态循环。
 
 ## 来源与构建体
 
@@ -42,7 +42,41 @@ done
   --ffmpeg "$FFMPEG" --fps 24 --frames 576 --output "$PROJECT/scene/video-check"
 ```
 
-`--mode continuous` 去掉阶段之间的停留，仍完整保留交换事件。它从 Ras–GDP 到 Ras–GTP，**不是化学闭环**；不能在最后一帧把 GTP 重置成 GDP。要做循环，先补上 GAP 催化水解与产物释放，再检查循环接缝和核苷酸身份交接。
+`--mode continuous` 去掉交换阶段之间的停留，仍完整保留事件。它从 Ras–GDP 到 Ras–GTP，**不是化学闭环**；不能在最后一帧把 GTP 重置成 GDP。衔接下方水解入口时，水解的 GTP 必须是交换进入的同一个分子。首轮离开的旧 GDP 与水解形成的新 GDP 身份不同，状态循环不等于封闭物质循环。
+
+## 重建 GAP 水解动画
+
+复用上面从公开结构准备的 `assets` 和 `sources`，不依赖交换工程或已有渲染结果。两个模式使用相同反应事件：`continuous` 连续推进，`teaching` 增加反应前后停留。默认 576 帧、24 fps 是教学节奏，不是实验速率。
+
+```bash
+"$PYTHON" "$SKILL/scripts/prepare_ras_hydrolysis_motion.py" \
+  --asset-dir "$PROJECT/assets" --sources "$PROJECT/sources" \
+  --output "$PROJECT/hydrolysis-motion" --mode continuous --frames 576 --fps 24
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_ras_hydrolysis_scene.py" -- \
+  --motion-dir "$PROJECT/hydrolysis-motion" --output "$PROJECT/hydrolysis-scene" \
+  --font-zh "$FONT_ZH" --font-en "$FONT_EN" --width 1280 --engine eevee --samples 32 --render
+"$BLENDER" -b "$PROJECT/hydrolysis-scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_ras_hydrolysis_scene.py" -- \
+  --output "$PROJECT/hydrolysis-scene/scene-audit.json"
+"$BLENDER" -b "$PROJECT/hydrolysis-scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/hydrolysis-scene/frames" --frames all
+"$PYTHON" "$SKILL/scripts/encode_video.py" "$PROJECT/hydrolysis-scene" --ffmpeg "$FFMPEG"
+"$PYTHON" "$SKILL/scripts/audit_video.py" "$PROJECT/hydrolysis-scene/preview.mp4" \
+  --ffmpeg "$FFMPEG" --fps 24 --frames 576 --output "$PROJECT/hydrolysis-scene/video-check"
+```
+
+两个场景生成器均可传入 `--environment-dir "$PROJECT/environment"`，加入默认的细胞微结构景深背景；公开资产准备见 [cellular-environment.md](cellular-environment.md)。背景是来源形状的示意摆放，不参与反应区的化学或碰撞判断。
+
+水解入口的专项约束：
+
+- 共 34 个化学重原子：GTP 32 + 水中氧 1 + Mg 1，生成 GDP 28 + Pi 5 + Mg 1。PG、O1G/O2G/O3G 始终来自同一个 GTP，Pi 的第四个氧来自 1WQ1 作者链 R 的水 230。没有 Al/F 原子变成磷酸。省略氢、质子转移、质子化状态、电子结构和其他溶剂。
+- 1QRA 的真正 GTP 拟合到 1WQ1 的 GDP 骨架；不为避开 Mg 而任意平移整个 GTP。Pi 末态是理想化四面体，不是已测得的产物晶体。反应键的粗细插值用于表达成键/断键，不是计算得到的键级。
+- 1WQ1 支持 p120GAP Arg789 和 Ras Gln61 的催化构象解释；动画没有计算活化能。蛋白结合 Pi 及其释放/构象复位的定性顺序参考上述 neurofibromin FTIR 工作，不能据此宣称 p120GAP 的相同数值速率或逐原子轨迹。
+- `ras-gap-route.json` 保存来源哈希、整体接近路径和 Lys949/Arg903 的侧链转角。两个侧链随路径调整，其余 GAP 原子保持刚体几何；这些转角是避免穿插的示意安排，不是实测 rotamer 动力学。全部原子保留，检查侧链与其余 GAP 的内部接触。
+- 全时序检查 Ras、GAP、核苷酸骨架、磷酸、水中氧和 Mg 的相关原子对。Mg–磷酸氧的特定短距离配位按源结构处理；不得把全局 0.20 nm 阈值降下来。需要时记录局部平滑的 GAP 刚体绕行和单个 Mg 位移，端点位移与速度均为零，再检查所有伙伴。
+- 从保存的工程重新读取形变坐标、双视图变换和反应键；独立核对 CCD 图、34 个身份、反应前连通分量 32/1/1 与产物 28/5/1、Pi 释放时的刚体几何、GDP 终点和逐帧字幕。几何检查通过后仍需查看编码视频，尤其是水中氧遮挡和 Pi 离开方向。
 
 ## 几何、化学与画面验收
 
