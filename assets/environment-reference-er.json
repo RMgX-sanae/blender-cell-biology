@@ -1,0 +1,26 @@
+{
+  "provider": "Jennifer Lippincott-Schwartz, Howard Hughes Medical Institute Janelia Research Campus; NIGMS Image Gallery 5855",
+  "reference": "https://www.nigms.nih.gov/image-gallery/5855",
+  "url": "https://www.nigms.nih.gov/sites/nigms/files/image-and-video-gallery/Figure%203A.png",
+  "sha256": "10c1f69eaa574b9ab35f6ef2768bd389330b42a19f0ecf1872133be1c465cbd6",
+  "license": "CC BY-NC-SA 3.0",
+  "license_url": "https://creativecommons.org/licenses/by-nc-sa/3.0/",
+  "terms_source": "https://www.nigms.nih.gov/image-gallery",
+  "subject": "Super-resolution microscopy of peripheral endoplasmic reticulum",
+  "crop_bottom_left_xywh": [150, 260, 2240, 1400],
+  "gamma": 0.48,
+  "white_point": 0.7,
+  "blur_at_1280": 13,
+  "palette": {
+    "dark": ["102632", "486965"],
+    "light": ["DCE5E4", "A8BBB3"]
+  },
+  "network": {
+    "trace_width": 1120,
+    "threshold": 0.19,
+    "seed": 28,
+    "depth_amplitude": 0.45
+  },
+  "processing": "Crop excludes the source scale/color bar; aspect-preserving scale, monochrome recoloring and fixed-plane defocus. Original intensity and depth colors are not retained as data.",
+  "scope": "Illustrative context, not a microscopy volume reconstruction or a measured neighborhood of the foreground mitochondrion. The direct image path is a fixed backplate; the traced-network path has authored 3D depth. Credit the provider and source page; license adapted outputs under CC BY-NC-SA 3.0."
+}

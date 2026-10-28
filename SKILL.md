@@ -33,6 +33,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 参考图、截图、视频关键帧的风格识别与模仿 | [style-from-reference.md](references/style-from-reference.md) |
 | 扩展参考风格、几何节点、插画/透明/丝带/密度/显微外观小样 | [style-library.md](references/style-library.md)：18 类可执行起点、来源目录、参数与迁移方法；显微外观是示意，不能冒充真实成像 |
 | 组合渲染滤镜、保护文字、主体强调与景深层次 | [render-recipes.md](references/render-recipes.md)：可编辑有序节点链、引擎与 pass 限制、实际画面检查 |
+| 细胞、细胞器、膜和分子的背景风格对照 | [cellular-environment.md](references/cellular-environment.md)：按尺度选择环境，浅/深底、独立景深层与高反差分隔线 |
 | 将结合/释放动作推广到不同蛋白、肽段与抑制剂 | [protein-interactions.md](references/protein-interactions.md)：明确源构象、保留配体、逐帧路径检查与独立动画模式 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
 | GEF 促进 GDP 释放与新 GTP 装载 | [ras-switch.md](references/ras-switch.md)：Ras/SOS 联动、完整核苷酸身份与同步双视图；GAP 水解另行实现 |

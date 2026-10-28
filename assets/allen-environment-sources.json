@@ -1,0 +1,54 @@
+{
+  "provider": "Allen Institute for Cell Science, Visual Guide to Human Cells",
+  "reference": "https://www.allencell.org/visual-guide-to-human-cells.html",
+  "terms": "https://alleninstitute.org/legal/terms-of-use",
+  "terms_summary": "Noncommercial research and educational use with attribution; see original terms. Downloaded assets are not distributed in the skill repository.",
+  "assets": [
+    {
+      "name": "er-cell",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/endoplasmic-reticulum/interphase/membrane.obj",
+      "sha256": "9b5d8b39eef93891371dfe47190b6d34e402e73d454ef1c9ed4ee4fe41779a29"
+    },
+    {
+      "name": "er-dna",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/endoplasmic-reticulum/interphase/dna.obj",
+      "sha256": "d33e1c3ae73e1538d7cd88c00d32fea9a6b1ef8c366af41ab98f26f5401962b3"
+    },
+    {
+      "name": "mito-cell",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/mitochondria/interphase/membrane.obj",
+      "sha256": "d7a557d5d29ef3aaa904cc1caaa7b09da07eb53fe22aaf1f4d99bacb765024b1"
+    },
+    {
+      "name": "mito-dna",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/mitochondria/interphase/dna.obj",
+      "sha256": "cb6b6cae636ce5c6c6580af301456eb92117da5e0bb91480249d4cbefcb006c9"
+    },
+    {
+      "name": "golgi-cell",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/golgi-apparatus/interphase/membrane.obj",
+      "sha256": "93883072c4227139ebbc47dad1094e605ccaa47d2c4854d49fcb8220a27364a3"
+    },
+    {
+      "name": "golgi-dna",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/golgi-apparatus/interphase/dna.obj",
+      "sha256": "4d9bde9b94d577bb5f0a48f10939d0b28417b1751581bf337c18343d398188e8"
+    },
+    {
+      "name": "er-structure",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/endoplasmic-reticulum/interphase/structure.obj",
+      "sha256": "ab6d8333cc949612c7092655af0677fd2ce817d1035ef1bba682b753fb21f1f9"
+    },
+    {
+      "name": "mito-structure",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/mitochondria/interphase/structure.obj",
+      "sha256": "030311cada8790395fa098fc0141a357fd1d0e9b557e62ccb4f50ed4f745bb4c"
+    },
+    {
+      "name": "golgi-structure",
+      "url": "https://d31eht1ctw6dw3.cloudfront.net/visual-cell/cell-structure-3d-data/golgi-apparatus/interphase/structure.obj",
+      "sha256": "9d12a4aab6781a12645a3637c324c58ef75ed07715876b9dbfc0cd8c0c71f862"
+    }
+  ],
+  "asset_use": "Public single-structure interphase display meshes used as background shape references, retaining the microscopy-resolution limitations. Not atomic or tomographic models."
+}

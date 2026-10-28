@@ -21,6 +21,10 @@ validation/
 *.gif
 *.npz
 *.npy
+*.obj
+*.stl
+*.glb
+*.gltf
 *.ttf
 *.otf
 *.ttc
