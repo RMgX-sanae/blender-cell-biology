@@ -273,7 +273,7 @@ class Shot:
         W=self.scene_scale
         self.text(self.c['title'],(0,-75,W*.244),W*.025)
         for i,beat in enumerate(self.c['beats']):
-            obj=self.text(beat,(0,-75,W*.192),W*.017)
+            obj=self.text(beat,(0,-75,W*.192),W*(.022 if self.c['id']=='f03' else .017))
             self.visibility(obj,i/3,1 if i==2 else (i+1)/3-1/self.n)
         # A few whole source-derived background proteins give depth; their
         # illustrative placement/density is explicitly not a cell measurement.
@@ -403,11 +403,55 @@ def formin_setup(s,actin_chains='ABCDEF'):
 
 def formin_seed(s):
     s.scene_scale=64
-    core,fr,heads=formin_setup(s,'DEF')
-    for i,o in enumerate(core):s.docking(o,Matrix.Identity(4),(.15+i*.16,.33+i*.16),Vector(s.plans['seed_'+list('DEF')[i]]['offset'])*.5)
-    s.center(core+heads,offset=(-1,0,0),rotation=R(-12))
-    s.text('FH2 二聚体', (9,-13,4.5),.95)
-    s.text('极性短丝',(-7,-13,-4.5),.95)
+    repairs=json.loads((ROOT/'assets/fh2-seed-repairs.json').read_text())
+    core=[s.asset('9B27',c,color='blue' if i%2 else 'teal') for i,c in enumerate('DEF')]
+    heads={}
+    for chain,partner in [('G','H'),('H','G')]:
+        obj=s.asset('fh2_seed',chain,name='FH2 body '+chain+' / partner lasso '+partner,
+                    color='pink' if chain=='G' else 'green')
+        obj.data.materials.append(s.mats['green' if chain=='G' else 'pink'])
+        obj.data.polygons.foreach_set('material_index',s.cached[('fh2_seed',chain)]['material_indices'].astype(np.int32))
+        obj['source_structure']='9B27';obj['source_chain']=chain+' body; '+partner+' lasso'
+        obj['geometry_evidence']='All original source vertices and faces retained; only existing unresolved-linker gaps separate rigid groups'
+        heads[chain]=obj
+    for chain,obj in zip('DEF',core):
+        record=repairs['motions'][chain]
+        s.docking(obj,Matrix.Identity(4),repairs['intervals'][chain],record['offset'],repair=record)
+    head=heads['H'];offset=Vector(repairs['motions']['H']['offset'])
+    side=offset.cross(Vector((0,0,1))).normalized()*1.2
+    for f in range(1,s.n+1):
+        u=(f-1)/(s.n-1);first,last=repairs['opening'];a,b=repairs['closing']
+        d=smooth((u-first)/(last-first))*(1-smooth((u-a)/(b-a)));far=max(0,(d-.5)*2)
+        correction=sample_detour(d,repairs['motions']['H'])
+        head.location=offset*d+side*math.sin(math.pi*far)**2+Vector(correction[:3])
+        head.keyframe_insert('location',frame=f)
+    linkers=[];linker_checks=[]
+    for record in repairs['linkers']:
+        obj=path('Unresolved FH2 linker '+record['chain'],[(0,0,0)]*21,.055,
+                 s.mats['pink' if record['chain']=='G' else 'green'],s.groups['Schematics'])
+        obj['geometry_evidence']=record['representation'];linkers.append(obj);lengths=[]
+        obj['source_linker_contour_nm']=record['contour_upper_bound_nm']
+        obj['linker_anchor_start']={'object':heads[record['start_lobe']].name,'position':record['start']}
+        obj['linker_anchor_end']={'object':heads[record['end_lobe']].name,'position':record['end']}
+        for f in range(1,s.n+1):
+            bpy.context.scene.frame_set(f);bpy.context.view_layer.update()
+            a=heads[record['start_lobe']].matrix_basis@Vector(record['start'])
+            b=heads[record['end_lobe']].matrix_basis@Vector(record['end'])
+            radial=Vector((0,(a.y+b.y)/2,(a.z+b.z)/2)).normalized()
+            points=[a.lerp(b,t/20)+radial*(.4*math.sin(math.pi*t/20)) for t in range(21)]
+            length=sum((y-x).length for x,y in zip(points,points[1:]));lengths.append(length)
+            if length>record['contour_upper_bound_nm']:
+                raise ValueError('Schematic FH2 linker exceeds its residue contour bound')
+            for point,position in zip(obj.data.splines[0].points,points):
+                point.co=(*position,1);point.keyframe_insert('co',frame=f)
+        linker_checks.append({'chain':record['chain'],'maximum_curve_length_nm':max(lengths),
+                              'contour_upper_bound_nm':record['contour_upper_bound_nm']})
+    s.events.append({'object':'FH2 seed assembly','action':'Sequential intact monomers with one rigid functional lobe opening and returning',
+                     'limits':repairs['limits'],'unresolved_linker_checks':linker_checks})
+    s.center(core+list(heads.values())+linkers,offset=(-1,0,0),rotation=R(-12))
+    s.text('FH2 二聚体',(17,-40,5.5),1.4)
+    free=s.text('游离单体',(-12,-40,-11),1.4);s.visibility(free,0,.48)
+    seed=s.text('极性短丝',(-9,-40,-8),1.4);s.visibility(seed,.48,1)
 
 def formin_growth(s,reentry=False):
     s.scene_scale=92
@@ -633,6 +677,8 @@ def main():
     config=json.loads((ROOT/'storyboard.json').read_text());selected=a.shots.split(',')
     if (selected==['all'] or set(selected)&{'a05','a07','c05','f06'}) and not (ROOT/'assets/contact-repairs.json').exists():
         raise ValueError('Contact repair assets missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or 'f03' in selected) and not (ROOT/'assets/fh2-seed-repairs.json').exists():
+        raise ValueError('FH2 seed assets missing; run build_actin_films.py --steps prepare for this project first')
     methods={'a01':lambda s:input_scene(s),'f01':lambda s:input_scene(s,True),'a02':wrc_scene,
              'c01':supply_scene,'a03':nucleate_branch,'a04':branch_growth,'a08':lambda s:branch_growth(s,True),
              'f02':autoinhib,'f03':formin_seed,'f04':formin_growth,'f07':lambda s:formin_growth(s,True),

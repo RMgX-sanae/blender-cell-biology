@@ -21,6 +21,9 @@ def scan(folder):
     obs=sorted(scene.objects,key=lambda o:o.name)
     molecules=[o for o in obs if o.get('atoms_file')]
     transforms=[];shapes=[];gates=[];visible=[];keys=[];framing=[]
+    linker_checks={o.name:{'maximum_curve_length_nm':0.,'maximum_anchor_error_nm':0.,
+                          'contour_upper_bound_nm':float(o['source_linker_contour_nm'])}
+                   for o in obs if o.get('source_linker_contour_nm')}
     W=scene.camera.data.ortho_scale
     for f in range(scene.frame_start,scene.frame_end+1):
         scene.frame_set(f);bpy.context.view_layer.update()
@@ -32,6 +35,21 @@ def scan(folder):
             h.update(np.round(np.array(o.matrix_world),7).tobytes())
             if o.type=='MESH' and o.data.shape_keys:
                 h.update(np.array([k.value for k in o.data.shape_keys.key_blocks],dtype=np.float32).tobytes())
+            if o.type=='CURVE':
+                for spline in o.data.splines:
+                    h.update(np.array([p.co[:] for p in spline.points],dtype=np.float32).tobytes())
+                    for point in spline.bezier_points:
+                        h.update(np.array([point.co[:],point.handle_left[:],point.handle_right[:]],dtype=np.float32).tobytes())
+            if o.name in linker_checks:
+                points=[o.matrix_world@Vector(p.co[:3]) for p in o.data.splines[0].points]
+                length=sum((b-a).length for a,b in zip(points,points[1:]))
+                item=linker_checks[o.name];item['maximum_curve_length_nm']=max(item['maximum_curve_length_nm'],length)
+                for label,point in [('start',points[0]),('end',points[-1])]:
+                    anchor=o['linker_anchor_'+label]
+                    expected=scene.objects[anchor['object']].matrix_world@Vector(anchor['position'])
+                    item['maximum_anchor_error_nm']=max(item['maximum_anchor_error_nm'],(expected-point).length)
+                if length>item['contour_upper_bound_nm']+1e-5 or item['maximum_anchor_error_nm']>1e-4:
+                    raise ValueError('Saved FH2 linker exceeds its contour bound or has detached endpoints: '+o.name)
         for node in scene.compositing_node_group.nodes:
             if node.bl_idname=='CompositorNodeAlphaOver':
                 h.update(np.array([node.inputs['Factor'].default_value],dtype=np.float32).tobytes())
@@ -55,6 +73,7 @@ def scan(folder):
     report={'frames':len(keys),'unique_visual_states':len(set(keys)),
             'positive_orientation':bool(np.all(determinants>0)),'max_orthogonality_error':error,
             'finite':bool(np.isfinite(matrices).all()),'framing_warning_frames':len(set(r['frame'] for r in framing)),
+            'unresolved_linker_checks':linker_checks,
             'framing_examples':framing[::max(1,len(framing)//30)][:30],
             'molecules':[{'name':o.name,'asset':o['atoms_file'],'source':o.get('source_structure'),
                           'biological_id':o.get('biological_id')} for o in molecules]}

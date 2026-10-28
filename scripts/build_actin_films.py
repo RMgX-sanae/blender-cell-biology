@@ -170,6 +170,7 @@ def main():
         python(CHAPTERS/'prepare_head_morphs.py')
         python(CHAPTERS/'plan_clear_approaches.py')
         python(CHAPTERS/'prepare_contact_repairs.py')
+        python(CHAPTERS/'prepare_fh2_seed.py')
     if 'build' in stages:
         python(CHAPTERS/'write_storyboard.py')
         blender(CHAPTERS/'build_shots.py', '--shots', args.shots, *(['--preview'] if args.preview else []))

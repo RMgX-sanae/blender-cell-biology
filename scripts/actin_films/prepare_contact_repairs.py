@@ -94,16 +94,17 @@ def repair_path(points, obstacles, offset, far_shift=(0, 0, 0)):
     return result
 
 
-def repair_rigid_release(points, obstacles, pivot, offset, far_shift=(0,0,0)):
+def repair_rigid_release(points, obstacles, pivot, offset, far_shift=(0,0,0), *,
+                         samples=61, clearance=.218, iterations=500):
     """Withdraw an intact daughter filament or FH2 dimer with a rigid turn."""
     centered = points-pivot
     tree = cKDTree(obstacles)
     offset = np.array(offset, dtype=float)
-    fraction = np.linspace(0, .25, 61)
+    fraction = np.linspace(0, .25, samples)
     travel = fraction[:, None]*offset
     knots = np.r_[np.zeros(4), np.linspace(0,1,7)[1:-1], np.ones(4)]
     basis = BSpline(knots, np.eye(len(knots)-4), 3)(fraction/.25)[:,2:-2]
-    count = basis.shape[1];target = .218
+    count = basis.shape[1];target = clearance
 
     def objective(flat):
         controls = flat.reshape(count,6);poses = basis@controls
@@ -127,7 +128,7 @@ def repair_rigid_release(points, obstacles, pivot, offset, far_shift=(0,0,0)):
 
     fit = minimize(objective,np.zeros(count*6),jac=True,method='L-BFGS-B',
         bounds=([(-1.,1.)]*3+[(-.3,.3)]*3)*count,
-        options={'maxiter':500,'ftol':1e-12,'gtol':1e-7,'maxls':40})
+        options={'maxiter':iterations,'ftol':1e-12,'gtol':1e-7,'maxls':40})
     controls = np.vstack([np.zeros((2,6)),fit.x.reshape(count,6),np.zeros((2,6))])
     spline = BSpline(knots,controls,3)
     side = np.cross(offset,[0,0,1]);side *= 1.2/np.linalg.norm(side)
