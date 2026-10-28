@@ -271,9 +271,9 @@ class Shot:
         if hasattr(scene,'eevee') and hasattr(scene.eevee,'taa_render_samples'):
             scene.eevee.taa_render_samples=OPTIONS['samples']
         W=self.scene_scale
-        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if self.c['id'] in {'f04','f07'} else .025))
+        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if self.c['id'] in {'f02','f04','f07'} else .025))
         for i,beat in enumerate(self.c['beats']):
-            obj=self.text(beat,(0,-75,W*.192),W*(.026 if self.c['id'] in {'f04','f07'} else .022 if self.c['id']=='f03' else .017))
+            obj=self.text(beat,(0,-75,W*.192),W*(.026 if self.c['id'] in {'f02','f04','f07'} else .022 if self.c['id']=='f03' else .017))
             self.visibility(obj,i/3,1 if i==2 else (i+1)/3-1/self.n)
         # A few whole source-derived background proteins give depth; their
         # illustrative placement/density is explicitly not a cell measurement.
@@ -388,13 +388,17 @@ def branch_growth(s,reentry=False):
 
 def autoinhib(s):
     s.scene_scale=38
+    record=json.loads((ROOT/'assets/actin-path-repairs.json').read_text())
+    if not record['passed']:raise ValueError('Regulatory release preparation failed; prepare this project again')
     rig,obs=s.compound('2BAP',list('ABCD'),['teal','blue','gold','gold'])
-    for i,o in enumerate(obs[2:]):s.docking(o,Matrix.Identity(4),(.23,.43),s.plans['dad_'+list('CD')[i]]['offset'],release=True)
-    s.center(obs,offset=(-1,0,-1),rotation=R(-20,'Z'))
-    s.node('RhoA–GTP',10,3,'green',8)
-    s.arrow((7,0,1.5),(3,0,-.3),'green')
-    s.text('DID / 二聚化调控片段',(-4,-12,-4.8),.83)
-    s.text('DAD 抑制片段',(-4,-12,5),.83)
+    for i,o in enumerate(obs[2:]):
+        path_record=record['motions']['dad_'+list('CD')[i]]
+        s.docking(o,Matrix.Identity(4),(.23,.43),path_record['offset'],release=True,repair=path_record)
+    s.center(obs,offset=(-2,0,0),rotation=R(60,'Y')@R(-90,'X')@R(-20,'Z'))
+    s.text('RhoA–GTP',(11,-14,3),1.2)
+    s.arrow((7,0,1.5),(2.5,0,.7),'green')
+    s.text('DID / 二聚化调控片段',(-7,-40,5.6),.95)
+    s.text('金色：DAD 抑制片段',(-8,-40,-8.3),1.05)
 
 def formin_setup(s,actin_chains='ABCDEF'):
     fr,heads=s.compound('9B27',['G','H'],['pink','green'],name='FH2 dimer')
@@ -703,6 +707,8 @@ def main():
         raise ValueError('FH2 seed assets missing; run build_actin_films.py --steps prepare for this project first')
     if (selected==['all'] or set(selected)&{'f04','f07'}) and not (ROOT/'assets/fh2-growth.json').exists():
         raise ValueError('FH2 growth assets missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or 'f02' in selected) and not (ROOT/'assets/actin-path-repairs.json').exists():
+        raise ValueError('Regulatory path preparation missing; run build_actin_films.py --steps prepare for this project first')
     methods={'a01':lambda s:input_scene(s),'f01':lambda s:input_scene(s,True),'a02':wrc_scene,
              'c01':supply_scene,'a03':nucleate_branch,'a04':branch_growth,'a08':lambda s:branch_growth(s,True),
              'f02':autoinhib,'f03':formin_seed,'f04':formin_growth,'f07':lambda s:formin_growth(s,True),

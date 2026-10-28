@@ -169,6 +169,7 @@ def main():
         python(CHAPTERS/'prepare_assets.py')
         python(CHAPTERS/'plan_clear_approaches.py')
         python(CHAPTERS/'prepare_contact_repairs.py')
+        python(CHAPTERS/'prepare_actin_paths.py')
         python(CHAPTERS/'prepare_fh2_seed.py')
         python(CHAPTERS/'prepare_fh2_growth.py')
     if 'build' in stages:
@@ -182,7 +183,7 @@ def main():
         blender(CHAPTERS/'render_chapters.py', '--shots', args.shots, '--audit-only')
         blender(CHAPTERS/'audit_saved_assets.py')
         python(CHAPTERS/'check_contacts.py', *([] if args.shots=='all' else ['--shots',args.shots]))
-        repaired = ['a05','a07','c05','f03','f04','f06','f07']
+        repaired = ['a05','a07','c05','f02','f03','f04','f06','f07']
         strict = repaired if args.shots=='all' else [name for name in repaired if name in args.shots.split(',')]
         if strict:
             python(CHAPTERS/'check_contacts.py', '--shots', ','.join(strict),
