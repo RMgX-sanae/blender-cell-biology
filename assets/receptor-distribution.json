@@ -1,0 +1,43 @@
+{
+  "name": "Endosomal beta2AR-Gs distribution hypotheses",
+  "source_id": "3SN6",
+  "source_preset": "beta2",
+  "chains": ["R", "A", "B", "G"],
+  "surface": {"kind": "ellipsoid", "semiaxes_nm": [60, 46, 42]},
+  "local_positive_z": "inward",
+  "display": {
+    "context_label": "内体膜 · Gs 位于胞质侧",
+    "camera_position_nm": [0, -240, 100],
+    "camera_target_nm": [0, 0, 0],
+    "camera_scale_nm": 235,
+    "membrane_palette": {"dark": {"heads": "768081", "core": "566569"}, "light": {"heads": "D0D4C9", "core": "BFC3B8"}},
+    "legend": [{"chain": "R", "label": "β2AR"}, {"chain": "A", "label": "Gαs"}, {"chain": "B", "label": "Gβ"}, {"chain": "G", "label": "Gγ"}]
+  },
+  "orientation_evidence": "prepare_molecular_asset beta2 uses UniProt P07550 TM ends to infer +Z extracellular. On an endosome it faces the lumen; the negative-Z Gs partner faces cytosol. Membrane origin/orientation are inferred, not an experimental membrane plane.",
+  "count": 48,
+  "seed": 31,
+  "minimum_anchor_nm": 10,
+  "atom_clearance_nm": 0.20,
+  "excluded_spheres": [{"center_nm": [-60, 0, 0], "radius_nm": 16}],
+  "distribution": "uniform",
+  "fields": {
+    "uniform": {"kind": "uniform"},
+    "clustered": {"kind": "clustered", "background": 0.10, "clusters": [
+      {"center_nm": [-26, -38, 16], "sigma_nm": 14, "amplitude": 6},
+      {"center_nm": [31, -29, -19], "sigma_nm": 14, "amplitude": 6}
+    ]},
+    "polarized": {"kind": "polarized", "plane_normal": [0, 0, 1], "plane_offset_nm": 8, "enrichment": 10}
+  },
+  "biological_context": "Schematic endosomal membrane. beta2AR/Gs signaling on early endosomes is supported by Irannejad et al. 2013; the size, count, shape, clusters, excluded cap and all complexes being Gs-associated are illustrative choices, not observations from that study.",
+  "sources": [
+    {"url": "https://www.rcsb.org/structure/3SN6", "role": "3.20 A X-ray active-state beta2AR/nucleotide-free Gs shape; engineered and mixed-species construct"},
+    {"url": "https://doi.org/10.1038/nature10361", "role": "Structure primary citation"},
+    {"url": "https://www.nature.com/articles/nature12000", "role": "Endosomal beta2AR/Gs signaling context; publisher abstract read, no density or cluster parameters derived"}
+  ],
+  "construct_limits": [
+    "Human beta2AR construct plus bovine G-alpha-s/gamma and rat beta-1; do not relabel as an intact native human complex.",
+    "Preserves every selected resolved polymer atom. R residues below 400 retain the receptor portion; engineered T4 fusion and nanobody N are excluded as whole selected components.",
+    "Non-polymer P0G agonist is omitted by this surface preset, not interpreted as absence of agonist or an inactive state. No activation/binding animation is claimed.",
+    "Source substitutions, unresolved loops/termini, lipid anchors and missing glycans are not repaired."
+  ]
+}

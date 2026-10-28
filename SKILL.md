@@ -70,6 +70,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 骨架装配与拆解 | `prepare_filament_assets.py` + `build_polymer_scene.py`，复用 8F8R/8F8Q/7AQK/3J6F；模板、命令与边界见 polymer-templates |
 | 肌动蛋白化学状态与完整流程计划检查 | `prepare_actin_states.py` + `build_actin_state_comparison.py` 保留 8A2R/S/T 配体并生成静态对照；`audit_mechanism_plan.py` 检查计划覆盖与闭环，不证明全流程成片完成 |
 | 膜受体、转录复合物、运输 | `build_molecular_scene.py`：3SN6/5FLM/4HNA；只有 motor 内置过程动画 |
+| 曲面受体分布与膜内外朝向 | `prepare_receptor_distribution.py` + `build_receptor_distribution_scene.py`：完整 3SN6 实例、均匀/成簇/极性强度、排除区和全复合物间距；可选浅/深风格与合成器，详见 receptors-and-distributions |
 | 核糖体与复制复合体结构 | `build_complex_scene.py`：9SPI/7PFO 完整装配或完整隐藏部分亚基的内部视图，属于静态结构 |
 | 翻译延伸的底物循环 | `build_translation_scene.py`：9SPI 衍生 tRNA/mRNA，示意的进入、短肽转移、三核苷酸转位；完整单体分层展示，非完整催化循环 |
 | 转录中的一个核苷酸加入 | `prepare_transcription.py` + `build_transcription_scene.py`：5FLM 产物与 CCD CTP，明确标注的底物接近/连接变化/PPi 离开 |
