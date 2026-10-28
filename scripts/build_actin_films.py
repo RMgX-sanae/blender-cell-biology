@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 SKILL = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL / 'scripts'
 CHAPTERS = SCRIPTS / 'actin_films'
-SOURCES = ['7USC', '7USE', '1K8K', '7TPT', '9B27', '2BTF', '6VAO',
+SOURCES = ['7USC', '7USE', '1K8K', '7TPT', '9B27', '2BTF', '6VAO', '6UC4',
            '6FM2-assembly1', '2BAP', '1FOE', '4JD2', '8F8R', '8F8Q',
            '7AQK', '3J6F', '8A2R', '8A2S', '8A2T', '1UBQ']
 QUALITY = {'draft': {'width': 640, 'samples': 8, 'fps': 12},
@@ -170,6 +170,9 @@ def main():
         python(CHAPTERS/'plan_clear_approaches.py')
         python(CHAPTERS/'prepare_contact_repairs.py')
         python(CHAPTERS/'prepare_actin_paths.py')
+        python(CHAPTERS/'prepare_branch_paths.py')
+        python(CHAPTERS/'prepare_branch_growth.py')
+        python(CHAPTERS/'prepare_cofilin_paths.py')
         python(CHAPTERS/'prepare_fh2_seed.py')
         python(CHAPTERS/'prepare_fh2_growth.py')
     if 'build' in stages:
@@ -183,7 +186,7 @@ def main():
         blender(CHAPTERS/'render_chapters.py', '--shots', args.shots, '--audit-only')
         blender(CHAPTERS/'audit_saved_assets.py')
         python(CHAPTERS/'check_contacts.py', *([] if args.shots=='all' else ['--shots',args.shots]))
-        repaired = ['a05','a07','c05','f02','f03','f04','f06','f07']
+        repaired = ['a03','a04','a05','a07','a08','c04','c05','f02','f03','f04','f06','f07']
         strict = repaired if args.shots=='all' else [name for name in repaired if name in args.shots.split(',')]
         if strict:
             python(CHAPTERS/'check_contacts.py', '--shots', ','.join(strict),

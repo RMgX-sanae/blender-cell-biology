@@ -70,6 +70,8 @@ class Shot:
         emission=nodes.new('ShaderNodeEmission');emission.inputs['Color'].default_value=(.76,.88,.87,1)
         emission.inputs['Strength'].default_value=.85
         out=nodes.new('ShaderNodeOutputMaterial');self.ink.node_tree.links.new(emission.outputs[0],out.inputs['Surface'])
+        self.diagram_ink=self.ink.copy();self.diagram_ink.name='Dark diagram typography'
+        self.diagram_ink.node_tree.nodes.get('Emission').inputs['Color'].default_value=(.012,.025,.032,1)
         self.font=bpy.data.fonts.load(FONT);self.font.pack()
         self.latin_font=bpy.data.fonts.load(LATIN_FONT);self.latin_font.pack()
 
@@ -209,13 +211,13 @@ class Shot:
         for c in list(obj.users_collection):c.objects.unlink(obj)
         self.groups['Schematics'].objects.link(obj);obj.data.materials.append(self.mats[color])
         mod=obj.modifiers.new('Diagram corner radius','BEVEL');mod.width=.2;mod.segments=3
-        self.text(label,(x,-.1,z),.72);return obj
+        self.text(label,(x,-40,z),1.2,color=self.diagram_ink);return obj
 
     def token(self,label,pos,color='gold',radius=.75):
         p=Parts();p.ball((0,0,0),radius,seg=20,rings=12)
         obj=p.object('Schematic '+label,[self.mats[color]],self.groups['Schematics']);obj.location=pos
-        lab=self.text(label,(0,-radius-.1,0),radius*.72)
-        lab.parent=obj;lab.location=(0,-radius-.1,0)
+        lab=self.text(label,(0,-40,0),radius*.8,color=self.diagram_ink)
+        lab.parent=obj;lab.location=(0,-40,0)
         obj['representation']='chemical/signaling symbol, not atomic scale'
         return obj,lab
 
@@ -271,10 +273,12 @@ class Shot:
         if hasattr(scene,'eevee') and hasattr(scene.eevee,'taa_render_samples'):
             scene.eevee.taa_render_samples=OPTIONS['samples']
         W=self.scene_scale
-        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if self.c['id'] in {'f02','f04','f07'} else .025))
+        readable=self.c['id'] in {'a03','a04','a08','c04','f02','f04','f07'}
+        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if readable else .025))
         for i,beat in enumerate(self.c['beats']):
-            obj=self.text(beat,(0,-75,W*.192),W*(.026 if self.c['id'] in {'f02','f04','f07'} else .022 if self.c['id']=='f03' else .017))
-            self.visibility(obj,i/3,1 if i==2 else (i+1)/3-1/self.n)
+            obj=self.text(beat,(0,-75,W*.192),W*(.026 if readable else .024))
+            boundaries=self.c.get('beat_boundaries',[0,1/3,2/3,1])
+            self.visibility(obj,boundaries[i],1 if i==2 else boundaries[i+1]-1/self.n)
         # A few whole source-derived background proteins give depth; their
         # illustrative placement/density is explicitly not a cell measurement.
         data=np.load(ROOT/'assets/ubiquitin/chain_A.npz')
@@ -342,7 +346,6 @@ def supply_scene(s):
         obj,_=s.token(lab,start,color,.85);s.move(obj,T(*start),T(*end),interval,(0,-1,1.5),'nucleotide exchange symbol')
     s.node('Tβ4 封存池',11,3,'blue',8)
     s.arrow((9,0,1.6),(5,0,-.4))
-    s.text('结合伙伴的分配是示意；ATP/ADP 符号不按原子比例',(0,-12,-6.5),.57)
 
 def branch_setup(s,mother=True,daughter=True,arp=True,parent=None):
     groups={}
@@ -354,37 +357,52 @@ def branch_setup(s,mother=True,daughter=True,arp=True,parent=None):
     return groups
 
 def nucleate_branch(s):
-    s.scene_scale=105
+    s.scene_scale=90
+    record=json.loads((ROOT/'assets/branch-path-repairs.json').read_text())
+    if not record['passed']:raise ValueError('Branch path preparation failed; prepare this project again')
     groups=branch_setup(s)
     arp,arpobs=groups['arp']
-    s.docking(arp,Matrix.Identity(4),(.10,.30),s.plans['arp']['offset'])
+    path_record=record['motions']['arp']
+    s.docking(arp,Matrix.Identity(4),record['intervals']['arp'],path_record['offset'],repair=path_record)
     for i,o in enumerate(groups['daughter'][1]):
-        s.docking(o,Matrix.Identity(4),(.31+i*.10,.43+i*.10),Vector(s.plans['branch_'+list('HIJK')[i]]['offset'])*.5,far_shift=(i*6,i*10,-i))
-        s.visibility(o,.303,1)
+        key='branch_'+list('HIJK')[i];path_record=record['motions'][key]
+        s.docking(o,Matrix.Identity(4),record['intervals'][key],path_record['offset'],far_shift=path_record['far_shift'],repair=path_record)
+        s.visibility(o,record['daughter_reveal'],1)
     allobs=sum([v[1] for v in groups.values()],[])
     comp=s.center(allobs,offset=(0,0,-1),rotation=R(20))
-    s.text('已有母丝',(-15,-15,-8),1.05)
-    s.text('Arp2/3 七亚基',(-10,-15,2),1.05)
-    wca,_=s.token('WCA',(-12,-12,9),'gold',1.1)
-    s.move(wca,T(-12,-12,9),T(-23,-12,11),(.67,.80),(0,0,1),'NPF release symbol')
+    s.text('已有母丝',(-20,-40,-8),1.8)
+    s.text('Arp2/3 七亚基',(-19,-40,2),1.8)
+    wca,wca_label=s.token('WCA',(-24,-40,12.2),'gold',2.2)
+    wca_label.data.materials[0]=s.ink
+    s.move(wca,T(-24,-40,12.2),T(-33,-40,12.2),(.67,.80),(0,0,1),'NPF release symbol')
 
 def branch_growth(s,reentry=False):
-    s.scene_scale=76
+    s.scene_scale=60
     groups=branch_setup(s,mother=False,arp=False)
-    step=s.step('7TPT')
-    fit=Matrix(json.loads((ROOT/'assets/actin-target-fits.json').read_text())['branch_K'])
+    record=json.loads((ROOT/'assets/branch-growth.json').read_text())
+    motion_file=ROOT/'assets/branch_growth/motion.npz'
+    if not record['passed'] or hashlib.sha256(motion_file.read_bytes()).hexdigest()!=record['motion_sha256']:
+        raise ValueError('Branch growth preparation failed or its motion file changed; prepare this project again')
+    if hashlib.sha256((ROOT/'assets/actin_morph.npz').read_bytes()).hexdigest()!=record['actin_asset_sha256']:
+        raise ValueError('Branch growth actin asset changed; prepare this project again')
+    with np.load(motion_file) as data:motion={key:data[key] for key in data.files}
     added=[]
-    for i in range(1,3):
-        target=power(step,i)@fit
-        obj=s.actin('actin_001' if i==1 else 'actin_002',target=target,tracked=i==1,g_fraction=1)
-        center=np.mean(np.load(ROOT/'assets/9B27/F.npz')['vertices'],axis=0)
-        interval=(.10+(i-1)*.31,.34+(i-1)*.31)
-        s.docking(obj,target,interval,Vector(s.plans['branch_add_'+str(i)]['offset'])*.7,turn=True)
-        s.morph(obj,1,0,(interval[0]+.03,interval[0]+.11))
-        added.append(obj)
-    s.center(sum([v[1] for v in groups.values()],[])+added,offset=(-3,0,-1),rotation=R(75))
-    s.text('已成核子丝的倒钩端 +',(3,-18,5),1)
-    s.text('金色：跟踪的 actin_001',(-12,-18,-8.8),.9)
+    for i in range(2):
+        obj=s.actin('actin_001' if i==0 else 'actin_002',tracked=i==0,g_fraction=1)
+        obj.rotation_mode='QUATERNION';added.append(obj)
+        for f in range(1,s.n+1):
+            index=(f-1)/(s.n-1)*(len(motion['matrices'])-1);lo=int(index);hi=min(lo+1,len(motion['matrices'])-1);q=index-lo
+            a,qa,_=Matrix(motion['matrices'][lo,i]).decompose();b,qb,_=Matrix(motion['matrices'][hi,i]).decompose()
+            obj.location=a.lerp(b,q);obj.rotation_quaternion=qa.slerp(qb,q)
+            obj.keyframe_insert('location',frame=f);obj.keyframe_insert('rotation_quaternion',frame=f)
+            key=obj.data.shape_keys.key_blocks[1];key.value=(1-q)*motion['g_fractions'][lo,i]+q*motion['g_fractions'][hi,i]
+            key.keyframe_insert('value',frame=f)
+    s.events.append({'object':'Two daughter-actin additions','first':1,'last':s.n,
+        'action':'Source-fitted endpoints and coupled approach/G-F interpolation',
+        'limits':record['limits'],'motion_preparation':str(ROOT/'assets/branch-growth.json')})
+    s.center(sum([v[1] for v in groups.values()],[])+added,offset=(-3,0,2.5),rotation=R(75))
+    s.text('开放的倒钩端 +',(14,-40,-11.8),1.4)
+    s.text('金色：跟踪单体',(-16,-40,-11.8),1.4)
 
 def autoinhib(s):
     s.scene_scale=38
@@ -551,8 +569,8 @@ def chemistry(s):
         d=np.load(STATES/(record['id']+'.npz'))
         o=mesh(record['id']+' whole F subunit',d['vertices'].tolist(),d['faces'].tolist(),[s.mats['teal']],s.groups['Molecules'])
         o.location=(x,0,1.3);o['source_structure']=record['id'];s.primary.append(o)
+        o['atoms_file']=str(STATES/(record['id']+'.npz'))
         s.text(['ATP 状态类似物','ADP · Pi','ADP'][i],(x,-8,5.7),.88)
-        s.text(record['id'],(x,-8,-1.5),.65)
         adp=next(l for l in record['ligands'] if l['ccd']=='ADP');center=np.mean(adp['positions_nm'],axis=0)
         for ligand in record['ligands']:
             parts=Parts()
@@ -564,9 +582,9 @@ def chemistry(s):
             obj['source_structure']=record['id'];obj['ccd']=ligand['ccd'];obj['magnification']=2.1
             if ligand['ccd']=='PO4':
                 s.move(obj,T(x,-1,-4.1),T(x+4,-1,-6),(.56,.72),(0,-2,1),'Pi release in an enlarged ligand-only inset')
-        s.text(['ADP + BeF3 + Mg','ADP + Pi + Mg','ADP + Mg'][i],(x,-9,-6.8),.58)
+        s.text(['ADP + BeF3 + Mg','ADP + Pi + Mg','ADP + Mg'][i],(x,-9,-6.8),.82)
     s.arrow((-7,-3,1.5),(-5,-3,1.5),'gold');s.arrow((5,-3,1.5),(7,-3,1.5),'gold')
-    s.text('下方配体单独放大 ×2.1；没有剖开蛋白',(0,-12,-7.7),.61)
+    s.text('配体放大 ×2.1',(0,-12,-9.1),.9)
 
 def network(s,formin=False):
     s.scene_scale=80 if formin else 110
@@ -627,25 +645,42 @@ def cofilin_control(s):
     s.text('cofilin：Ser3 调控状态示意',(0,-12,-5.8),.9)
 
 def sever(s):
-    s.scene_scale=91
-    left=s.rig('Left complete fragment');right=s.rig('Right complete fragment')
-    departing=s.rig('Tracked ADP-actin plus cofilin',parent=right)
-    mapping={'C':'F','A':'J','D':'I','E':'G','B':'H'}
+    s.scene_scale=78
+    record=json.loads((ROOT/'assets/cofilin-path-repairs.json').read_text())
+    motion_file=ROOT/'assets/cofilin_boundary/motion.npz'
+    if not record['passed'] or record['source']['entry']!='6UC4':
+        raise ValueError('Cofilactin boundary preparation missing or failed; prepare this project again')
+    if hashlib.sha256(motion_file.read_bytes()).hexdigest()!=record['motion_sha256']:
+        raise ValueError('Cofilactin motion file changed; prepare this project again')
+    for unit in record['geometry']['units']:
+        if hashlib.sha256((ROOT/'assets/cofilin_boundary'/(unit['unit']+'.npz')).read_bytes()).hexdigest()!=unit['sha256']:
+            raise ValueError('Cofilactin source asset changed: '+unit['unit'])
+    with np.load(motion_file) as data:
+        poses=data['matrices'];units=data['units'].tolist()
     obs=[]
-    for ac,co in mapping.items():
-        parent=left if ac in 'CA' else departing if ac=='D' else right
-        a=s.asset('6VAO',ac,name='actin_001' if ac=='D' else 'actin '+ac,
-                  color='gold' if ac=='D' else 'teal',parent=parent)
-        if ac=='D':a['biological_id']='actin_001'
-        c=s.asset('6VAO',co,color='pink',parent=parent)
-        s.docking(c,Matrix.Identity(4),(.08,.23),s.plans['cofilin_'+co]['offset'])
-        obs.extend([a,c])
-    s.docking(right,Matrix.Identity(4),(.32,.46),s.plans['sever']['offset'],release=True)
-    s.docking(left,Matrix.Identity(4),(.32,.46),(-9,0,0),release=True)
-    s.docking(departing,Matrix.Identity(4),(.58,.77),s.plans['monomer_release']['offset'],release=True)
-    # Frame the bound and separated fragments, not only the departed molecule.
-    s.text('完整片段 1',(-12,-16,8),.9);s.text('完整片段 2',(14,-16,9),.9)
-    s.text('金色原亚基回到单体池',(-13,-18,-8),.9)
+    for i,unit in enumerate(units):
+        chains=record['units'][unit];cofilin=unit in record['placements']
+        obj=s.asset('cofilin_boundary',unit,name='actin_001' if unit=='FG' else ('cofilin ' if cofilin else 'actin ')+unit,
+            color='gold' if unit=='FG' else 'pink' if cofilin else 'teal')
+        obj['source_structure']='6UC4';obj['source_chain']='+'.join(chains)
+        obj['geometry_evidence']='Complete modeled biological subunit; complementary source domains joined before meshing'
+        if unit=='FG':obj['biological_id']='actin_001'
+        if cofilin:obj['placement_evidence']='Bounded whole-cofilin rigid fit in a 9.2 A boundary model; not an atomic interface measurement'
+        obj.rotation_mode='QUATERNION'
+        for f in range(1,s.n+1):
+            index=(f-1)/(s.n-1)*(len(poses)-1);lo=int(index);hi=min(lo+1,len(poses)-1);q=index-lo
+            a,qa,_=Matrix(poses[lo,i]).decompose();b,qb,_=Matrix(poses[hi,i]).decompose()
+            obj.location=a.lerp(b,q);obj.rotation_quaternion=qa.slerp(qb,q)
+            obj.keyframe_insert('location',frame=f);obj.keyframe_insert('rotation_quaternion',frame=f)
+        obs.append(obj)
+    s.events.append({'object':'Complete cofilactin boundary and tracked monomer','first':1,'last':s.n,
+        'action':'Local cluster binding, rigid boundary separation, then terminal monomer release',
+        'limits':record['limits'],'motion_preparation':str(ROOT/'assets/cofilin-path-repairs.json')})
+    s.center(obs,offset=(0,0,0),rotation=R(-12,'Y'))
+    s.text('局部 cofilin 簇',(-20,-40,-13.8),1.6)
+    s.text('未结合区',(23,-40,-13.8),1.6)
+    label=s.text('完整单体返回单体池',(2,-40,-9.5),1.6)
+    s.visibility([label],.84,1)
 
 def debranch(s):
     s.scene_scale=96
@@ -709,6 +744,12 @@ def main():
         raise ValueError('FH2 growth assets missing; run build_actin_films.py --steps prepare for this project first')
     if (selected==['all'] or 'f02' in selected) and not (ROOT/'assets/actin-path-repairs.json').exists():
         raise ValueError('Regulatory path preparation missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or 'a03' in selected) and not (ROOT/'assets/branch-path-repairs.json').exists():
+        raise ValueError('Branch path preparation missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or set(selected)&{'a04','a08'}) and not (ROOT/'assets/branch-growth.json').exists():
+        raise ValueError('Branch growth preparation missing; run build_actin_films.py --steps prepare for this project first')
+    if (selected==['all'] or 'c04' in selected) and not (ROOT/'assets/cofilin-path-repairs.json').exists():
+        raise ValueError('Cofilin path preparation missing; run build_actin_films.py --steps prepare for this project first')
     methods={'a01':lambda s:input_scene(s),'f01':lambda s:input_scene(s,True),'a02':wrc_scene,
              'c01':supply_scene,'a03':nucleate_branch,'a04':branch_growth,'a08':lambda s:branch_growth(s,True),
              'f02':autoinhib,'f03':formin_seed,'f04':formin_growth,'f07':lambda s:formin_growth(s,True),

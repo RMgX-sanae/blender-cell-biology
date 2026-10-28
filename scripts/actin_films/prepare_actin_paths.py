@@ -11,16 +11,43 @@ from prepare_contact_repairs import repair_path
 from project_context import ROOT
 
 
+def smooth(value):
+    value = np.clip(value,0,1)
+    return value**3*(10+value*(-15+6*value))
+
+
 def displacement(fraction, record):
     offset = np.array(record['offset']);side = np.cross(offset,[0,0,1])
     side *= 1.2/np.linalg.norm(side)
     far = max(0,(fraction-.5)*2)
-    shift = offset*fraction+side*np.sin(np.pi*far)**2
+    shift = offset*fraction+side*np.sin(np.pi*far)**2+np.array(record['far_shift'])*smooth(far)
     detour = record['detour']
     if detour and detour['first_fraction']<fraction<detour['last_fraction']:
         u = (fraction-detour['first_fraction'])/(detour['last_fraction']-detour['first_fraction'])
         shift += BSpline(detour['knots'],detour['controls_nm'],3)(u)
     return shift
+
+
+def screen_translations(atoms, trajectory, samples=2001):
+    """Check complete chains together; trajectory omits explicitly hidden chains."""
+    trees = {c:cKDTree(p) for c,p in atoms.items()}
+    bounds = {c:(p.min(0),p.max(0)) for c,p in atoms.items()}
+    minima = {};worst = {};previous = {};radius = .5
+    for index,fraction in enumerate(np.linspace(0,1,samples)):
+        shifts = trajectory(fraction)
+        for a,b in itertools.combinations(shifts,2):
+            pair = a+'/'+b;relative = tuple(np.array(shifts[a])-shifts[b])
+            if pair in previous and relative==previous[pair][0]:continue
+            low,high = bounds[b];points = atoms[a]+relative
+            selected = ((points>=low-radius)&(points<=high+radius)).all(1)
+            value = min(radius,float(trees[b].query(points[selected],distance_upper_bound=radius)[0].min())) if selected.any() else radius
+            previous[pair] = (relative,value)
+            if value<minima.get(pair,float('inf')):minima[pair] = value;worst[pair] = float(fraction)
+        if index%500==0:print('TRANSLATION_SCREEN',index,'of',samples-1,flush=True)
+    return {'samples':samples,'threshold_nm':.20,'search_radius_nm':radius,
+        'pair_minima_nm_capped_at_radius':minima,'worst_fractions':worst,
+        'passed':min(minima.values())>=.20,
+        'limits':'Source heavy atom centers and authored whole-chain translations. Hidden chains omitted until their recorded reveal. No force-field or kinetics claim.'}
 
 
 def main():

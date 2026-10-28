@@ -64,6 +64,8 @@ RhoA 对纯化全长 mDia1 的活化依赖条件，不能把片段实验外推�
 
 切断产生两个完整片段，不直接得到一堆游离球；片段继续解聚才产生单体。cofilin 对丝的装饰、接口切断、与单体结合、释放需区分。CAP 的片段结构可支持局部接口，不代表已有完整 CAP 的所有动作。回收的 monomer ID 进入交换步骤，再由可用单体池进入新的丝端。[CAP 结构与交换](https://www.nature.com/articles/s41467-018-04231-7)、[网络回收实验](https://pmc.ncbi.nlm.nih.gov/articles/PMC10152149/)
 
+cofilin 的局部结合簇与未结合区之间的边界应在画面中可辨认，避免仅用均匀覆盖的短丝解释边界断裂。当前可移植 `c04` 采用 [6UC4](https://www.rcsb.org/structure/6UC4) 的倒钩端侧边界作为一个教学例子；结构归属、低分辨率位置修正和动画限定见 [portable-actin-films.md](portable-actin-films.md)。
+
 ## 可运行的配体保留与状态对照
 
 通用 `prepare_molecular_asset.py` 默认只保留聚合物，**会丢掉游离配体、核苷酸、离子**。不能用其输出证明化学过程已建立。下列专用入口读取 8A2R/S/T 的完整模型链 C，并保留同一作者链下的 ADP、Mg 以及 BEF 或 PO4；核验来源哈希、配体身份和重原子数。三个结构均是 F-actin，不能拿一个独立显示的 F 亚基充当 G-actin。
@@ -96,7 +98,7 @@ python3 "$SKILL/scripts/audit_mechanism_plan.py" \
 
 项目验收分别写明：两条路线哪些阶段只有计划、哪些已用真实资产构建、哪些有保存的动画、哪些已导出完整视频并检查。完整视频最后应能回答“刺激怎样启动它、亚基怎样加入、能量和产物怎样变化、它做了什么、怎样停止并再次利用”。
 
-## 已制作的本地完整视频案例
+## 历史本地完整视频案例（2026-10-24）
 
 2026-10-24 的教学案例保存在原制作环境的项目目录。持有该项目时，先读其中 `观看与工程入口.md`，再按章节打开 `shots/<id>/scene.blend`；大型工程和视频不包含在本仓库或 skill 压缩包内。新环境重建使用 [portable-actin-films.md](portable-actin-films.md)。
 

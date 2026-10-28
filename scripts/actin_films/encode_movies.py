@@ -48,7 +48,8 @@ def main():
             s=byid[id];end=clock+s['seconds'];times.append({'id':id,'start_seconds':clock,'end_seconds':end,'title':s['title']})
             meta+=f"[CHAPTER]\nTIMEBASE=1/1000\nSTART={clock*1000}\nEND={end*1000}\ntitle={s['title']}\n"
             for j,beat in enumerate(s['beats']):
-                a=clock+j*s['seconds']/3;b=clock+(j+1)*s['seconds']/3
+                boundaries=s.get('beat_boundaries',[0,1/3,2/3,1])
+                a=clock+boundaries[j]*s['seconds'];b=clock+boundaries[j+1]*s['seconds']
                 subtitle.append(f'{n}\n{stamp(a)} --> {stamp(b)}\n{beat}\n');n+=1
             clock=end
         (folder/(name+'.chapters.json')).write_text(json.dumps(times,ensure_ascii=False,indent=2)+'\n')

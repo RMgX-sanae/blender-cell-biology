@@ -10,7 +10,7 @@ from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS
 
 def atoms(code,chains):return np.concatenate([np.load(ROOT/'assets'/code/f'{c}.npz')['atoms'] for c in chains])
 def trans(a,m):return a@m[:3,:3].T+m[:3,3]
-def choose(a,b,desired,length=10):
+def choose(a,b,desired,length=10,clearance=.12):
     tree=cKDTree(b);desired=np.array(desired,dtype=float);desired/=np.linalg.norm(desired)
     j=np.arange(300);z=1-2*(j+.5)/len(j);phi=j*2.399963229728653
     dirs=np.column_stack([np.sqrt(1-z*z)*np.cos(phi),np.sqrt(1-z*z)*np.sin(phi),z])
@@ -19,11 +19,11 @@ def choose(a,b,desired,length=10):
     for k in order:
         v=dirs[k]
         points=(a[::2,None,:]+distances[None,:,None]*v).reshape(-1,3)
-        d,_=tree.query(points,k=1,distance_upper_bound=.12)
+        d,_=tree.query(points,k=1,distance_upper_bound=clearance)
         count=int(np.isfinite(d).sum());score=(count,1-float(v@desired))
         if best is None or score<best[0]:best=(score,v)
         if count==0:
-            d,_=tree.query((a[:,None,:]+distances[None,:,None]*v).reshape(-1,3),k=1,distance_upper_bound=.12)
+            d,_=tree.query((a[:,None,:]+distances[None,:,None]*v).reshape(-1,3),k=1,distance_upper_bound=clearance)
             count=int(np.isfinite(d).sum())
             if count==0:best=((0,1-float(v@desired)),v);break
     result={'offset':(best[1]*length).tolist(),'sampled_deep_contacts':best[0][0]}
@@ -72,14 +72,6 @@ def main():
     old=ROOT/'assets/filaments/cap'
     cap=np.concatenate([np.load(old/f'chain_{c}.npz')['atoms'] for c in 'GH'])
     add('cap',trans(cap,capfit),core,[1,0,0],12)
-    actins=atoms('6VAO','ABCDE')
-    for ch in 'FGHIJ':
-        a=atoms('6VAO',ch);center=a.mean(0)
-        add('cofilin_'+ch,a,actins,[0,center[1],center[2]+1.4],4)
-    left=atoms('6VAO','CAFJ');right=atoms('6VAO','DEBIGH')
-    add('sever',right,left,[1,0,0],9)
-    left_relative=left-np.array(plans['sever']['offset'])
-    add('monomer_release',atoms('6VAO','DI'),np.concatenate([atoms('6VAO','EBGH'),left_relative]),[-1,-.5,0],9)
     add('cap_recycle',atoms('6FM2-assembly1',['A']),atoms('6FM2-assembly1',['B','A-2','B-2']),[-1,-1,-.5],10)
     (ROOT/'assets/approach-plans.json').write_text(json.dumps(plans,indent=2)+'\n')
 
