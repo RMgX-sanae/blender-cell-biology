@@ -51,7 +51,7 @@
   --python "$SKILL/scripts/build_dub_hydrolysis_scene.py" -- \
   --asset-dir "$PROJECT/assets" --output "$PROJECT/dark" \
   --font-zh "$FONT_ZH" --font-en "$FONT_EN" \
-  --style dark --recipe neutral --width 960 --samples 16 --render
+  --style dark --recipe neutral --width 960 --samples 64 --render
 
 "$BLENDER" -b "$PROJECT/dark/scene.blend" --python-exit-code 1 \
   --python "$SKILL/scripts/audit_dub_hydrolysis_scene.py" -- \
@@ -65,6 +65,6 @@
   --fps 24 --frames 720 --ffmpeg "$FFMPEG" --output "$PROJECT/dark/video-check"
 ```
 
-使用 `--style light` 另建浅色工程；合成配方通过 `--recipe` 独立选择。不要把一个配方在 K63 中通过，当作它在新结构上已经通过。默认双视图有不同放大率，水氧及共价键的画面标记有所加粗，背景是源蛋白形状的艺术性分布，不表达该细胞中的实际丰度或相同景深尺度。
+使用 `--style light` 另建浅色工程；合成配方通过 `--recipe` 独立选择。上面的 64 次 Eevee 采样对应已验收示例的实际保存设置；降低采样后需重新检查细线和运动噪声。不要把一个配方在 K63 中通过，当作它在新结构上已经通过。默认双视图有不同放大率，水氧及共价键的画面标记有所加粗，背景是源蛋白形状的艺术性分布，不表达该细胞中的实际丰度或相同景深尺度。
 
 准备检查包括 2569 个所选重原子的身份映射、两种 Zn、末端键长度/平面/角度、移动部分的自接触、分子间接触、内部键和相邻键角保持。2.38 Å 是本例的重原子中心接触筛查阈值；只对明确的配位原子和反应键邻域作例外。它不代替能量、键级、电荷或质子路径检查。几何通过后，还要检查保存工程和实际像素中的水氧可见性、整分子释放及文字。

@@ -50,8 +50,11 @@ evaluated=obj.evaluated_get(bpy.context.evaluated_depsgraph_get());mesh=evaluate
 surface_vertices=len(mesh.vertices);evaluated.to_mesh_clear()
 if not surface_vertices:raise RuntimeError('Density probe produced an empty mesh')
 if not font.font.packed_file or not font.font_bold.packed_file:raise RuntimeError('Probe fonts were not packed')
+samples=scene.cycles.samples if a.engine=='cycles' else scene.eevee.taa_render_samples
+if samples!=a.samples:raise RuntimeError('Requested render sample count was not applied')
 result={'version':bpy.app.version_string,'python':sys.version,'numpy':np.__version__,'asset_atoms_loaded':len(points),
         'engine':scene.render.engine,'cycles_device':scene.cycles.device if a.engine=='cycles' else None,
+        'requested_samples':a.samples,'actual_samples':samples,
         'geometry_nodes_executed':True,'surface_vertices':surface_vertices,'fonts_loaded_and_packed':True,
         'neutral_compositor':compositor,'resolution':[320,180]}
 (p.parent/'blender-result.json').write_text(json.dumps(result,indent=2)+'\n')

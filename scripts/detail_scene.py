@@ -235,6 +235,7 @@ def compositors(scene, profile, selected=None):
 def studio(profile, args, camera_defaults):
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES' if args.engine == 'cycles' else 'BLENDER_EEVEE'
+    if scene.render.engine == 'BLENDER_EEVEE': scene.eevee.taa_render_samples = args.samples
     scene.render.resolution_x = args.width
     scene.render.resolution_y = round(args.width * 5 / 8)
     scene.render.resolution_percentage = 100
