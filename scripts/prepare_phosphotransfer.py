@@ -18,6 +18,7 @@ from fetch_structure import download
 from interaction_motion import plan
 from prepare_filament_assets import rigid_fit
 from prepare_molecular_asset import atom_table, surface, xyz
+from reaction_ledger import validate as validate_reaction_ledger
 
 
 def residue_atoms(residue):
@@ -185,12 +186,27 @@ def main():
     gated0=kinase_open.copy();gated1=kinase_open.copy()
     rotamer=[i for i,r in enumerate(kinase_rows) if r[3]==127 and r[2] in ['CB','CG','CD','OE1','OE2']]
     gated0[rotamer]=kinase[rotamer];gated1[rotamer]=kinase_product[rotamer]
-    metals=[]
+    metals=[];metal_elements={}
     for code in ['4IAC','4IAD']:
         rs=sorted([r for r in structures[code]['A'] if r.name=='MG'],key=lambda r:r.seqid.num)
         if [r.seqid.num for r in rs]!=[401,402]:raise ValueError('Unexpected metal site identifiers')
         metals.append(coordinates(np.array([list(r[0].pos) for r in rs]),code=='4IAD'))
+        metal_elements[code]=[[f'Mg:{r.seqid.num}',r[0].element.name] for r in rs]
+    peptide_atoms=lambda rows:[[f'peptide:{r[3]}:{r[2]}',r[1]] for r in rows]
+    gamma_map=dict(zip(gamma,['P','O1P','O2P','O3P']))
+    ledger={'version':1,
+        'scope':'SP20 heavy atoms, reconstructed ATP, observed ADP/phosphopeptide and two Mg sites. Kinase, hydrogens and solvent are outside this ledger.',
+        'bond_scope':'Phosphoryl-center covalent adjacency only; bond order is not represented.',
+        'reactant_atoms':peptide_atoms(substrate)+[['ATP:'+n,ideal[n][0]] for n in names]+metal_elements['4IAC'],
+        'product_atoms':peptide_atoms(tables['4IAD']['S'])+[['ADP:'+n,v[1]] for n,v in adp.items()]+metal_elements['4IAD'],
+        'atom_map':[[identity,identity] for identity,_ in peptide_atoms(substrate)+metal_elements['4IAC']]
+            +[['ATP:'+n,'ADP:'+n] for n in core]+[['ATP:'+n,'peptide:621:'+gamma_map[n]] for n in gamma],
+        'reactant_bonds':[['ATP:PG','ATP:'+n] for n in gamma[1:]]+[['ATP:PG','ATP:O3B']],
+        'product_bonds':[['peptide:621:P','peptide:621:'+gamma_map[n]] for n in gamma[1:]]+[['peptide:621:P','peptide:621:OG']],
+        'break':[['ATP:PG','ATP:O3B']], 'form':[['ATP:PG','peptide:621:OG']]}
+    ledger_check=validate_reaction_ledger(ledger)
     a.output.mkdir(parents=True)
+    (a.output/'reaction-ledger.json').write_text(json.dumps(ledger,indent=2)+'\n')
     vertices,faces=surface(kinase*10,.75,1.1,.55)
     vertices=vertices*.1
     np.savez_compressed(a.output/'kinase.npz',atoms=kinase,vertices=vertices,faces=faces,
@@ -230,6 +246,7 @@ def main():
         plans[name]=report;np.savez_compressed(a.output/(name+'-path.npz'),moving=mobile,obstacle=fixed,obstacle_open=opened)
         print(name,report['collision_screen_passed'],report['max_new_or_worsened_overlap_atoms'],flush=True)
     manifest={'kind':'pka-phosphotransfer','sources':provenance,'ccd_atp':ccd_meta,'units':'nm',
+        'reaction_ledger':ledger_check,
         'alignment_rmsd_angstrom':rmsd,'alignment_product_to_reference':transform.tolist(),
         'reaction':'ATP + SP20(Ser21-OH) -> ADP + pSP20(Ser21-O-phosphoryl)',
         'source_model':'Mouse PKAc with engineered SP20 derived from human PKI, not a native full-length substrate',

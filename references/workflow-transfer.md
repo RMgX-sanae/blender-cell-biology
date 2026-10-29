@@ -21,6 +21,7 @@
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py` 的 `atom_table`、`xyz`、`surface` | 使用者明确选择必要配体；不得因默认过滤而丢失反应物 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
+| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63 准备脚本共用；只检查输入的原子和键子图，不推断反应、不代替几何检查 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
 | 保存后渲染与视频检查 | `render_saved.py`、`encode_video.py`、`audit_video.py` | 可以共用执行步骤；场景内的机制检查仍按本例定义，成功解码不能证明科学正确 |
@@ -64,6 +65,27 @@ PY
 ```
 
 接着使用 [局部结合工作流](protein-interactions.md) 中原有的场景构建、保存后检查及渲染命令。新蛋白需要经来源审查后替换 `pdb`、`anchor`、`moving`、`ligands`、标签和构建体边界；无需为了新名字复制 `prepare_interaction.py`。路径失败时查看实际失败原子对，再决定是否需要柔性或其他源构象。
+
+## 可复用的反应身份检查
+
+`prepare_phosphotransfer.py`、`prepare_ras_hydrolysis_motion.py` 和 `prepare_ubiquitin_transfer.py` 在准备时调用同一个检查器，并生成项目文件 `reaction-ledger.json` 和 manifest 内的 `reaction_ledger` 检查结果。PKA 的转移基团、Ras 的水氧归属、K63 的连接位点分别由各自机制定义；通用检查器没有内置这些反应。
+
+```bash
+"$PYTHON" "$SKILL/scripts/reaction_ledger.py" "$PROJECT/assets/reaction-ledger.json" \
+  --output "$PROJECT/ledger-audit.json"
+```
+
+新机制在自己的准备脚本中构造相同格式的字典，调用 `from reaction_ledger import validate`；让检查通过后再生成运动。字段约定如下：
+
+| 字段 | 内容 |
+|---|---|
+| `version`、`scope`、`bond_scope` | 版本 `1`、本账本包括/省略的对象、检查哪些键；明确重原子或含氢范围 |
+| `reactant_atoms`、`product_atoms` | 分别从端态资产提取的 `[唯一原子ID, 元素]` 列表；产物中离开的分子和离子也要列入所选物质范围 |
+| `atom_map` | `[反应物ID, 产物ID]` 一一映射；允许产物名称改变，元素必须相同，两个端态的所列原子都必须覆盖 |
+| `reactant_bonds`、`product_bonds` | 各自端态 ID 下的无向共价键列表；只列经过判断的子图，写明它不是完整分子图 |
+| `break`、`form` | 预期净断键/成键，**均用反应物 ID**；由机制依据独立确定，与端态键差核对，不能直接复制计算出的键差作为预期值 |
+
+这个检查能发现“总数相同但原子重复”、映射遗漏、元素被换成另一种元素、错误反应位点和未声明的额外键变化。它不能发现两个端态同时遗漏了同一批必要原子，也不能判断一个自洽但生物学错误的声明。PKA 与 Ras 仅覆盖反应物/产物重原子及金属；K63 覆盖所选结构的重原子；三者都只提供反应中心键子图。源结构适用性、质子/电荷、键级、全分子价态、中间姿态和实际画面仍需各自检查。
 
 ## 跨机制迁移：保留方法，重建改变的科学部分
 

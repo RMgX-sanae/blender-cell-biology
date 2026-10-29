@@ -21,6 +21,7 @@ from prepare_ras_switch import fit_points
 from prepare_ras_exchange_motion import pair_check, apply
 from prepare_phosphotransfer_motion import covalent_interpolate, group_interpolate, rotation_between, smooth
 from rigid_path_detour import refine
+from reaction_ledger import validate as validate_reaction_ledger
 
 
 def merge_contacts(*records):
@@ -151,6 +152,19 @@ def main():
     fitted,water,gamma_ids,product=chemistry(nt,gd,source_path)
     core_ids=[i for i in range(len(nt['atoms'])) if i not in gamma_ids]
     names=list(nt['atom_names']);core_names=[str(names[i]) for i in core_ids]
+    gamma_names=[str(names[i]) for i in gamma_ids];pi_names=['P','O1','O2','O3']
+    ledger={'version':1,
+        'scope':'GTP/GDP heavy atoms, source water oxygen and one Mg site. Pi is an inferred product; proteins and hydrogens are outside this ledger.',
+        'bond_scope':'Phosphate-center covalent adjacency only; bond order and metal coordination are not represented.',
+        'reactant_atoms':[['GTP:'+str(n),str(e)] for n,e in zip(nt['atom_names'],nt['elements'])]+[['water:O','O'],['Mg','Mg']],
+        'product_atoms':[['GDP:'+str(n),str(e)] for n,e in zip(gd['atom_names'],gd['elements'])]
+            +[['Pi:'+n,str(nt['elements'][i])] for n,i in zip(pi_names,gamma_ids)]+[['Pi:O_water','O'],['Mg','Mg']],
+        'atom_map':[['GTP:'+n,'GDP:'+n] for n in core_names]
+            +[['GTP:'+n,'Pi:'+p] for n,p in zip(gamma_names,pi_names)]+[['water:O','Pi:O_water'],['Mg','Mg']],
+        'reactant_bonds':[['GTP:PG','GTP:'+n] for n in gamma_names[1:]]+[['GTP:PG','GTP:O3B']],
+        'product_bonds':[['Pi:P','Pi:'+n] for n in pi_names[1:]]+[['Pi:P','Pi:O_water']],
+        'break':[['GTP:PG','GTP:O3B']], 'form':[['GTP:PG','water:O']]}
+    ledger_check=validate_reaction_ledger(ledger)
     target_indices=[list(d['old_gdp']['atom_names']).index(n) for n in core_names]
     source_indices=[list(gd['atom_names']).index(n) for n in core_names]
     target=d['old_gdp']['atoms'][target_indices]
@@ -235,6 +249,7 @@ def main():
         values=np.linalg.norm(points[:,edges[:,0]]-points[:,edges[:,1]],axis=2)
         lengths[label]=[float(values.min()),float(values.max())]
     report.update(full_timeline_checks=checks,covalent_length_ranges_nm=lengths,
+        reaction_ledger=ledger_check,
         heavy_atoms=34,atom_balance='GTP(32) + water oxygen(1) + Mg(1) -> GDP(28) + Pi(5) + Mg(1)',
         forming_covalent_pair=['GTP:PG','water:O'],leaving_covalent_pair=['GTP:PG','GTP:O3B'],
         chemistry_limits=['Hydrogens, proton transfers, protonation states, solvent and electronic energies are omitted.',
@@ -246,6 +261,7 @@ def main():
     np.savez_compressed(a.output/'hydrolysis.npz',ras=ras,gap=gap_world,gap_local=gap_local,gap_pose=gap_pose,
         nucleotide_core=core,phosphate=gamma,water_oxygen=waters,magnesium=metals,core_bonds=bonds,
         transfer=transfer,pi_release=pi_phase)
+    (a.output/'reaction-ledger.json').write_text(json.dumps(ledger,indent=2)+'\n')
     (a.output/'manifest.json').write_text(json.dumps(report,indent=2))
     print(json.dumps({'passed':report['passed'],'checks':checks,'bond_ranges':lengths}),flush=True)
     if not report['passed']:raise SystemExit('Hydrolysis motion failed; keep diagnostic output for correction.')

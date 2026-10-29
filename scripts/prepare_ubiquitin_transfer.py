@@ -14,6 +14,7 @@ from scipy.interpolate import PchipInterpolator
 from interaction_motion import matrices
 from prepare_molecular_asset import surface
 from ubiquitin_geometry import UbiquitinGeometry, PROTEINS, SOURCE_HASHES, digest
+from reaction_ledger import validate as validate_reaction_ledger
 
 
 def smooth(value):
@@ -98,11 +99,22 @@ def main():
         from ubiquitin_release import UbiquitinReleaseGeometry
         model = UbiquitinReleaseGeometry(a.sources)
     else: model = UbiquitinGeometry(a.sources)
+    selected_atoms = [[f'{k}:{r[3]}:{r[2]}', r[1]] for k, rows in model.rows.items() for r in rows]
+    ledger = {'version': 1,
+        'scope': 'All selected source heavy atoms, including four Zn. The same source indices persist in both endpoint poses; hydrogens are implicit.',
+        'bond_scope': 'Net-transfer reactive bonds and donor terminal C-O adjacency only; bond order and Zn coordination are not represented.',
+        'reactant_atoms': selected_atoms, 'product_atoms': selected_atoms,
+        'atom_map': [[identity, identity] for identity, _ in selected_atoms],
+        'reactant_bonds': [['e2:87:SG', 'donor:76:C'], ['donor:76:C', 'donor:76:O']],
+        'product_bonds': [['donor:76:C', 'acceptor:63:NZ'], ['donor:76:C', 'donor:76:O']],
+        'break': [['e2:87:SG', 'donor:76:C']], 'form': [['donor:76:C', 'acceptor:63:NZ']]}
+    ledger_check = validate_reaction_ledger(ledger)
     arrays, states, fractions = sample(model, config, np.arange(a.frames+1)/a.frames)
     checks = audit(model, arrays, states, fractions)
     if not checks['passed']:
         print(json.dumps(checks, indent=2)); raise ValueError('Fix motion geometry before writing a renderable asset')
     a.output.mkdir(parents=True)
+    (a.output/'reaction-ledger.json').write_text(json.dumps(ledger, indent=2)+'\n')
     origin = np.concatenate([model.source[k] for k in PROTEINS]).mean(0)
     np.savez_compressed(a.output/'motion.npz', **{k: (v-origin)*.1 for k, v in arrays.items()}, transfer_fraction=fractions)
     identities = {}
@@ -124,6 +136,7 @@ def main():
     captions = [[begin*scale, end*scale, body] for begin, end, body in config['captions']]
     if a.release: captions += config['release']['captions']
     manifest = {'kind': config['kind'], 'passed': True, 'frames': a.frames, 'fps': a.fps,
+        'reaction_ledger': ledger_check,
         'source_directory': str(a.sources.resolve()), 'source_sha256': SOURCE_HASHES, 'source_changes': model.source_record,
         'origin_A': origin.tolist(), 'config': config, 'config_sha256': digest(a.config), 'checks': checks,
         'atom_ids': identities, 'atom_counts': {k: len(v) for k, v in model.rows.items()}, 'reaction_atom_indices': model.ids,
