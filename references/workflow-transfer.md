@@ -18,6 +18,7 @@
 
 | 已验证工作流中的部分 | 现有入口 | 迁移边界 |
 |---|---|---|
+| 分子视频的共用运行链 | `check_runtime.py` | 在新环境检查实际资产准备、Blender 读取/渲染及编码/解码；不认证机制、特定滤镜或项目额外依赖，见 production-workflow |
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py` 的 `atom_table`、`xyz`、`surface` | 使用者明确选择必要配体；不得因默认过滤而丢失反应物 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |

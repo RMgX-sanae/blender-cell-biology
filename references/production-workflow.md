@@ -20,6 +20,18 @@ python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --format pdb --output "$PROJECT
   "$PROJECT/structures/3SN6.pdb" --preset beta2 --output "$PROJECT/beta2"
 ```
 
+制作使用双语标签的分子视频时，在新机器、新 Python 环境或解压副本上先检查一次共用运行链；同一已核对环境不用在每个机制前重复运行。此检查另需 `fonttools`，安装到上述项目环境即可。明确传入实际 Blender、FFmpeg、宋体和 Times New Roman 文件：
+
+```bash
+"$PROJECT/.venv/bin/python" -m pip install fonttools
+"$PROJECT/.venv/bin/python" "$SKILL/scripts/check_runtime.py" \
+  --blender "$BLENDER" --ffmpeg "$FFMPEG" \
+  --font-zh "$FONT_ZH" --font-en "$FONT_EN" --engine eevee \
+  --output "$PROJECT/runtime-check.json"
+```
+
+检查会用当前 Python 的现有准备函数处理随包的 1BNA 小资产，再由选定 Blender 读取、生成密度包络和受保护文字/中性合成，最后调用原有视频脚本编码并完整解码 3 个相同的技术测试帧。临时图片、网格和视频自动清除，只留下版本、路径、字体家族/样本文字覆盖及失败原因。它不安装软件、不修改其他环境，也不检查当前生物机制、完整项目标签或所有滤镜。通过后，后续准备命令继续用报告中的同一个 Python，不要改回未配置的系统 `python3`。仅制作无字模型或静态图时检查相关依赖即可，不因这个视频检查要求安装不需要的 FFmpeg/字体工具。
+
 `beta2` 仅用于 3SN6：保留受体 R 中原始编号 <400 的部分及 Gs A/B/G；去掉工程化 T4 融合体、稳定抗体 N 及非聚合物。受体相对膜方向来自 UniProt P07550 TM1–7 端点，属于推定朝向，不是测量的膜平面。缺失 N/C 端和环区不会自动补全。
 
 `transcription` 仅用于 5FLM；`motor` 仅用于 4HNA A/B/K，排除 DARPin。`generic` 用于已核对的其他结构。每个输出保存原始文件哈希、选取规则、单位变换、各链范围和表面参数。聚合物修饰残基按 Gemmi entity 类型保留；氢、游离配体及非 A alternative location 默认排除，若它们对问题必要，应在项目中明确改选。
