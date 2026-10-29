@@ -34,7 +34,7 @@ def main():
     assert len(set(identities)) == 4476 and len(source['atom_ids']['zinc']) == 4
     assert set(obj['component'] for obj in groups['detail']) == {'donor', 'acceptor'}
     assert 'donor:76:OXT' not in identities and 'acceptor:76:OXT' in identities
-    maximum = 0.; checked = 0
+    maximum = 0.; checked = 0; final_overview = {}
     for view, layer in [('overview', 'Overview'), ('detail', 'Ubiquitin detail')]:
         bpy.context.window.view_layer = scene.view_layers[layer]
         for frame in range(1, frames+1):
@@ -46,14 +46,34 @@ def main():
                 assert np.allclose(matrix, record['transforms'][view][frame-1], atol=1e-5), (frame, obj.name, 'Framing transform')
                 assert np.ptp(np.linalg.svd(matrix[:3, :3], compute_uv=False)) < 1e-5, 'Nonuniform protein scale'
                 projected = observed@matrix[:3, :3].T+matrix[:3, 3]
+                if view == 'overview' and frame == frames: final_overview[obj['component']] = projected[:, :2]
                 center_x = -5.5 if view == 'overview' else 5.5
                 assert abs(projected[:, 0]-center_x).max() < 4.4 and abs(projected[:, 1]).max() < 3.2, 'Protein cropped by panel'
                 assert observed.shape == expected.shape, (frame, obj.name)
                 error = float(np.max(abs(observed-expected))); maximum = max(maximum, error)
                 assert error < 2e-4, (frame, obj.name, error)
                 assert np.isfinite(observed).all(); checked += 1
+    separation_gaps = {}
+    if source.get('release_included'):
+        product = np.concatenate([final_overview[k] for k in ('donor', 'acceptor')])
+        for name, keys in [('RING', ('ring', 'zinc')), ('E2-UEV', ('e2', 'uev'))]:
+            other = np.concatenate([final_overview[k] for k in keys])
+            gap = float(np.maximum(other.min(0)-product.max(0), product.min(0)-other.max(0)).max())
+            assert gap > .1, (name, 'Released product overlaps partner in the final overview')
+            separation_gaps[name] = gap
+    if record.get('product_leader_tracks_atoms'):
+        bpy.context.window.view_layer = scene.view_layers['Reaction annotation render']
+        leader = scene.objects['Product bond leader']
+        for modifier in leader.modifiers: modifier.show_viewport = False
+        ids = source['reaction_atom_indices']
+        for frame in range(round(source.get('timing', {}).get('product_formed', .76)*frames)+1, frames+1):
+            scene.frame_set(frame); observed = vertices(leader)
+            point = (data['donor'][frame-1, ids['c']]+data['acceptor'][frame-1, ids['nz']])/2
+            matrix = np.array(record['transforms']['detail'][frame-1])
+            point = matrix[:3, :3]@point+matrix[:3, 3]
+            assert np.max(abs(observed[0, :2]-point[:2])) < 2e-4, (frame, 'Product leader detached from bond')
     bpy.context.window.view_layer = scene.view_layers[scene['compositor_label_layer']]
-    captions = {row[2] for row in source['config']['captions']}
+    captions = {row[2] for row in source.get('captions', source['config']['captions'])}
     fonts = [obj for obj in scene.objects if obj.type == 'FONT']
     for obj in fonts:
         assert obj.data.font.packed_file and obj.data.font_bold.packed_file
@@ -74,7 +94,9 @@ def main():
         'four_source_zinc_preserved': True, 'source_atom_identity_and_terminal_chemistry_checked': True,
         'shared_coordinates_between_views': True, 'whole_atom_envelopes': True, 'caption_timing_checked': True,
         'packed_fonts_checked': True, 'image_domain_masks_checked': True,
-        'limits': 'Checks transferred coordinates, identities and display setup; final visual/encoded-video review is separate. Product release is outside this example.'}
+        'release_included': source.get('release_included', False), 'moving_product_leader_checked': record.get('product_leader_tracks_atoms', False),
+        'final_product_projected_box_gaps_scene_units': separation_gaps,
+        'limits': 'Checks transferred coordinates, identities and display setup; final visual/encoded-video review is separate. E1 charging and ubiquitin recycling are outside this example.'}
     a.output.parent.mkdir(parents=True, exist_ok=True); a.output.write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
     print(json.dumps(result, ensure_ascii=False))
 

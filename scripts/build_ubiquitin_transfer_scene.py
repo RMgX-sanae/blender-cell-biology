@@ -41,6 +41,15 @@ def envelope(obj, material):
     tree.links.new(source, smooth.inputs['Geometry']); tree.links.new(smooth.outputs['Geometry'], target.inputs['Geometry'])
 
 
+def annotation_line(obj, material, radius):
+    tree, src, target = sn.geometry_tree(obj, 'GN_net_bond_annotation')
+    curve = sn.node(tree, 'GeometryNodeMeshToCurve'); tree.links.new(src, curve.inputs['Mesh'])
+    circle = sn.node(tree, 'GeometryNodeCurvePrimitiveCircle'); circle.inputs['Resolution'].default_value = 12; circle.inputs['Radius'].default_value = radius
+    solid = sn.node(tree, 'GeometryNodeCurveToMesh'); tree.links.new(curve.outputs['Curve'], solid.inputs['Curve']); tree.links.new(circle.outputs['Curve'], solid.inputs['Profile Curve'])
+    paint = sn.node(tree, 'GeometryNodeSetMaterial'); paint.inputs['Material'].default_value = material
+    tree.links.new(solid.outputs['Mesh'], paint.inputs['Geometry']); tree.links.new(paint.outputs['Geometry'], target)
+
+
 def background(asset_dir, scale):
     groups = [ds.collection('Molecular background '+n) for n in ('far', 'middle', 'near')]
     colors = {'donor': '#778f9a', 'e2': '#789994', 'uev': '#8f839e'}; meshes = {}; records = []
@@ -132,17 +141,13 @@ def main():
     # Explicit graphic overlays identify the net bond exchange. Full molecular
     # shapes remain present; no residue fragments are cut out of a protein.
     ids = source['reaction_atom_indices']; fraction = data['transfer_fraction']; marks = []
+    timing = source.get('timing', {'acceptor_arrival': .39, 'product_formed': .76})
     ink = sn.material('High contrast net-bond annotation', {'material': 'paint'}, '#fff1b1' if a.style == 'dark' else '#3c2454', 'paint')
     for name, first, second, view, visible in [
-        ('E2 thioester annotation', data['e2'][:, ids['sg']], data['donor'][:, ids['c']], 'overview', (np.arange(count+1)/count >= .39)&(fraction < .05)),
+        ('E2 thioester annotation', data['e2'][:, ids['sg']], data['donor'][:, ids['c']], 'overview', (np.arange(count+1)/count >= timing['acceptor_arrival'])&(fraction < .05)),
         ('K63 product bond annotation', data['donor'][:, ids['c']], data['acceptor'][:, ids['nz']], 'detail', fraction >= .98)]:
         points = np.stack([first, second], axis=1); obj = keyed_points(name, points, overlay, [(0, 1)])
-        tree, src, target = sn.geometry_tree(obj, 'GN_net_bond_annotation')
-        curve = sn.node(tree, 'GeometryNodeMeshToCurve'); tree.links.new(src, curve.inputs['Mesh'])
-        circle = sn.node(tree, 'GeometryNodeCurvePrimitiveCircle'); circle.inputs['Resolution'].default_value = 12; circle.inputs['Radius'].default_value = .065
-        solid = sn.node(tree, 'GeometryNodeCurveToMesh'); tree.links.new(curve.outputs['Curve'], solid.inputs['Curve']); tree.links.new(circle.outputs['Curve'], solid.inputs['Profile Curve'])
-        paint = sn.node(tree, 'GeometryNodeSetMaterial'); paint.inputs['Material'].default_value = ink
-        tree.links.new(solid.outputs['Mesh'], paint.inputs['Geometry']); tree.links.new(paint.outputs['Geometry'], target)
+        annotation_line(obj, ink, .065)
         obj.parent = parents[view]; obj['display_annotation'] = True
         for i, show in enumerate(visible):
             obj.hide_render = not bool(show); obj.keyframe_insert('hide_render', frame=i+1)
@@ -156,19 +161,22 @@ def main():
         obj = bpy.data.objects.new(body, curve); labels.objects.link(obj); obj.location = (x, y, 12)
         return obj
     text('K63 双泛素连接', 0, 5.1, .85)
-    text('复合物组装与转移', -5.5, 4.1, .64); text('供体与受体泛素', 5.5, 4.1, .64)
+    text('组装、转移与释放' if source.get('release_included') else '复合物组装与转移', -5.5, 4.1, .64); text('供体与受体泛素', 5.5, 4.1, .64)
     for x, k, title in [(-8.5, 'ring', 'RNF4'), (-4.3, 'e2', 'Ubc13 / E2'), (0, 'uev', 'Ube2V2'), (4.4, 'donor', '供体泛素'), (8.7, 'acceptor', '受体泛素')]:
         text(title, x, -4.3, .49)
         dot = sn.point_object(title+' legend dot', [[x-1.45, -4.12, 12]], overlay)
         sn.instance_spheres(dot, sn.material(title+' legend color', {'material': 'paint'}, config['display']['colors'][k], 'paint'), radius=.09)
-    for begin, end, caption in config['captions']:
+    for begin, end, caption in source.get('captions', config['captions']):
         obj = text(caption, 0, -5.4, .66); visibility(obj, round(begin*count)+1, round(end*count))
     product_label = text('Gly76—Lys63', 7.9, -2.2, .49)
-    visibility(product_label, round(.76*count)+1, count)
-    contact = (data['donor'][-1, ids['c']]+data['acceptor'][-1, ids['nz']])/2
-    contact = transforms['detail'][-1]@np.r_[contact, 1]
-    leader = ds.path('Product bond leader', [(contact[0], contact[1], 12), (7.2, -1.6, 12), (8.7, -1.6, 12)], .012, ink, overlay)
-    visibility(leader, round(.76*count)+1, count)
+    visibility(product_label, round(timing['product_formed']*count)+1, count)
+    contact = (data['donor'][:, ids['c']]+data['acceptor'][:, ids['nz']])/2
+    contact = np.einsum('nij,nj->ni', transforms['detail'][:, :3, :3], contact)+transforms['detail'][:, :3, 3]
+    line = np.broadcast_to([[0., 0., 12.], [7.2, -1.6, 12.], [8.7, -1.6, 12.]], (count+1, 3, 3)).copy()
+    line[:, 0, :2] = contact[:, :2]
+    leader = keyed_points('Product bond leader', line, overlay, [(0, 1), (1, 2)])
+    annotation_line(leader, ink, .012)
+    visibility(leader, round(timing['product_formed']*count)+1, count)
     divider = sn.material('High contrast divider', {'material': 'paint'}, '#bad6d9' if a.style == 'dark' else '#365a64', 'paint')
     ds.path('Panel separator', [(0, -3.5, 12), (0, 3.55, 12)], .016, divider, overlay)
     bg_groups, bg_record = background(a.asset_dir, float(np.linalg.norm(transforms['overview'][-1, :3, 0])))
@@ -225,13 +233,13 @@ def main():
     a.output.mkdir(parents=True); scene.frame_set(round(count*.82)+1); bpy.context.view_layer.update()
     bpy.ops.wm.save_as_mainfile(filepath=str(a.output/'scene.blend'))
     result = {'kind': 'ubiquitin-net-transfer-scene', 'fps': a.fps, 'frames': count, 'preparation': source, 'asset_directory': str(a.asset_dir.resolve()),
-        'transforms': {k: v.tolist() for k, v in transforms.items()}, 'actors': actors, 'annotations': marks,
+        'transforms': {k: v.tolist() for k, v in transforms.items()}, 'actors': actors, 'annotations': marks, 'product_leader_tracks_atoms': True,
         'environment': {'objects': bg_record, 'evidence': 'Source-shaped molecular crowding backdrop; no cell type, measured abundance or common scene scale asserted.'},
         'font_zh_sha256': digest(a.font_zh), 'font_en_sha256': digest(a.font_en), 'style': a.style, 'compositor_report': report,
         'limits': source['limits']+['The two views use different magnifications. Covalent annotation strokes are enlarged for readability.', 'Full atom-derived Gaussian envelopes are rebuilt per frame; no protein surface stretching.']}
     (a.output/'manifest.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
     if a.render:
-        for t in (.12, .32, .43, .60, .82):
+        for t in ((.12, .32, .43, .60, .73, .83, .89, .95) if source.get('release_included') else (.12, .32, .43, .60, .82)):
             scene.frame_set(round(count*t)+1); scene.render.filepath = str(a.output/f'key_{scene.frame_current:04d}.png'); bpy.ops.render.render(write_still=True)
     print(json.dumps({'saved': str(a.output/'scene.blend'), 'frames': count, 'style': a.style, 'recipe': a.recipe}))
 

@@ -661,5 +661,75 @@
       "acceptor": "#7dc4a6",
       "zinc": "#e1d48f"
     }
+  },
+  "release": {
+    "transfer_fraction": 0.6666666666666666,
+    "partner_interval": [
+      0.6666666666666666,
+      0.8333333333333334
+    ],
+    "product_interval": [
+      0.8333333333333334,
+      0.9444444444444444
+    ],
+    "partner": {
+      "direction": [
+        0.8926926835621324,
+        0.09924524900679907,
+        0.31697168655192115
+      ],
+      "distance_nm": 4.5,
+      "turn_radians": 0.17484437760056062,
+      "bend_fraction": 0.10541499299990408,
+      "sidechain_torsions_radians": [
+        0.6506845083094192,
+        0.5087789439785325,
+        1.6108500644992187,
+        1.0441950381515048,
+        0.04415602130171625,
+        0.4100305713975634
+      ],
+      "separation_start": 0.6,
+      "separation_offset_nm": [
+        0.7893522173763262,
+        2.8942914637131967,
+        -0.0
+      ]
+    },
+    "product": {
+      "direction": [
+        -0.12983945683291254,
+        0.11894357832322953,
+        0.984375
+      ],
+      "distance_nm": 4.5,
+      "turn_radians": 0.4,
+      "bend_fraction": 0.18,
+      "primary_end": 0.8,
+      "separation_start": 0.1,
+      "separation_offset_nm": [
+        -1.8418218405447613,
+        -6.753346748664125,
+        0.0
+      ]
+    },
+    "captions": [
+      [
+        0.6666666666666666,
+        0.8333333333333334,
+        "E2 与 Ube2V2 成对离开反应复合物"
+      ],
+      [
+        0.8333333333333334,
+        0.9444444444444444,
+        "K63 双泛素产物离开 RNF4"
+      ],
+      [
+        0.9444444444444444,
+        1,
+        "产物与酶分离，Gly76—Lys63 连接保留"
+      ]
+    ],
+    "evidence": "Authored geometric sequence. Interface side-chain torsions, partner-preserving departure and whole-product release are inferred; not measured rates or an observed release order."
   }
 }

@@ -37,7 +37,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 将结合/释放动作推广到不同蛋白、肽段与抑制剂 | [protein-interactions.md](references/protein-interactions.md)：明确源构象、保留配体、逐帧路径检查与独立动画模式 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
 | GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
-| 泛素的共价连接与链型识别 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移；完整原子、工程突变恢复与双视图，范围止于结合产物，不包含释放或全通路 |
+| 泛素的共价连接、链型识别与产物释放 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移，可选连续释放；完整原子、工程突变恢复与双视图，不包含 E1 装载或全通路 |
 | 独立重建 Arp2/3 与 formin 完整案例 | [portable-actin-films.md](references/portable-actin-films.md)：公开坐标到两条完整视频，不依赖原制作目录；局部接触诊断仍须审核 |
 | 分子剖面、遮挡与内部观察窗口 | [section-views.md](references/section-views.md)：用完整单体和前后层次表达 |
 | 不同细胞类型、组织极性与基本形态 | [cells-and-organelles.md](references/cells-and-organelles.md) 的细胞表 |
@@ -88,7 +88,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | Ras/SOS 核苷酸交换 | `prepare_ras_switch.py`、`prepare_ras_exchange_motion.py`、`build_ras_exchange_scene.py`、`audit_ras_exchange_scene.py`；旧 GDP 释放、新 GTP 结合及 SOS 释放，不包含 GAP 水解 |
 | Ras/p120GAP 水解与关闭 | 同一结构准备后运行 `prepare_ras_hydrolysis_motion.py`、`build_ras_hydrolysis_scene.py`、`audit_ras_hydrolysis_scene.py`；水中氧进入 Pi、GDP/Pi 中间态、Pi 释放和构象复位 |
 | Ras 的 GDP→GTP→GDP 连续状态序列 | `prepare_ras_cycle_motion.py` 合并两段准备坐标；复用水解场景生成器与检查器，统一镜头、63 个化学重原子身份及全部伙伴检查；不是封闭物质循环或完整信号通路 |
-| RNF4/Ubc13/Ube2V2 的 K63 净键转移 | `prepare_ubiquitin_transfer.py`、`build_ubiquitin_transfer_scene.py`、`audit_ubiquitin_transfer_scene.py`；从已装载 E2 到结合态双泛素，产物释放与 E1 装载仍待实现 |
+| RNF4/Ubc13/Ube2V2 的 K63 净键转移与释放 | `prepare_ubiquitin_transfer.py`、`build_ubiquitin_transfer_scene.py`、`audit_ubiquitin_transfer_scene.py`；默认至结合产物，准备时加 `--release` 继续展示 E2/UEV 及完整双泛素离开；E1 装载仍待实现 |
 | 可组合滤镜与受保护标签 | `apply_render_recipe.py` + `compositor_stack.py`，节点链保存在新工程，按所需 pass 和引擎检查 |
 
 精细入口的风格档案为 [style-studio.json](assets/style-studio.json)、[style-molecular-reference.json](assets/style-molecular-reference.json)、[style-organelle.json](assets/style-organelle.json)。它们控制几何表现、材质、灯光、镜头和合成分支。受体示例默认采用用户选定的侧视剖面（`--membrane-view side`）；`--environment` 增加有身份和尺度的前/中/后景。保持主结构清楚，环境数量和分布注明是否为假设。

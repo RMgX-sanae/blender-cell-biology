@@ -12,10 +12,14 @@ from ubiquitin_geometry import UbiquitinGeometry, index
 
 def main():
     p = argparse.ArgumentParser(description=__doc__); p.add_argument('--sources', type=Path, required=True)
-    p.add_argument('--output', type=Path, required=True); a = p.parse_args()
+    p.add_argument('--output', type=Path, required=True); p.add_argument('--release', action='store_true'); a = p.parse_args()
     if a.output.exists(): p.error('Use a new test receipt')
-    m = UbiquitinGeometry(a.sources)
+    if a.release:
+        from ubiquitin_release import UbiquitinReleaseGeometry
+        m = UbiquitinReleaseGeometry(a.sources)
+    else: m = UbiquitinGeometry(a.sources)
     config = json.loads((Path(__file__).resolve().parents[1]/'assets/ubiquitin-transfer.json').read_text())
+    config['include_release'] = a.release
     arrays, states, fractions = sample(m, config, np.linspace(0, 1, 121))
     result = audit(m, arrays, states, fractions); assert result['passed']
     r = m.rows; assert r['e2'][index(r['e2'], 87, 'SG')][1] == 'S'
@@ -45,7 +49,14 @@ def main():
     twisted['acceptor'][frame] = (twisted['acceptor'][frame]-center)@Rotation.from_rotvec(axis*np.pi/2).as_matrix().T+center
     bad_amide = audit(m, twisted, states, fractions)
     assert any('amide_angles' in failure for failure in bad_amide['failures'])
-    receipt = {'passed': True, 'samples': 121, 'negative_controls': ['wrong chemical state', 'new interprotein collision', 'wrong K48 reaction site', 'stretched peptide bond', 'nonplanar amide with correct bond length'],
+    controls = ['wrong chemical state', 'new interprotein collision', 'wrong K48 reaction site', 'stretched peptide bond', 'nonplanar amide with correct bond length']
+    if a.release:
+        broken = {k: v.copy() for k, v in arrays.items()}; broken['acceptor'][-1] += [4, 0, 0]
+        assert not audit(m, broken, states, fractions)['passed']
+        detached = {k: v.copy() for k, v in arrays.items()}; detached['uev'][-1] += [5, 0, 0]
+        assert not m.release_checks(detached, states)['passed']
+        controls += ['product bond broken during release', 'E2/UEV partner relationship lost']
+    receipt = {'passed': True, 'samples': 121, 'release_included': a.release, 'negative_controls': controls,
         'native_C87_and_K92_identity': True, 'positive_geometry': result,
         'limits': 'Source-specific geometric controls; not evidence of physiological rates or an elementary reaction mechanism.'}
     a.output.parent.mkdir(parents=True, exist_ok=True); a.output.write_text(json.dumps(receipt, indent=2)+'\n')
