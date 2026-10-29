@@ -50,9 +50,9 @@ def annotation_line(obj, material, radius):
     tree.links.new(solid.outputs['Mesh'], paint.inputs['Geometry']); tree.links.new(paint.outputs['Geometry'], target)
 
 
-def background(asset_dir, scale):
+def background(asset_dir, scale, components=('donor', 'e2', 'uev')):
     groups = [ds.collection('Molecular background '+n) for n in ('far', 'middle', 'near')]
-    colors = {'donor': '#778f9a', 'e2': '#789994', 'uev': '#8f839e'}; meshes = {}; records = []
+    colors = dict(zip(components, ['#778f9a', '#789994', '#8f839e'])); meshes = {}; records = []
     for k, color in colors.items():
         d = np.load(asset_dir/('background_'+k+'.npz'))
         mesh = bpy.data.meshes.new('Whole background '+k); mesh.from_pydata(d['vertices'].tolist(), [], d['faces'].tolist()); mesh.update()
@@ -65,12 +65,48 @@ def background(asset_dir, scale):
                   (-7.7, -3.1, 1, 'uev'), (9.4, -2.8, 1, 'e2'), (-1.1, 3.9, 1, 'donor'),
                   (-12.3, -1.3, 2, 'uev'), (12.3, 2.2, 2, 'e2')]
     for i, (x, y, layer, k) in enumerate(placements):
+        k = dict(zip(('donor', 'e2', 'uev'), components))[k]
         obj = bpy.data.objects.new(f'Background {k} {i}', meshes[k]); groups[layer].objects.link(obj)
         angles = rng.uniform(0, 6.28, 3); projection = [.55, .9, 1.4][layer]
         matrix = Matrix.Translation((x, y, [-20, -12, -6][layer]))@Euler(angles).to_matrix().to_4x4()@Matrix.Scale(scale*projection, 4)
         obj.matrix_world = matrix; obj['environment_only'] = True; obj['evidence'] = 'Artistic placement of complete source protein shape'
         records.append({'object': obj.name, 'component': k, 'matrix': np.array(matrix).tolist(), 'depth_layer': layer})
     return groups, records
+
+
+def paired_composite(scene, close, annotations, bg_layers, background_color, width):
+    """Compose synchronized whole-molecule panels after build_stack initializes labels."""
+    tree = scene.compositing_node_group
+    # The label collection is created by build_stack after our view layers.
+    for layer in [close, annotations, *bg_layers]: layer.layer_collection.children[scene['compositor_label_collection']].exclude = True
+    base = next(n for n in tree.nodes if n.label == 'Straight background plus premultiplied rendered foreground')
+    left_render = base.inputs['Foreground'].links[0].from_socket
+    right_render = sn.node(tree, 'CompositorNodeRLayers'); right_render.layer = close.name
+    domain = sn.math_node(tree, 'MULTIPLY', left_render.node.outputs['Alpha'], 0)
+    mask = sn.node(tree, 'CompositorNodeBoxMask'); mask.inputs['Position'].default_value = (.25, .5); mask.inputs['Size'].default_value = (.5, 1)
+    tree.links.new(domain, mask.inputs['Mask'])
+    mix = sn.node(tree, 'ShaderNodeMixRGB'); tree.links.new(mask.outputs['Mask'], mix.inputs[0]); tree.links.new(right_render.outputs['Image'], mix.inputs[1]); tree.links.new(left_render, mix.inputs[2])
+    # MixRGB does not select both premultiplied alpha channels with the RGB.
+    # Explicitly select alpha too, otherwise the left panel adds onto a light
+    # background instead of occluding it and looks incorrectly translucent.
+    inverse = sn.math_node(tree, 'SUBTRACT', 1, mask.outputs['Mask'])
+    left_alpha = sn.math_node(tree, 'MULTIPLY', left_render.node.outputs['Alpha'], mask.outputs['Mask'])
+    right_alpha = sn.math_node(tree, 'MULTIPLY', right_render.outputs['Alpha'], inverse)
+    alpha = sn.math_node(tree, 'ADD', left_alpha, right_alpha)
+    panels = sn.node(tree, 'CompositorNodeSetAlpha', 'Select matching premultiplied panel alpha')
+    panels.inputs['Type'].default_value = 'Replace Alpha'
+    tree.links.new(mix.outputs[0], panels.inputs['Image']); tree.links.new(alpha, panels.inputs['Alpha'])
+    window = sn.node(tree, 'CompositorNodeBoxMask', 'Framing window, no molecular mesh section')
+    # Box-mask height is relative to image width in this Blender compositor.
+    window.inputs['Position'].default_value = (.5, .5); window.inputs['Size'].default_value = (1, .32)
+    tree.links.new(domain, window.inputs['Mask'])
+    crop = sn.node(tree, 'CompositorNodeSetAlpha', 'Apply framing to premultiplied color and alpha')
+    crop.inputs['Type'].default_value = 'Apply Mask'
+    tree.links.new(panels.outputs[0], crop.inputs['Image']); tree.links.new(window.outputs['Mask'], crop.inputs['Alpha'])
+    annotate = sn.node(tree, 'CompositorNodeRLayers'); annotate.layer = annotations.name
+    over = sn.node(tree, 'CompositorNodeAlphaOver'); tree.links.new(crop.outputs[0], over.inputs['Background']); tree.links.new(annotate.outputs['Image'], over.inputs['Foreground'])
+    tree.links.new(over.outputs['Image'], base.inputs['Foreground'])
+    tree.links.new(environment.composite(tree, bg_layers, background_color, width), base.inputs['Background'])
 
 
 def main():
@@ -191,37 +227,8 @@ def main():
         layer = scene.view_layers.new(g.name+' render'); isolate(layer, [g]); bg_layers.append(layer)
     recipe = next(r.copy() for r in json.loads((root/'assets/render-recipes.json').read_text())['recipes'] if r['id'] == a.recipe)
     recipe.update(background=profile['background'], label_min_pixels=25*a.width/1280)
-    report = build_stack(scene, recipe); tree = scene.compositing_node_group
-    # The label collection is created by build_stack after our view layers.
-    for layer in [close, annotations, *bg_layers]: layer.layer_collection.children[scene['compositor_label_collection']].exclude = True
-    base = next(n for n in tree.nodes if n.label == 'Straight background plus premultiplied rendered foreground')
-    left_render = base.inputs['Foreground'].links[0].from_socket
-    right_render = sn.node(tree, 'CompositorNodeRLayers'); right_render.layer = close.name
-    domain = sn.math_node(tree, 'MULTIPLY', left_render.node.outputs['Alpha'], 0)
-    mask = sn.node(tree, 'CompositorNodeBoxMask'); mask.inputs['Position'].default_value = (.25, .5); mask.inputs['Size'].default_value = (.5, 1)
-    tree.links.new(domain, mask.inputs['Mask'])
-    mix = sn.node(tree, 'ShaderNodeMixRGB'); tree.links.new(mask.outputs['Mask'], mix.inputs[0]); tree.links.new(right_render.outputs['Image'], mix.inputs[1]); tree.links.new(left_render, mix.inputs[2])
-    # MixRGB does not select both premultiplied alpha channels with the RGB.
-    # Explicitly select alpha too, otherwise the left panel adds onto a light
-    # background instead of occluding it and looks incorrectly translucent.
-    inverse = sn.math_node(tree, 'SUBTRACT', 1, mask.outputs['Mask'])
-    left_alpha = sn.math_node(tree, 'MULTIPLY', left_render.node.outputs['Alpha'], mask.outputs['Mask'])
-    right_alpha = sn.math_node(tree, 'MULTIPLY', right_render.outputs['Alpha'], inverse)
-    alpha = sn.math_node(tree, 'ADD', left_alpha, right_alpha)
-    panels = sn.node(tree, 'CompositorNodeSetAlpha', 'Select matching premultiplied panel alpha')
-    panels.inputs['Type'].default_value = 'Replace Alpha'
-    tree.links.new(mix.outputs[0], panels.inputs['Image']); tree.links.new(alpha, panels.inputs['Alpha'])
-    window = sn.node(tree, 'CompositorNodeBoxMask', 'Framing window, no molecular mesh section')
-    # Box-mask height is relative to image width in this Blender compositor.
-    window.inputs['Position'].default_value = (.5, .5); window.inputs['Size'].default_value = (1, .32)
-    tree.links.new(domain, window.inputs['Mask'])
-    crop = sn.node(tree, 'CompositorNodeSetAlpha', 'Apply framing to premultiplied color and alpha')
-    crop.inputs['Type'].default_value = 'Apply Mask'
-    tree.links.new(panels.outputs[0], crop.inputs['Image']); tree.links.new(window.outputs['Mask'], crop.inputs['Alpha'])
-    annotate = sn.node(tree, 'CompositorNodeRLayers'); annotate.layer = annotations.name
-    over = sn.node(tree, 'CompositorNodeAlphaOver'); tree.links.new(crop.outputs[0], over.inputs['Background']); tree.links.new(annotate.outputs['Image'], over.inputs['Foreground'])
-    tree.links.new(over.outputs['Image'], base.inputs['Foreground'])
-    tree.links.new(environment.composite(tree, bg_layers, profile['background'], a.width), base.inputs['Background'])
+    report = build_stack(scene, recipe)
+    paired_composite(scene, close, annotations, bg_layers, profile['background'], a.width)
     for action in bpy.data.actions:
         for layer in action.layers:
             for strip in layer.strips:

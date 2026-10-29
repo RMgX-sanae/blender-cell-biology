@@ -21,8 +21,9 @@
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py` 的 `atom_table`、`xyz`、`surface` | 使用者明确选择必要配体；不得因默认过滤而丢失反应物 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
-| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63 准备脚本共用；只检查输入的原子和键子图，不推断反应、不代替几何检查 |
+| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63 和 AMSH-LP 准备脚本共用；只检查输入的原子和键子图，不推断反应、不代替几何检查 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
+| 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
 | 保存后渲染与视频检查 | `render_saved.py`、`encode_video.py`、`audit_video.py` | 可以共用执行步骤；场景内的机制检查仍按本例定义，成功解码不能证明科学正确 |
 
@@ -104,3 +105,7 @@ PY
 用少量互补情况验证方法：一个只换项目配置的同类目标、一个确实改变反应规则的目标、一个会使旧假设失效的反例。已经存在的 PKA→Ras 显示模块复用、Ras 两阶段组合、以及 K63 对 `interaction_motion.matrices` 的调用，可作为跨机制复用的代码实例；它们各自的科学准备和检查仍独立保留。
 
 检查材料应回答：复用了哪些确切入口；新增的代码为何必要；错误输入能否被检出；保存工程与实际画面是否一致；目标的适用边界是什么。尚未实现的过程继续明确标注，但不以重复制作整段视频替代对迁移能力的验证。
+
+## 改变反应规则的实际迁移
+
+[AMSH-LP 水解迁移案例](dub-workflow-transfer.md)从 K63 工作流沿用原子处理、绕键转动、刚体运动、双视图、背景和合成器；新建水解端态、水氧归属与受限末端释放。它还保留了两个有用反例：源晶体的连接几何不能直接当作天然反应物，能通过的近端刚体释放不能自动用于远端通道。这个案例覆盖已结合底物到产物离开；底物进入和溶剂重装载没有实现。
