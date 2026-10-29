@@ -13,6 +13,8 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。
 
+**扩展优先级：**新机制先按 [workflow-transfer.md](references/workflow-transfer.md) 选择已验证的工作流，区分可以沿用的步骤、需要替换的项目数据和必须重建的科学规则。优先让 agent 能迁移已有方法，以少量代表性案例验证；不以新增脚本、过程条目或视频数量衡量完善程度。
+
 ## 接到任务后
 
 1. 明确物种、细胞类型、状态、要解释的过程、观众和交付形式。缺失信息可用明确标注的教学假设开始；若物种/状态会改变机制，先澄清再构建相应部分。不要将哺乳动物、植物、细菌的结构混搭。
@@ -29,6 +31,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 任务 | 读取 |
 |---|---|
 | 精细模型、真实结构资产、连续动画、可复现渲染命令 | [production-workflow.md](references/production-workflow.md)，默认入口 |
+| 将已验证流程用于其他蛋白、反应、装配或膜环境 | [workflow-transfer.md](references/workflow-transfer.md)：迁移层级、实际复用入口、项目配置示例及有针对性的验收 |
 | 寻找、选择、缓存和复用网上公开资产 | [public-assets-first.md](references/public-assets-first.md)，所有新对象先走此流程 |
 | 参考图、截图、视频关键帧的风格识别与模仿 | [style-from-reference.md](references/style-from-reference.md) |
 | 扩展参考风格、几何节点、插画/透明/丝带/密度/显微外观小样 | [style-library.md](references/style-library.md)：18 类可执行起点、来源目录、参数与迁移方法；显微外观是示意，不能冒充真实成像 |

@@ -2,6 +2,8 @@
 
 先完成参考图拆解和生物结构选择，再选脚本。不要把脚本名当作自动完成整个机制的承诺。下列脚本支持 Blender 5.x，在 5.2.3 LTS / Apple M5 Metal 实际运行过；其他版本需要适配节点和小样验证。
 
+新目标按 [workflow-transfer.md](workflow-transfer.md) 从最接近的已验证工作流开始，复用适用模块，只实现改变的科学内容。以下专用实例也是迁移的参考调用点，不是要求逐一复制的完整脚本套件。
+
 ## 准备结构资产
 
 先按 [public-assets-first.md](public-assets-first.md) 检索并核对可用坐标、分割或现成模型；已有适用缓存就复用。肌动蛋白与微管的 11 个可执行模板和命令见 [polymer-templates.md](polymer-templates.md)，其他 8 个装配过程的项目分镜见 [assembly-storyboards.md](assembly-storyboards.md)。
