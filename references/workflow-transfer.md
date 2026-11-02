@@ -28,6 +28,7 @@
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
 | 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
+| 对已有画面追加调色 | `apply_render_recipe.py`、`publish_composite_outputs`，见 [合成输出约定](render-recipes.md) | 保留已合成的分屏/背景及独立文字；多视图不能直接借用一个视图的法线/深度，缺少对齐 pass 时拒绝对应配方 |
 | 保存后渲染与视频检查 | `render_saved.py`、`encode_video.py`、`audit_video.py` | 可以共用执行步骤；场景内的机制检查仍按本例定义，成功解码不能证明科学正确 |
 
 复用这些脚本时把实际 skill 的 `scripts` 目录加入导入路径，不绑定作者机器的绝对路径。先查看函数签名和一个现有调用点，保持 Å/nm、帧数及数组形状一致。不要假定不同机制的 manifest 可以直接互换。

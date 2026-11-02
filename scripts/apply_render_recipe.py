@@ -1,5 +1,6 @@
 """Apply an editable compositor stack to the scene currently open in Blender."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -45,7 +46,7 @@ def main():
             obj.pass_index=1
     scene.frame_set(a.frame); bpy.context.view_layer.update()
     source = bpy.data.filepath
-    report = build_stack(scene, recipe)
+    report = build_stack(scene, recipe, source=scene.compositing_node_group)
     a.output.mkdir(parents=True)
     scene.render.image_settings.file_format = 'PNG'
     scene.render.filepath = str(a.output/f'frame_{a.frame:04d}.png')
@@ -53,6 +54,14 @@ def main():
     if a.render: bpy.ops.render.render(write_still=True)
     report.update(source_blend=source, recipe=recipe, blender=bpy.app.version_string, frame=a.frame,
                   resolution=[scene.render.resolution_x,scene.render.resolution_y], rendered=a.render)
+    if source:
+        with Path(source).open('rb') as stream:
+            report['source_blend_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
+        manifest = Path(source).with_name('manifest.json')
+        if manifest.is_file():
+            record = json.loads(manifest.read_text())
+            record.setdefault('display_postprocessing', []).append(report)
+            (a.output/'manifest.json').write_text(json.dumps(record, ensure_ascii=False, indent=2))
     (a.output/'render-recipe-report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
 
 

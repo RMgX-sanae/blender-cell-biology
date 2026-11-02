@@ -22,14 +22,28 @@
 ```bash
 "$BLENDER" -b "$PROJECT/scene.blend" --python-exit-code 1 \
   --python "$SKILL/scripts/apply_render_recipe.py" -- \
-  --recipe depth-layered --output "$PROJECT/look-depth" --frame 96 --render
+  --recipe crisp-neutral --output "$PROJECT/look-crisp" --frame 96 --render
 ```
 
-输出为新的 `.blend`、PNG 与实际节点/参数记录。原工程保持原样。用 `--recipes /project/recipes.json` 指定项目自己的配方；可以调整滤镜顺序和参数，不必新增脚本。主体选择使用实际对象或集合名称，例如 `--recipe subject-focus --engine cycles --subject actin_001`。空集合不算有效选择。不要将膜内外整个群体一起错误选成单个主体。
+输出为新的 `.blend`、PNG 与实际节点/参数记录。原工程保持原样；原目录有 manifest 时保留其中的来源/机制记录，另追加 `display_postprocessing`，记录本次配方及原 `.blend` 哈希，不把旧建模参数冒充新的渲染设置。用 `--recipes /project/recipes.json` 指定项目自己的配方；可以调整滤镜顺序和参数，不必新增脚本。
+
+对已有合成树，工具保留原双视图、背景和取景，将新配方**追加**在其 `Beauty` 后，再叠加原 `Labels`。从同一个基准工程分别生成版本来比较不同配方；对已调色版本再应用会累加效果。原有背景已是图像的一部分，此时配方的 `background` 不替换它；需要换背景/文字明暗时回到场景生成参数。没有合成树的原始场景仍由 `build_stack` 建立基础合成。
+
+已有合成树须提供下面的输出约定；未知树会报错，不能默认取一个 Render Layer 来代替整幅画面。旧工程可用更新后的原生成器重建，或在确知每条支路含义后为项目合成树显式导出这些输出。不要用修改版本标记来跳过检查。
+
+### 跨场景保留布局的输出约定
+
+`publish_composite_outputs(tree, beauty, labels=None, passes=None)` 为当前可编辑节点组增加 `Beauty`（已经完成分屏/背景/取景，尚未叠加受保护文字）、`Labels`（透明底、预乘 alpha 的文字/标注层）和确实可用的 pass；它不改动原 `Image` 输出。Ras 水解/状态序列、K63/AMSH-LP 双视图以及 `build_stack` 创建的场景提供此约定。项目制作的自定义合成树由 agent 确定这两个实际 socket 后调用，而不是靠节点名字猜测。
+
+- 曝光、对比、饱和度、调色、光晕、暗角、颗粒和双色映射只需合成图像，可接在这些布局之后。
+- 描边还需与合成像素对应的 Normal/Alpha；景深雾需 Depth/Alpha；AO 和主体隔离各需对应 pass。原始单视图 `build_stack` 会导出本次配方实际启用的 pass。没有导出时重新准备这些 pass，再应用配方。
+- 双视图经缩放、遮罩和混合后，一个原始视图的法线/深度已不对应完整画面。目前双视图不导出这些 pass，所以依赖它们的配方会明确失败；不能拿左视图的深度给右视图加雾。若项目需要，分别处理各视图，或同步合成全部相关 pass 后再声明可用。
+
+主体选择使用实际对象或集合名称，例如 `--recipe subject-focus --engine cycles --subject actin_001`；源合成也必须已有对齐的 Object Index 输出。空集合不算有效选择。不要将膜内外整个群体一起错误选成单个主体。
 
 ### 文字和语义颜色
 
-默认将字体对象移入独立的 Typography View Layer，保留其动画和字体，在艺术处理后叠加。文字明暗按背景调整；这样浅底不会保留无法阅读的白字，也不会给文字加颗粒、景深或边缘滤镜。使用带景深的相机时仍需把字体置于焦平面，或在项目中采用独立的二维字幕渲染。彩色文字本身承载变量时，按项目保留独立图例并复查，不能把自动中性色字当作科学语义验证。
+初建 `build_stack` 时默认将字体对象移入独立的 Typography View Layer，保留其动画和字体，在艺术处理后叠加，文字明暗按背景调整。对已有合成追加配方时直接复用原 `Labels`，不移动字体或重设字号。使用带景深的相机时仍需把字体置于焦平面，或采用独立二维字幕。各项目的 Labels 可能只含字体，也可能含图例色点和分隔线，必须检查实际支路；字体之外的标注不自动得到保护。彩色文字承载变量时，不能把自动中性色字当作科学语义验证。
 
 双色、局部去色、饱和度和调色均可能改变身份颜色。至少对照中性版本，检查 ATP/ADP、亲代/新生链、不同离子和同一跟踪分子是否仍可区分。显微外观只用于教学模型；不得对实验数据图套这些艺术滤镜。
 

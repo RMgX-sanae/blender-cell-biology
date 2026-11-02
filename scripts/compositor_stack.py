@@ -4,6 +4,7 @@ These nodes change presentation, not scientific data or molecular geometry.
 Validated combinations must be recorded per project and Blender version.
 """
 import bpy
+import json
 from mathutils import Vector
 
 from detail_scene import linear
@@ -83,7 +84,24 @@ def isolate_labels(scene, background, minimum_pixels=26):
             'requested_minimum_font_pixels': minimum_pixels, 'long_labels_limited_to_frame_width': True}
 
 
-def build_stack(scene, recipe, name=None):
+def publish_composite_outputs(tree, beauty, labels=None, passes=None):
+    """Expose an existing layout for later grading without changing its Image output."""
+    output = next(n for n in tree.nodes if n.bl_idname == 'NodeGroupOutput')
+    sockets = {'Beauty': beauty, 'Labels': labels, **(passes or {})}
+    for name, socket in sockets.items():
+        if name not in output.inputs:
+            tree.interface.new_socket(name=name, in_out='OUTPUT',
+                socket_type=socket.bl_idname if socket is not None else 'NodeSocketColor')
+        if socket is not None: tree.links.new(socket, output.inputs[name])
+        else:
+            for link in list(output.inputs[name].links): tree.links.remove(link)
+            output.inputs[name].default_value = (0, 0, 0, 0)
+    tree['display_contract_version'] = 1
+    tree['display_has_labels'] = labels is not None
+    tree['display_passes'] = json.dumps(list(passes or {}))
+
+
+def build_stack(scene, recipe, name=None, source=None):
     if not hasattr(scene, 'compositing_node_group'):
         raise RuntimeError('This stack uses Blender 5.x compositor sockets; check the installed API before adapting')
     filters = recipe.get('filters', [])
@@ -94,21 +112,45 @@ def build_stack(scene, recipe, name=None):
         raise ValueError('Unknown filters: ' + ', '.join(sorted(kinds - supported)))
     if 'subject_focus' in kinds and scene.render.engine != 'CYCLES':
         raise ValueError('Object-index subject isolation is supported here only with Cycles; choose a compatible recipe')
-    labels = isolate_labels(scene, recipe.get('background', '#071f2b'), recipe.get('label_min_pixels',26)) if recipe.get('protect_labels', True) else None
+    required = set()
+    for kind, passes in {'outline': ['Normal','Alpha'], 'depth_fog': ['Depth','Alpha'],
+                         'ambient_occlusion': ['Ambient Occlusion'], 'subject_focus': ['Object Index']}.items():
+        if kind in kinds: required.update(passes)
+    if source is not None:
+        if source.get('display_contract_version') != 1:
+            raise ValueError('Existing compositor has no Beauty/Labels contract; qualify its layout before applying a recipe')
+        available = json.loads(source['display_passes'])
+        if required-set(available):
+            raise ValueError('Existing composite does not export aligned passes: '+', '.join(sorted(required-set(available))))
+        labels = {'source_group': source.name, 'preserved': True} if recipe.get('protect_labels', True) and source['display_has_labels'] else None
+    else:
+        labels = isolate_labels(scene, recipe.get('background', '#071f2b'), recipe.get('label_min_pixels',26)) if recipe.get('protect_labels', True) else None
     for layer in scene.view_layers:
         if 'outline' in kinds: layer.use_pass_normal = True
         if 'depth_fog' in kinds: layer.use_pass_z = True
         if 'ambient_occlusion' in kinds: layer.use_pass_ambient_occlusion = True
         if 'subject_focus' in kinds: layer.use_pass_object_index = True
-    t = bpy.data.node_groups.new('COMP_STACK_' + (name or recipe['id']), 'CompositorNodeTree')
+    if source is not None:
+        # Keep Render Layers at the root of the scene compositor. Copying the
+        # graph also leaves the original saved branch available for comparison.
+        t = source.copy(); t.name = 'COMP_STACK_' + (name or recipe['id'])
+        out = next(n for n in t.nodes if n.bl_idname == 'NodeGroupOutput')
+        image = out.inputs['Beauty' if labels else 'Image'].links[0].from_socket
+        source_labels = out.inputs['Labels'].links[0].from_socket if labels else None
+        exported_passes = {key: out.inputs[key].links[0].from_socket for key in available}
+        data_outputs = exported_passes
+    else:
+        t = bpy.data.node_groups.new('COMP_STACK_' + (name or recipe['id']), 'CompositorNodeTree')
+        t.interface.new_socket(name='Image', in_out='OUTPUT', socket_type='NodeSocketColor')
+        layers = node(t, 'CompositorNodeRLayers')
+        if labels: layers.layer = labels['beauty']
+        over = node(t, 'CompositorNodeAlphaOver', 'Straight background plus premultiplied rendered foreground')
+        over.inputs['Background'].default_value = (*linear(recipe.get('background', '#071f2b')), 1)
+        t.links.new(layers.outputs['Image'], over.inputs['Foreground'])
+        image = over.outputs['Image']
+        exported_passes = {key: layers.outputs[key] for key in required}
+        data_outputs = layers.outputs
     t.use_fake_user = True
-    t.interface.new_socket(name='Image', in_out='OUTPUT', socket_type='NodeSocketColor')
-    layers = node(t, 'CompositorNodeRLayers')
-    if labels: layers.layer = labels['beauty']
-    over = node(t, 'CompositorNodeAlphaOver', 'Straight background plus premultiplied rendered foreground')
-    over.inputs['Background'].default_value = (*linear(recipe.get('background', '#071f2b')), 1)
-    t.links.new(layers.outputs['Image'], over.inputs['Foreground'])
-    image = over.outputs['Image']
     actual = []
     for settings in filters:
         f = dict(settings)
@@ -142,11 +184,11 @@ def build_stack(scene, recipe, name=None):
         elif kind == 'outline':
             normal = node(t, 'CompositorNodeFilter', 'Normals show structural creases without cutting the mesh')
             normal.inputs['Type'].default_value = 'Sobel'
-            t.links.new(layers.outputs['Normal'], normal.inputs['Image'])
+            t.links.new(data_outputs['Normal'], normal.inputs['Image'])
             gray = node(t, 'CompositorNodeRGBToBW'); t.links.new(normal.outputs[0], gray.inputs[0])
             edge = math_node(t, 'MULTIPLY', gray.outputs[0], f.get('strength', .18))
             silhouette = node(t, 'CompositorNodeFilter'); silhouette.inputs['Type'].default_value = 'Sobel'
-            t.links.new(layers.outputs['Alpha'], silhouette.inputs['Image'])
+            t.links.new(data_outputs['Alpha'], silhouette.inputs['Image'])
             edge = math_node(t, 'ADD', edge, math_node(t, 'MULTIPLY', silhouette.outputs[0], f.get('silhouette', .3)))
             tone = math_node(t, 'MAXIMUM', math_node(t, 'SUBTRACT', 1, edge), .1)
             image = mix(t, image, tone, 1, 'MULTIPLY')
@@ -158,12 +200,12 @@ def build_stack(scene, recipe, name=None):
             mapped.inputs['From Min'].default_value = near
             mapped.inputs['From Max'].default_value = far
             mapped.clamp = True
-            t.links.new(layers.outputs['Depth'], mapped.inputs['Value'])
-            factor = math_node(t, 'MULTIPLY', mapped.outputs[0], layers.outputs['Alpha'])
+            t.links.new(data_outputs['Depth'], mapped.inputs['Value'])
+            factor = math_node(t, 'MULTIPLY', mapped.outputs[0], data_outputs['Alpha'])
             factor = math_node(t, 'MULTIPLY', factor, f.get('strength', .2))
             image = mix(t, image, (*linear(f.get('color', '#597c8b')), 1), factor)
         elif kind == 'ambient_occlusion':
-            ao = mix(t, (1, 1, 1, 1), layers.outputs['Ambient Occlusion'], f.get('strength', .2))
+            ao = mix(t, (1, 1, 1, 1), data_outputs['Ambient Occlusion'], f.get('strength', .2))
             image = mix(t, image, ao, 1, 'MULTIPLY')
         elif kind == 'vignette':
             ellipse = node(t, 'CompositorNodeEllipseMask', 'Optional frame-edge grading; inspect peripheral events')
@@ -190,23 +232,33 @@ def build_stack(scene, recipe, name=None):
             mask = node(t, 'CompositorNodeIDMask', 'Whole-object selection; no geometry slicing')
             mask.inputs['Index'].default_value = index
             mask.inputs['Anti-Alias'].default_value = True
-            t.links.new(layers.outputs['Object Index'], mask.inputs['ID value'])
+            t.links.new(data_outputs['Object Index'], mask.inputs['ID value'])
             grade = node(t, 'CompositorNodeHueSat')
             grade.inputs['Saturation'].default_value = f.get('background_saturation', .15)
             grade.inputs['Value'].default_value = f.get('background_value', .65)
             t.links.new(image, grade.inputs['Image'])
             image = mix(t, grade.outputs[0], image, mask.outputs[0])
         actual.append(f)
+    beauty = image; label_image = None
     if labels:
-        text_layer = node(t, 'CompositorNodeRLayers', 'Typography bypasses filters; contrast follows the chosen background')
-        text_layer.layer = labels['layer']
+        if source is not None:
+            label_image = source_labels
+        else:
+            text_layer = node(t, 'CompositorNodeRLayers', 'Typography bypasses filters; contrast follows the chosen background')
+            text_layer.layer = labels['layer']
+            label_image = text_layer.outputs['Image']
         over = node(t, 'CompositorNodeAlphaOver')
         t.links.new(image, over.inputs['Background'])
-        t.links.new(text_layer.outputs['Image'], over.inputs['Foreground'])
+        t.links.new(label_image, over.inputs['Foreground'])
         image = over.outputs[0]
-    out = node(t, 'NodeGroupOutput'); t.links.new(image, out.inputs['Image'])
+    if source is None: out = node(t, 'NodeGroupOutput')
+    t.links.new(image, out.inputs['Image'])
+    publish_composite_outputs(t, beauty, label_image, exported_passes)
     scene.compositing_node_group = t
     scene['selected_compositor'] = name or recipe['id']
     return {'group': t.name, 'filters': actual, 'engine': scene.render.engine, 'protected_labels': labels,
+            'source_composite': source.name if source is not None else None,
+            'source_background_preserved': source is not None,
+            'exported_aligned_passes': list(exported_passes),
             'requires_color_legend_review': bool(kinds & {'color_balance','saturation','duotone','subject_focus'}),
             'limits': 'Appearance operations only. Inspect real final pixels, encoded motion and scientific color labels.'}

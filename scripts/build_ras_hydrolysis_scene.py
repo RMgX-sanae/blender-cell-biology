@@ -10,6 +10,7 @@ from mathutils import Matrix
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 from event_timing import frame_window
+from compositor_stack import publish_composite_outputs
 import style_nodes as sn
 import cellular_environment as environment
 from build_phosphotransfer_scene import animated_mesh, visibility, view_layer
@@ -190,6 +191,7 @@ def main():
     typography=sn.node(tree,'CompositorNodeRLayers');typography.layer=layers[2].name
     over=sn.node(tree,'CompositorNodeAlphaOver');tree.links.new(crop.outputs[0],over.inputs['Background']);tree.links.new(typography.outputs['Image'],over.inputs['Foreground'])
     output=sn.node(tree,'NodeGroupOutput');tree.links.new(over.outputs['Image'],output.inputs['Image']);scene.compositing_node_group=tree
+    publish_composite_outputs(tree,crop.outputs[0],typography.outputs['Image'])
     for obj in scene.objects:
         for modifier in obj.modifiers:
             if modifier.type!='NODES':continue

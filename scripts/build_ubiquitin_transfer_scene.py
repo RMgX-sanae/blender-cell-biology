@@ -107,6 +107,8 @@ def paired_composite(scene, close, annotations, bg_layers, background_color, wid
     over = sn.node(tree, 'CompositorNodeAlphaOver'); tree.links.new(crop.outputs[0], over.inputs['Background']); tree.links.new(annotate.outputs['Image'], over.inputs['Foreground'])
     tree.links.new(over.outputs['Image'], base.inputs['Foreground'])
     tree.links.new(environment.composite(tree, bg_layers, background_color, width), base.inputs['Background'])
+    # The original render-layer passes no longer describe both composed panels.
+    tree['display_passes'] = '[]'
 
 
 def main():
