@@ -76,6 +76,8 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 
 相互作用特写提供 `cinematic`、`teaching`、`clay`、`illustrative`、`fluorescence` 外观；这些外观与 `loop`/`teaching` 动画模式分别选择。荧光外观是发光标记与形状提示，不是光学成像模拟。原子描边外观要求 Eevee。两伙伴使用可区分的颜色及对应图例；文字独立合成，避免描边、颗粒和景深掩盖文字。更换颜色滤镜后重新核对图例与分子颜色。
 
+构建器选用的合成树还导出 `Beauty`/`Labels`，可按 [合成配方](render-recipes.md#对现有工程应用) 用 `apply_render_recipe.py` 追加调色。文字经过独立支路，图例色点随分子一起处理；没有宣称导出 Normal/Depth 等 pass，所以需要这些 pass 的配方仍会拒绝。2PTC 的独立重建检查中，原五张关键帧和追加 neutral 的画面逐像素一致；soft-cinema 改变画面，独立文字缓冲逐像素一致，两种保存版本各 193 个姿态通过检查。该结果不代表全部外观组合或完整调色视频已验收。
+
 ## 继续扩展其他作用时
 
 磷酸转移已有独立的 [PKAc/SP20 实例](phosphotransfer.md)，包含供体、产物及原子身份变化。它与局部结合入口分别实现，不把结合视频重新命名为催化视频。

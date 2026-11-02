@@ -50,7 +50,7 @@
 | 调整教学停顿或改为连续过程 | [事件时序](blender-workflow.md)、[DUB 两种节奏](dub-workflow-transfer.md)：`event_timing.py` 共用时间区间与字幕帧边界；科学次序由各机制声明 | DUB 改节奏与连续片段、Ras 水解和状态序列的保存字幕已逐帧核对。连续有限片段不自动成为闭合循环 |
 | 按参考图片换表现 | [看图实施](style-from-reference.md)、[风格库](style-library.md)：`analyze_style_image.py` 辅助统计，agent 观察后调整实际材质、光、镜头和节点 | 已有实例和 18 类可执行起点；统计色板不等于自动恢复材质，不保证任意图片都已验证 |
 | 换细胞/细胞器/膜/分子背景 | [分尺度环境](cellular-environment.md)：`apply_scale_environment.py` 及所选资产准备入口 | 细胞与 ER 环境已有独立重建小样；四种景别不是同一细胞的定量连续放大，原生数据与示意三维深度要分开 |
-| 换滤镜或保护主体/文字 | [合成配方](render-recipes.md)：`apply_render_recipe.py`、`compositor_stack.py` | 已检查 Ras/DUB 布局保留、独立文字及单视图 pass 复用；未知合成树或未对齐 pass 会被拒绝。每个新场景仍需检查身份颜色。Fusion/Natron/AE 目前是交接说明 |
+| 换滤镜或保护主体/文字 | [合成配方](render-recipes.md)：`apply_render_recipe.py`、`compositor_stack.py` | 已检查 Ras/DUB/局部结合的布局与独立文字保留，以及单视图 pass 复用；未知合成树或未对齐 pass 会被拒绝。每个新场景仍需检查身份颜色。Fusion/Natron/AE 目前是交接说明 |
 | 换机器或 Python 环境 | [运行检查](production-workflow.md)：`check_runtime.py` | Eevee/Cycles 的资产、双字体、几何、合成、三帧编码/解码已检查；不认证新机制或全部质量档位 |
 | 重开、续渲染、编码和检查 | `render_saved.py`、`encode_video.py`、`audit_video.py`；机制检查器见对应案例 | 共用运行步骤已使用；视频可解码不代表机制或视觉合格。外部合成必须实际执行后才能声明完成 |
 

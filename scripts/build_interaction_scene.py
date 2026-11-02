@@ -11,7 +11,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 import style_nodes as sn
-from compositor_stack import isolate_labels
+from compositor_stack import isolate_labels, publish_composite_outputs
 
 
 def main():
@@ -141,6 +141,7 @@ def main():
     over=tree.nodes.new('CompositorNodeAlphaOver')
     tree.links.new(previous,over.inputs['Background']);tree.links.new(layer.outputs['Image'],over.inputs['Foreground'])
     tree.links.new(over.outputs['Image'],output.inputs['Image'])
+    publish_composite_outputs(tree,previous,layer.outputs['Image'])
     if a.crowder_dir:
         d=np.load(a.crowder_dir/'chain_A.npz')
         mat=sn.material('Distant ubiquitin',{**profile,'roughness':.85},'#263f49','pbr')

@@ -33,7 +33,7 @@
 
 ### 跨场景保留布局的输出约定
 
-`publish_composite_outputs(tree, beauty, labels=None, passes=None)` 为当前可编辑节点组增加 `Beauty`（已经完成分屏/背景/取景，尚未叠加受保护文字）、`Labels`（透明底、预乘 alpha 的文字/标注层）和确实可用的 pass；它不改动原 `Image` 输出。Ras 水解/状态序列、K63/AMSH-LP 双视图以及 `build_stack` 创建的场景提供此约定。项目制作的自定义合成树由 agent 确定这两个实际 socket 后调用，而不是靠节点名字猜测。
+`publish_composite_outputs(tree, beauty, labels=None, passes=None)` 为当前可编辑节点组增加 `Beauty`（已经完成分屏/背景/取景，尚未叠加受保护文字）、`Labels`（透明底、预乘 alpha 的文字/标注层）和确实可用的 pass；它不改动原 `Image` 输出。Ras 水解/状态序列、K63/AMSH-LP 双视图、局部蛋白结合构建器当前选用的树，以及 `build_stack` 创建的场景提供此约定。项目制作的自定义合成树由 agent 确定这两个实际 socket 后调用，而不是靠节点名字猜测。
 
 - 曝光、对比、饱和度、调色、光晕、暗角、颗粒和双色映射只需合成图像，可接在这些布局之后。
 - 描边还需与合成像素对应的 Normal/Alpha；景深雾需 Depth/Alpha；AO 和主体隔离各需对应 pass。原始单视图 `build_stack` 会导出本次配方实际启用的 pass。没有导出时重新准备这些 pass，再应用配方。
