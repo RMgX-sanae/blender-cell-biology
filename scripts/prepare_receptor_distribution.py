@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 
 import numpy as np
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
 from scipy.spatial import cKDTree
 
 
@@ -33,6 +35,50 @@ def surface_table(vertices, faces):
     if not np.any(keep):
         raise ValueError('No nondegenerate membrane surface')
     return triangles[keep], cross[keep]/length[keep, None], length[keep]*.5, np.flatnonzero(keep)
+
+
+def validate_membrane_surface(vertices, faces, require_closed=False):
+    """Check edge topology and orientation; do not repair or reorient input."""
+    table = surface_table(vertices, faces)
+    vertices, faces = np.asarray(vertices, float), np.asarray(faces)
+    if not isinstance(require_closed, bool):
+        raise ValueError('surface.require_closed must be a boolean')
+    if len(table[3]) != len(faces):
+        raise ValueError('Membrane contains degenerate faces')
+    if len(np.unique(faces)) != len(vertices):
+        raise ValueError('Membrane contains unused vertices')
+    edges = np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
+    unique, inverse, counts = np.unique(np.sort(edges, axis=1), axis=0,
+                                        return_inverse=True, return_counts=True)
+    if np.any(counts > 2):
+        raise ValueError('Nonmanifold membrane edge: more than two incident faces')
+    directions = np.bincount(inverse, weights=np.where(edges[:, 0] < edges[:, 1], 1, -1))
+    if np.any((counts == 2) & (directions != 0)):
+        raise ValueError('Inconsistent membrane face winding')
+    boundary = unique[counts == 1]
+    if require_closed and len(boundary):
+        raise ValueError('Closed membrane required, but boundary edges were found')
+    graph = coo_matrix((np.ones(len(unique)), (unique[:, 0], unique[:, 1])),
+                       shape=(len(vertices), len(vertices)))
+    count, labels = connected_components(graph, directed=False)
+    components = []
+    for component in range(count):
+        points = vertices[labels == component]
+        boundary_count = int(np.sum(labels[boundary[:, 0]] == component))
+        volume = None
+        if boundary_count == 0:
+            triangles = vertices[faces[labels[faces[:, 0]] == component]]-points.mean(0)
+            volume = float(np.einsum('ij,ij->i', triangles[:, 0],
+                           np.cross(triangles[:, 1], triangles[:, 2])).sum()/6)
+            tolerance = np.linalg.norm(np.ptp(points, axis=0))**3*1e-12
+            if volume <= tolerance:
+                raise ValueError(f'Closed membrane component {component} must have outward face winding '
+                                 '(positive signed volume); correct the source mesh explicitly')
+        components.append({'boundary_edges': boundary_count, 'signed_volume_nm3': volume})
+    return {'boundary_edges': len(boundary), 'components': components,
+            'closed_components_outward': all(c['boundary_edges'] == 0 for c in components),
+            'limits': ['Edge incidence, winding and signed volume only; no self-intersection or vertex-link test.',
+                       'An open surface has no inferred inside/outside; orient its normals from compartment evidence.']}
 
 
 def draw_surface(table, count, rng):
@@ -219,6 +265,8 @@ def main():
         data = np.load(surface_file); vertices, faces = data['vertices'], data['faces']
         config['surface']['sha256'] = digest(surface_file)
     else: raise ValueError('Use an ellipsoid or an explicitly oriented world-space mesh')
+    surface_audit = validate_membrane_surface(vertices, faces,
+        config['surface'].get('require_closed', config['surface']['kind'] == 'ellipsoid'))
     table = surface_table(vertices, faces)
     sign = {'outward': 1, 'inward': -1}[config['local_positive_z']]
     placed = sample(table, config['count'], atoms, lambda point: intensity(config, point), field_bound(config),
@@ -240,6 +288,7 @@ def main():
         'chain_hashes': {c: digest(assets/f'chain_{c}.npz') for c in chains},
         'atoms_per_instance': len(atoms), 'atoms_by_chain': dict(zip(chains, map(len, atom_arrays))),
         'surface_area_nm2': placed['surface_area_nm2'], 'attempts': placed['attempts'],
+        'surface_audit': surface_audit,
         'minimum_intercomplex_atom_distance_nm': minimum, 'lipids': len(heads),
         'data_sha256': digest(a.output/'distribution.npz'),
         'limits': ['Fixed count and relative intensity field are authored hypotheses, not measured density or equilibrium.',

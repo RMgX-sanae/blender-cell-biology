@@ -1,7 +1,7 @@
 """Numerical regression checks for geometry sampling, not biological validation."""
 import unittest
 import numpy as np
-from prepare_receptor_distribution import surface_table, draw_surface, sample, ellipsoid
+from prepare_receptor_distribution import surface_table, draw_surface, sample, ellipsoid, validate_membrane_surface
 
 
 class DistributionTests(unittest.TestCase):
@@ -45,6 +45,64 @@ class DistributionTests(unittest.TestCase):
         vertices, faces = ellipsoid([4, 2, 1], 8, 16)
         table = surface_table(vertices, faces)
         self.assertTrue(np.all(np.einsum('ij,ij->i', table[0].mean(1), table[1]) > 0))
+
+
+class MeshInputTests(unittest.TestCase):
+    def setUp(self):
+        self.vertices, self.faces = ellipsoid([4, 2, 1], 8, 16)
+
+    def test_closed_and_open_surface_contract(self):
+        audit = validate_membrane_surface(self.vertices, self.faces, True)
+        self.assertEqual(audit['boundary_edges'], 0)
+        self.assertGreater(audit['components'][0]['signed_volume_nm3'], 0)
+        # Removing one triangle leaves a hole without orphaning any vertex.
+        audit = validate_membrane_surface(self.vertices, self.faces[1:])
+        self.assertEqual(audit['boundary_edges'], 3)
+        self.assertIsNone(audit['components'][0]['signed_volume_nm3'])
+        with self.assertRaisesRegex(ValueError, 'boundary edges'):
+            validate_membrane_surface(self.vertices, self.faces[1:], True)
+
+    def test_inconsistent_or_reversed_winding(self):
+        faces = self.faces.copy(); faces[0] = faces[0, ::-1]
+        with self.assertRaisesRegex(ValueError, 'Inconsistent'):
+            validate_membrane_surface(self.vertices, faces)
+        with self.assertRaisesRegex(ValueError, 'outward face winding'):
+            validate_membrane_surface(self.vertices, self.faces[:, ::-1])
+        reflected = self.vertices*np.array([-1, 1, 1])
+        with self.assertRaisesRegex(ValueError, 'outward face winding'):
+            validate_membrane_surface(reflected, self.faces)
+        validate_membrane_surface(reflected, self.faces[:, ::-1], True)
+
+    def test_nonmanifold_and_degenerate_faces(self):
+        with self.assertRaisesRegex(ValueError, 'Nonmanifold'):
+            validate_membrane_surface(self.vertices, np.vstack([self.faces, self.faces[0]]))
+        with self.assertRaisesRegex(ValueError, 'degenerate'):
+            validate_membrane_surface(self.vertices, np.vstack([self.faces, [0, 0, 1]]))
+
+    def test_each_disconnected_component_requires_outward_winding(self):
+        # The combined volume stays positive; a single global sum would miss this.
+        vertices = np.vstack([self.vertices, self.vertices*.5+[20, 0, 0]])
+        faces = np.vstack([self.faces, self.faces[:, ::-1]+len(self.vertices)])
+        with self.assertRaisesRegex(ValueError, 'outward face winding'):
+            validate_membrane_surface(vertices, faces, True)
+        faces[len(self.faces):] = self.faces+len(self.vertices)
+        self.assertEqual(len(validate_membrane_surface(vertices, faces, True)['components']), 2)
+
+    def test_affine_mesh_uses_world_normals_without_stretching_receptors(self):
+        angle = .6
+        rotation = np.array([[np.cos(angle), -np.sin(angle), 0],
+                             [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
+        transform = rotation@np.diag([1.4, .7, 1.2])
+        vertices = self.vertices@transform.T+[11, -7, 3]
+        validate_membrane_surface(vertices, self.faces, True)
+        expected = surface_table(self.vertices, self.faces)[1]@np.linalg.inv(transform)
+        expected /= np.linalg.norm(expected, axis=1)[:, None]
+        placed = sample(surface_table(vertices, self.faces), 16, [[0, 0, 0]], lambda _: 1, 1,
+                        min_anchor_distance=.3, normal_sign=-1)
+        for matrix, face in zip(placed['rotations'], placed['face_ids']):
+            self.assertTrue(np.allclose(matrix[:, 2], -expected[face]))
+            self.assertTrue(np.allclose(matrix.T@matrix, np.eye(3)))
+            self.assertAlmostEqual(np.linalg.det(matrix), 1)
 
 
 if __name__ == '__main__': unittest.main()
