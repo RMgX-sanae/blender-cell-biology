@@ -10,6 +10,59 @@ from pathlib import Path
 
 import gemmi
 import numpy as np
+from reaction_ledger import validate
+
+
+def addition_ledger(rna, primer_residue, component, names, elements, bonds,
+                    product_names, product_residue, *, product_observed):
+    """Local RNA-end + NTP heavy-atom graph; not a complete catalytic mechanism."""
+    names = list(map(str, names)); product_names = list(map(str, product_names))
+    core = len(product_names)
+    leaving = {'O3A','PB','O1B','O2B','O3B','PG','O1G','O2G','O3G'}
+    rename = {'PA':'P','O1A':'OP1','O2A':'OP2'}
+    if (len(set(names)) != len(names) or set(names[core:]) != leaving or
+            product_names != [rename.get(n,n) for n in names[:core]]):
+        raise ValueError('Qualify the RNA core / PPi partition and CCD-to-RNA atom names')
+    indices = np.flatnonzero(rna['residue_numbers'] == primer_residue)
+    primer_ids = {int(i):f'RNA:P:{primer_residue}:'+str(rna['atom_names'][i]) for i in indices}
+    primer_atoms = [[primer_ids[i],str(rna['elements'][i])] for i in indices]
+    nucleophile = f"RNA:P:{primer_residue}:O3'"
+    if dict(primer_atoms).get(nucleophile) != 'O':
+        raise ValueError('The selected RNA end must contain a resolved 3-prime oxygen')
+    primer_bonds = [[primer_ids[i],primer_ids[j]] for i,j in rna['bonds'] if i in primer_ids and j in primer_ids]
+    incoming = [f'{component}_for_P{product_residue}:'+n for n in names]
+    products = [f'RNA:P:{product_residue}:'+n for n in product_names]
+    products += [f'PPi_from_P{product_residue}:'+n for n in names[core:]]
+    product_elements = list(map(str,elements))
+    if product_observed:
+        ids = np.flatnonzero(rna['residue_numbers'] == product_residue)
+        native = {str(rna['atom_names'][i]):int(i) for i in ids}
+        if set(native) != set(product_names) or len(ids) != core:
+            raise ValueError('Observed RNA product does not match the selected nucleotide core')
+        product_elements[:core] = [str(rna['elements'][native[n]]) for n in product_names]
+        native_ids = {i:f'RNA:P:{product_residue}:'+str(rna['atom_names'][i]) for i in ids}
+        core_bonds = [[native_ids[i],native_ids[j]] for i,j in rna['bonds'] if i in native_ids and j in native_ids]
+        all_ids = {**primer_ids, **native_ids}
+        joining = [[all_ids[i],all_ids[j]] for i,j in rna['bonds'] if i in all_ids and j in all_ids and
+                   ((i in primer_ids) != (j in primer_ids))]
+    else:
+        core_bonds = [[products[i],products[j]] for i,j in bonds if i < core and j < core]
+        joining = [[nucleophile,f'RNA:P:{product_residue}:P']]
+    ppi_bonds = [[products[i],products[j]] for i,j in bonds if i >= core and j >= core]
+    book = {'version':1,
+        'scope':f'Local terminal RNA P:{primer_residue} plus {component}; new RNA P:{product_residue} and PPi. Other RNA residues, polymerase, DNA, solvent, metals and hydrogens omitted.',
+        'bond_scope':'Resolved primer intranucleotide graph; CCD NTP graph; product RNA core and PPi graph plus the 3-prime-O/alpha-P link. Upstream RNA linkage is outside this local subgraph. Bond orders/protonation are not checked.',
+        'reactant_atoms':primer_atoms+[[identity,str(e)] for identity,e in zip(incoming,elements)],
+        'product_atoms':primer_atoms+[[identity,e] for identity,e in zip(products,product_elements)],
+        'atom_map':[[identity,identity] for identity,_ in primer_atoms]+list(map(list,zip(incoming,products))),
+        'reactant_bonds':primer_bonds+[[incoming[i],incoming[j]] for i,j in bonds],
+        'product_bonds':primer_bonds+core_bonds+ppi_bonds+joining,
+        'break':[[f'{component}_for_P{product_residue}:PA',f'{component}_for_P{product_residue}:O3A']],
+        'form':[[nucleophile,f'{component}_for_P{product_residue}:PA']],
+        'product_core_evidence':'Observed 5FLM RNA coordinates and inferred covalent graph' if product_observed else 'Modeled CCD-derived RNA core; not a deposited product',
+        'sources':['https://www.rcsb.org/structure/5FLM','https://www.rcsb.org/ligand/'+component,
+                   'https://www-ssrl.slac.stanford.edu/research/highlights_archive/pol-II.pdf']}
+    return book, validate(book)
 
 
 def fit_torsions(coords, names, product, extras):
@@ -92,13 +145,18 @@ def main():
     lengths = np.linalg.norm(coords[bonds[:,0]]-coords[bonds[:,1]],axis=1)
     if not (.08 < lengths.min() and lengths.max() < .2):
         raise ValueError('Reconstructed CTP contains an excessive bond-length distortion.')
+    book, receipt = addition_ledger(rna, 19, 'CTP', names, [ideal[n][0] for n in names], bonds,
+        [mapping.get(n,n) for n in common], 20, product_observed=True)
     args.output.mkdir(parents=True)
+    ledger_file = args.output/'reaction-ledger-ctp.json'
+    ledger_file.write_text(json.dumps(book,indent=2)+'\n')
     np.savez_compressed(args.output/'ctp.npz', atoms=coords.astype(np.float32),
         atom_names=np.array(names), elements=np.array([ideal[n][0] for n in names]),
         bonds=bonds, bond_orders=np.array(orders),
         product_atom_count=len(common), product_names=np.array([mapping.get(n,n) for n in common]),
         product_atoms=product_coords.astype(np.float32))
     manifest = {'source_asset': source,
+        'reaction_ledger':{'file':ledger_file.name,'sha256':hashlib.sha256(ledger_file.read_bytes()).hexdigest(),'audit':receipt},
         'ccd': {'component': 'CTP', 'url': 'https://files.rcsb.org/ligands/download/CTP.cif',
                 'sha256': hashlib.sha256(args.ccd.read_bytes()).hexdigest(),
                 'coordinates': 'ideal CTP with four acyclic bond torsions fitted to the product; not an experimentally bound substrate'},

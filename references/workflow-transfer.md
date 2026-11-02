@@ -24,7 +24,7 @@
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py --config` 及 `atom_table`、`xyz`、`surface`，见 [项目配置](molecular-asset-config.md) | 可替换聚合物链/残基和有依据的刚体坐标系；使用者另行选择必要配体，不得因默认过滤而丢失反应物 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
-| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63 和 AMSH-LP 准备脚本共用；只检查输入的原子和键子图，不推断反应、不代替几何检查 |
+| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63、AMSH-LP 及两轮转录准备共用；各自定义反应，只检查输入原子和键子图，不代替几何检查 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
 | 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
@@ -91,6 +91,17 @@ PY
 | `break`、`form` | 预期净断键/成键，**均用反应物 ID**；由机制依据独立确定，与端态键差核对，不能直接复制计算出的键差作为预期值 |
 
 这个检查能发现“总数相同但原子重复”、映射遗漏、元素被换成另一种元素、错误反应位点和未声明的额外键变化。它不能发现两个端态同时遗漏了同一批必要原子，也不能判断一个自洽但生物学错误的声明。PKA 与 Ras 仅覆盖反应物/产物重原子及金属；K63 覆盖所选结构的重原子；三者都只提供反应中心键子图。源结构适用性、质子/电荷、键级、全分子价态、中间姿态和实际画面仍需各自检查。
+
+## 把身份检查用于核苷酸加入
+
+转录的 `prepare_transcription.py` 与 `prepare_transcription_next.py` 复用同一账本检查器，`addition_ledger` 则定义本例的 RNA 链端、NTP 核心和 PPi 规则。方法的迁移发生在原子对应和图检查层；底物选择、断键/成键及来源端态仍是本机制自己的内容。
+
+- [5FLM](https://www.rcsb.org/structure/5FLM) 提供静态牛 Pol II 与合成核酸支架及 C20 产物坐标；[CCD CTP](https://www.rcsb.org/ligand/CTP)、[UTP](https://www.rcsb.org/ligand/UTP) 提供各自理想组分与连接。进入姿态、U21 和转位仍是教学构造。
+- RNA 3′ 端进攻与 PPi 释放的机制依据见 [SSRL 对该原始研究的说明](https://www-ssrl.slac.stanford.edu/research/highlights_archive/pol-II.pdf)，原论文为 [Wang 等，2006](https://doi.org/10.1016/j.cell.2006.11.023)。这里只采用净连接规则，不重建 trigger loop、质子转移或金属催化，也不把论文的酵母构象搬到牛 Pol II 模型上。
+- 第一轮账本列出 P19 与 CTP 的 52 个重原子，第二轮列出 C20 与 UTP 的 49 个；同一个 `RNA:P:20:*` ID 在第一轮产物和第二轮链端中延续。新底物与 PPi 的 ID 带目标残基位置，以免把两轮游离分子混成一份。
+- 两个账本各自只覆盖一个链端和一个底物，早先 RNA、第一轮已离开的 PPi 及细胞物质池不被第二轮重复计入。需要更长的序列或完整回收时，另建这些对象的持续状态和去向。
+
+更换核苷酸或聚合酶时，先核对可反应的末端原子、模板与底物、α 磷酸/离去基团的命名及真实/构造产物。重新得到目标端态后再沿用检查器，不能把“总数仍是 29→20+9”当作原子身份正确的充分证据。
 
 ## 跨机制迁移：保留方法，重建改变的科学部分
 

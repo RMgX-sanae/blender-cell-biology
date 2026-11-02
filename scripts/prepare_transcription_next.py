@@ -16,6 +16,7 @@ import numpy as np
 from scipy.optimize import least_squares
 from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation
+from prepare_transcription import addition_ledger
 
 
 def fit(x, y):
@@ -129,7 +130,22 @@ def main():
     trans_r,trans_s=fit(np.array([moved[n] for n in purine]),np.array([former[n] for n in purine]))
     local_r=Rotation.from_rotvec(solution.x[4:7]).as_matrix()
     local_s=origin-local_r @ origin+solution.x[7:10]
+    ctp=np.load(a.substrate_dir/'ctp.npz')
+    first_book,first_receipt=addition_ledger(data['P'],19,'CTP',ctp['atom_names'],ctp['elements'],
+        ctp['bonds'],ctp['product_names'],20,product_observed=True)
+    product_names=[{'PA':'P','O1A':'OP1','O2A':'OP2'}.get(n,n) for n in core]
+    book,receipt=addition_ledger(data['P'],20,'UTP',ordered,elements[order],bonds,
+        product_names,21,product_observed=False)
+    retained={identity:element for identity,element in first_book['product_atoms'] if identity.startswith('RNA:P:20:')}
+    reused={identity:element for identity,element in book['reactant_atoms'] if identity.startswith('RNA:P:20:')}
+    if retained != reused or len(retained) != 20:
+        raise ValueError('The C20 product must become the same RNA end in the next addition')
     a.output.mkdir(parents=True)
+    ledger_records={}
+    for component,spec,audit in [('ctp',first_book,first_receipt),('utp',book,receipt)]:
+        path=a.output/f'reaction-ledger-{component}.json';path.write_text(json.dumps(spec,indent=2)+'\n')
+        ledger_records[component]={'file':path.name,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'audit':audit}
+    first['reaction_ledger']=ledger_records['ctp']
     shutil.copy2(a.substrate_dir/'ctp.npz',a.output/'ctp.npz')
     np.savez_compressed(a.output/'utp.npz',atoms=coords.astype(np.float32),atom_names=np.array(ordered),
         elements=elements[order],bonds=bonds,bond_orders=np.array(orders),product_atom_count=len(core),
@@ -138,6 +154,9 @@ def main():
         template_rotation=local_r,template_translation=local_s,
         translocation_rotation=trans_r,translocation_translation=trans_s)
     next_info={'component':'UTP','url':'https://files.rcsb.org/ligands/download/UTP.cif',
+        'reaction_ledger':ledger_records['utp'],
+        'retained_RNA_end':{'atoms':len(retained),'identity_and_elements_match':True,
+            'scope':'C20 product becomes the next primer. Earlier RNA and first PPi are not included in the second local ledger; this is not a closed material cycle.'},
         'sha256':hashlib.sha256(a.ccd.read_bytes()).hexdigest(),
         'product':{'chain':'P','residue':21,'name':'U','evidence':'modeled, absent from 5FLM'},
         'template_partner':{'chain':'T','residue':16,'name':'DA'},
