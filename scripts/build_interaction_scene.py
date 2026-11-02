@@ -12,6 +12,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 import style_nodes as sn
 from compositor_stack import isolate_labels, publish_composite_outputs
+from interaction_assets import verify_assets
 
 
 def main():
@@ -30,6 +31,7 @@ def main():
     if a.style=='illustrative' and a.engine!='eevee':p.error('The selected toon material requires Eevee')
     if not a.font_en.is_file():p.error('Supply an installed Times New Roman Regular font file')
     m=json.loads((a.asset_dir/'manifest.json').read_text())
+    integrity=verify_assets(a.asset_dir,m)
     if not m['motion']['collision_screen_passed']:
         p.error('The prepared path has unresolved deep-overlap frames; inspect and refine it first')
     poses=np.load(a.asset_dir/'motion.npz')['matrices'];n=m['frames']
@@ -151,6 +153,7 @@ def main():
             obj.rotation_euler=(i*.5,.3*i,.7*i)
             obj['source_structure']='1UBQ';obj['distribution_evidence']='illustrative, not measured concentration'
     scene['interaction_asset_dir']=str(a.asset_dir.resolve())
+    scene['interaction_manifest_sha256']=integrity['manifest_sha256']
     scene['animation_evidence']='Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics'
     scene['animation_mode']=m['mode'];scene['source_limits']=m['example']['limits']
     scene.frame_set(1);bpy.context.view_layer.update()

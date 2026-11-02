@@ -1,5 +1,6 @@
 """Check actual saved interaction geometry, transforms, framing and loop seam."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -9,12 +10,23 @@ import numpy as np
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
 
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from interaction_assets import verify_assets
+
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     scene=bpy.context.scene;folder=Path(scene['interaction_asset_dir'])
-    manifest=json.loads((folder/'manifest.json').read_text());expected=np.load(folder/'motion.npz')['matrices']
+    manifest_path=folder/'manifest.json'
+    manifest=json.loads(manifest_path.read_text())
+    fingerprint=scene.get('interaction_manifest_sha256')
+    if fingerprint and hashlib.sha256(manifest_path.read_bytes()).hexdigest()!=fingerprint:
+        raise ValueError('Prepared interaction manifest changed since this scene was built')
+    integrity=verify_assets(folder,manifest) if fingerprint or 'data_sha256' in manifest else {
+        'verified':False,'reason':'Legacy preparation has no file hashes; only saved geometry and poses are compared'}
+    integrity['scene_manifest_bound']=bool(fingerprint)
+    expected=np.load(folder/'motion.npz')['matrices']
     errors=[];meshes=[]
     for actor in manifest['actors']:
         obj=scene.objects.get(actor['id'])
@@ -51,6 +63,7 @@ def main():
     if not manifest['motion']['collision_screen_passed']:errors.append('Prepared path contact screen failed')
     if scene.frame_end!=manifest['frames'] or scene.render.fps!=manifest['fps']:errors.append('Timing differs from manifest')
     result={'scene':bpy.data.filepath,'actors':meshes,'pose_error_max':maximum_error,
+            'prepared_file_integrity':integrity,
             'actor_transform_error_max':actor_errors,
             'camera_minimum_fractional_margin':minimum_margin,'clipped_examples':clipped[:15],
             'checked_frames_including_virtual_seam':len(expected),'prepared_contact_screen':manifest['motion'],

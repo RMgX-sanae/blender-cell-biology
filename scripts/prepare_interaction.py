@@ -110,6 +110,8 @@ def main():
     np.savez_compressed(a.output/'motion.npz',matrices=poses)
     manifest={'example':e,'source':meta,'source_origin_angstrom':origin.tolist(),'units':'nm',
               'actors':records,'fps':a.fps,'frames':a.frames,'mode':a.mode,'motion':report,
+              'data_sha256':{name:hashlib.sha256((a.output/name).read_bytes()).hexdigest()
+                             for name in [*(actor['file'] for actor in records),'motion.npz']},
               'events':['approach','reorient','source-pose binding','release'],
               'geometry':'Complete modeled selected chains, plus explicitly selected ligands. Unresolved regions are not reconstructed.',
               'limits':'Local interaction cycle only. No catalytic transformation or complete cellular pathway is implied.'}

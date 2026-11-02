@@ -35,6 +35,10 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 
 更改帧率或帧数时同步修改审计参数。中断后的 PNG 渲染可在相同命令上加 `--resume`；它核对工程和渲染设置，并重新渲染损坏帧。不同工程或设置使用新目录。
 
+准备阶段在 manifest 的 `data_sha256` 中记录每个实体 NPZ 和 `motion.npz`；构建器先核对完整文件清单及哈希，再使用原来的路径检查结果。手工改变坐标、替换运动文件或删掉一条哈希记录都会失败，应从已审查输入重新准备。新 `.blend` 还保存准备 manifest 的指纹，重开检查时核对它，防止把旧工程与另一套准备记录混在一起。哈希只证明这些文件之间的一致性，不证明来源或机制正确。
+
+旧缓存没有这组哈希时，先重新运行 `prepare_interaction.py` 再生成新工程。对已有旧 `.blend`，检查器仍可比较几何和姿态，但会将 `prepared_file_integrity.verified` 明确标为 false；不能把这种旧记录称为文件指纹验证通过。
+
 字体、渲染帧、准备后的网格及视频都留在项目外部目录，不包含在 skill 分发包中。结构准备使用装有 Gemmi、NumPy、SciPy 和 scikit-image 的 Python 环境。
 
 当前示例：Barnase–Barstar（1BRS）、MDM2–p53 片段（1YCR）、Trypsin–BPTI（2PTC），以及用于检验动作限制的 Ras–RasGAP（1WQ1）。可在项目 JSON 中添加新蛋白，而不修改路径生成器；仍必须核对正确装配、作者链、构建体、状态、缺失区域和配体。

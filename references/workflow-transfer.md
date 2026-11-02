@@ -24,6 +24,7 @@
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py --config` 及 `atom_table`、`xyz`、`surface`，见 [项目配置](molecular-asset-config.md) | 可替换聚合物链/残基和有依据的刚体坐标系；使用者另行选择必要配体，不得因默认过滤而丢失反应物 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
+| 准备数据与工程的对应关系 | `interaction_assets.py` 的 `verify_assets`，由局部结合构建器/检查器调用 | 核对全部实体和运动文件，再将 manifest 指纹绑定到新工程；改过坐标后必须重新准备和检查路径。接口采用局部结合 manifest，其他机制应适配其实际文件清单 |
 | 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63、AMSH-LP 及两轮转录准备共用；各自定义反应，只检查输入原子和键子图，不代替几何检查 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
 | 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
