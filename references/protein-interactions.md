@@ -39,6 +39,26 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 
 当前示例：Barnase–Barstar（1BRS）、MDM2–p53 片段（1YCR）、Trypsin–BPTI（2PTC），以及用于检验动作限制的 Ras–RasGAP（1WQ1）。可在项目 JSON 中添加新蛋白，而不修改路径生成器；仍必须核对正确装配、作者链、构建体、状态、缺失区域和配体。
 
+### 明确保留哪一份配体
+
+`ligands` 是必需保留的 CCD 组分列表：在已选 `anchor`/`moving` 作者链中保留所有匹配的非聚合物，并随该链的刚体伙伴运动。任何请求的组分未找到、或匹配残基没有可保留重原子时，准备阶段在输出前失败；不能静默省略后继续。空列表表示本配置没有选取非聚合物，不证明来源不含这些组分。
+
+需要指定某一份配体、插入码，或配体使用独立作者链时，改用 `ligand_instances`。例如在 2PTC 的项目配置中保留其他字段，替换配体选择为：
+
+```json
+{
+  "ligands": [],
+  "ligand_instances": [
+    {"chain": "E", "residue_number": 462, "insertion_code": "", "component": "CA", "owner_role": "anchor"}
+  ],
+  "ligand_selection_note": "2PTC 作者链 E:462 的钙离子保留在 trypsin 固定伙伴中；依据条目配体及原子记录。"
+}
+```
+
+`chain`、整数 `residue_number`、可选单字符 `insertion_code` 和 `component` 合起来确定源残基；`owner_role` 只能是 `anchor` 或 `moving`。所属伙伴由项目依据结构关系确定，不能由链名或距离自动断言。不得同时使用非空 `ligands` 与 `ligand_instances`，同一源残基不得重复归属。输出 manifest 记录作者残基身份与保留的原子名称；原坐标仍与蛋白共用同一原点。保存工程检查逐帧核对每个实体的所属伙伴及整体矩阵，防止配体脱离父对象或被另行平移。
+
+这个入口仅选择模型 0 的 `NonPolymer` 实体，并保留非氢、正占据、空白/A altloc 原子；水、分支糖链、其他 altloc、缺失原子及共价连接需专门处理。保留配体坐标不等于确认其生理作用，也不自动生成配体成键、解离或催化。`prepare_molecular_asset.py` 的静态聚合物入口仍不包含非聚合物；不要混用两个入口的配置。
+
 - [1BRS](https://www.rcsb.org/structure/1BRS) 原研究描述 C40A/C82A barstar 构建体；记录其身份，不把瞬间教学往返当作真实结合/解离速率。
 - [1YCR](https://www.rcsb.org/structure/1YCR) 是 MDM2 结构域与 p53 肽段，不能凭这一结合镜头声称展示了完整泛素化和降解。
 - [2PTC](https://www.rcsb.org/structure/2PTC) 中 BPTI 是抑制剂，不能作为普通蛋白水解底物剪断。

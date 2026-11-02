@@ -69,7 +69,7 @@ PY
   --mode loop --frames 192 --fps 24
 ```
 
-接着使用 [局部结合工作流](protein-interactions.md) 中原有的场景构建、保存后检查及渲染命令。新蛋白需要经来源审查后替换 `pdb`、`anchor`、`moving`、`ligands`、标签和构建体边界；无需为了新名字复制 `prepare_interaction.py`。路径失败时查看实际失败原子对，再决定是否需要柔性或其他源构象。
+接着使用 [局部结合工作流](protein-interactions.md) 中原有的场景构建、保存后检查及渲染命令。新蛋白需要经来源审查后替换 `pdb`、`anchor`、`moving`、配体选择、标签和构建体边界；无需为了新名字复制 `prepare_interaction.py`。`ligands` 中请求但未找到的组分会失败；需要区分具体副本或独立作者链时用 [ligand_instances](protein-interactions.md#明确保留哪一份配体)，写明其刚体伙伴和选择依据。路径失败时查看实际失败原子对，再决定是否需要柔性或其他源构象。
 
 ## 可复用的反应身份检查
 

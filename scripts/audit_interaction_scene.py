@@ -29,23 +29,29 @@ def main():
         meshes.append({'id':actor['id'],'intact_source_geometry':bool(intact),'source_chain':actor['chain']})
         if not intact:errors.append('Geometry changed '+actor['id'])
         if obj.get('biological_id')!=actor['id']:errors.append('Identity changed '+actor['id'])
+        if obj.parent!=scene.objects.get(actor['role']):errors.append('Rigid partner ownership changed '+actor['id'])
         if any(m.type=='BOOLEAN' for m in obj.modifiers):errors.append('Cutting modifier on '+actor['id'])
-    maximum_error=0.;minimum_margin=1.;clipped=[]
+    maximum_error=0.;minimum_margin=1.;clipped=[];actor_errors={a['id']:0. for a in manifest['actors']}
     for frame,pose in enumerate(expected,1):
         scene.frame_set(frame);bpy.context.view_layer.update()
         actual=np.array(scene.objects['moving'].matrix_world)
         maximum_error=max(maximum_error,float(abs(actual-pose).max()))
         for actor in manifest['actors']:
             obj=scene.objects[actor['id']]
+            target=pose if actor['role']=='moving' else np.eye(4)
+            actor_errors[actor['id']]=max(actor_errors[actor['id']],float(abs(np.array(obj.matrix_world)-target).max()))
             for point in obj.bound_box:
                 v=world_to_camera_view(scene,scene.camera,obj.matrix_world@Vector(point))
                 margin=min(v.x,v.y,1-v.x,1-v.y);minimum_margin=min(minimum_margin,margin)
                 if margin<0 or v.z<=0:clipped.append({'frame':frame,'actor':actor['id']});break
     if maximum_error>2e-5:errors.append('Saved animation differs from prepared poses')
+    for name,error in actor_errors.items():
+        if error>2e-5:errors.append('Actor no longer follows its rigid partner '+name)
     if clipped:errors.append('Main actor bounding boxes leave the camera frame')
     if not manifest['motion']['collision_screen_passed']:errors.append('Prepared path contact screen failed')
     if scene.frame_end!=manifest['frames'] or scene.render.fps!=manifest['fps']:errors.append('Timing differs from manifest')
     result={'scene':bpy.data.filepath,'actors':meshes,'pose_error_max':maximum_error,
+            'actor_transform_error_max':actor_errors,
             'camera_minimum_fractional_margin':minimum_margin,'clipped_examples':clipped[:15],
             'checked_frames_including_virtual_seam':len(expected),'prepared_contact_screen':manifest['motion'],
             'errors':errors,'passed':not errors,
