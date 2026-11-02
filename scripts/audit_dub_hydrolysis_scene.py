@@ -82,6 +82,8 @@ def main():
         scene.frame_set(frame); graph = bpy.context.evaluated_depsgraph_get()
         active = [obj for obj in fonts if obj.data.body in captions and not obj.evaluated_get(graph).hide_render]
         assert len(active) == 1, (frame, 'Caption missing or overlaps')
+        expected = [text for start,end,text in source['config']['captions'] if start <= (frame-1)/frames < end]
+        assert expected == [active[0].data.body], (frame, 'Caption disagrees with event timing')
     tree = scene.compositing_node_group
     mask = next(n for n in tree.nodes if n.label == 'Select matching premultiplied panel alpha')
     assert mask.inputs['Type'].default_value == 'Replace Alpha' and mask.inputs['Alpha'].is_linked

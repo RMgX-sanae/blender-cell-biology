@@ -7,6 +7,7 @@ from mathutils import Matrix
 SKILL=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(SKILL/'scripts'))
 import detail_scene as ds
+from event_timing import frame_window
 import style_nodes as sn
 from build_ubiquitin_transfer_scene import keyed_points,envelope,annotation_line,background,paired_composite,digest
 from build_phosphotransfer_scene import visibility,animated_mesh
@@ -93,7 +94,7 @@ def main():
     for x,k,title in [(-8.4,'enzyme','AMSH-LP'),(-4.4,'distal','远端泛素'),(-.3,'proximal','近端泛素'),(4.2,'water','水中的氧'),(8.4,'zinc','Zn2+')]:
         text(title,x,-4.3,.49);dot=sn.point_object(title+' dot',[[x-1.3,-4.12,12]],overlay);sn.instance_spheres(dot,sn.material(title+' ink',{'material':'paint'},colors[k],'paint'),radius=.09)
     for start,end,body in source['config']['captions']:
-        visibility(text(body,0,-5.4,.64),round(start*count)+1,round(end*count))
+        visibility(text(body,0,-5.4,.64),*frame_window(start,end,count))
     ds.path('Panel separator',[(0,-3.5,12),(0,3.55,12)],.016,sn.material('Divider',{'material':'paint'},'#bad6d9' if a.style=='dark' else '#365a64','paint'),overlay)
     bg,bg_record=background(assets,float(np.linalg.norm(transforms['overview'][0,:3,0])),('distal','enzyme','proximal'))
     groups=[left,right,overlay,labels,*bg]

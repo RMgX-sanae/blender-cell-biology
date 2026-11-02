@@ -168,6 +168,8 @@ def main():
         scene.frame_set(frame);deps=bpy.context.evaluated_depsgraph_get()
         visible=[o for o in scene.objects if o.type=='FONT' and o.data.body in caption_bodies and not o.evaluated_get(deps).hide_render]
         assert len(visible)==1,(frame,'caption overlap or absence')
+        expected=[text for begin,end,text in m['captions'] if begin <= (frame-1)/count < end]
+        assert expected==[visible[0].data.body],(frame,'caption disagrees with event timing')
     result={'passed':True,'frames':count,'chemical_actor_frame_checks':checked,
         'stable_chemical_heavy_atoms':atom_count,'max_chemical_coordinate_error_nm':max_error,
         'max_protein_coordinate_errors_nm':protein_errors,'all_source_protein_atoms_retained':True,

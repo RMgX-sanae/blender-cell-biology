@@ -17,6 +17,32 @@ from prepare_molecular_asset import surface
 from prepare_ubiquitin_transfer import smooth
 from reaction_ledger import validate
 from ubiquitin_geometry import digest
+from event_timing import continuous_intervals, phase_progress, validate_intervals
+
+
+EVENT_ORDER = ['reaction', 'proximal_release', 'distal_release']
+
+
+def presentation_config(config, mode):
+    config = dict(config)
+    if set(config['timing']) != set(EVENT_ORDER):
+        raise ValueError('DUB timing requires reaction, proximal_release and distal_release')
+    validate_intervals(config['timing'], zip(EVENT_ORDER, EVENT_ORDER[1:]))
+    if mode == 'continuous':
+        config['timing'] = continuous_intervals(config['timing'], EVENT_ORDER)
+    elif mode != 'teaching':
+        raise ValueError('Use teaching or continuous; this fragment is not a closed catalytic loop')
+    texts = config.get('caption_texts')
+    if texts is None:  # Older project files stored numeric caption boundaries.
+        texts = [row[2] for row in config['captions']]
+    if len(texts) != 6 or any(not isinstance(t, str) or not t.strip() for t in texts):
+        raise ValueError('Supply six DUB caption texts in the documented event/state order')
+    reaction, proximal, distal = [config['timing'][name] for name in EVENT_ORDER]
+    bounds = [0., reaction[0], reaction[1], proximal[0], distal[0], distal[1], 1.]
+    config['captions'] = [[start, end, text] for start, end, text in zip(bounds, bounds[1:], texts)
+                          if end > start]
+    config['presentation_mode'] = mode
+    return config
 
 
 def sample(model, config, frames):
@@ -38,9 +64,9 @@ def sample(model, config, frames):
     lengths = np.r_[0, np.cumsum(np.linalg.norm(np.diff(positions, axis=0), axis=2).max(axis=1))]
     lengths /= lengths[-1]
     time = np.arange(frames+1)/frames
+    phases = phase_progress(time, config['timing'], before=zip(EVENT_ORDER, EVENT_ORDER[1:]))
     def progress(name):
-        start, end = config['timing'][name]
-        return smooth((time-start)/(end-start))
+        return smooth(phases[name])
     fractions = progress('reaction'); release_q = np.interp(progress('distal_release'), lengths, grid)
     path = config['proximal_release']
     poses = matrices(endpoint['proximal']*.1, path['direction'], path['distance_nm'],
@@ -140,10 +166,11 @@ def main():
     p.add_argument('--sources', type=Path, required=True); p.add_argument('--output', type=Path, required=True)
     p.add_argument('--config', type=Path, default=Path(__file__).resolve().parents[1]/'assets/dub-hydrolysis.json')
     p.add_argument('--frames', type=int, default=720); p.add_argument('--fps', type=int, default=24)
+    p.add_argument('--mode', choices=['teaching', 'continuous'], default='teaching')
     a = p.parse_args()
     if a.output.exists(): p.error('Use a fresh preparation directory')
     if a.frames < 96 or a.fps < 1: p.error('Use at least 96 frames and positive fps')
-    config = json.loads(a.config.read_text()); model = DubGeometry(a.sources)
+    config = presentation_config(json.loads(a.config.read_text()), a.mode); model = DubGeometry(a.sources)
     book = ledger(model); receipt = validate(book)
     arrays, fractions = sample(model, config, a.frames); checks = audit(model, arrays, fractions)
     if not checks['passed']: raise ValueError(checks)

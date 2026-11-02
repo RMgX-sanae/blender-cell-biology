@@ -20,6 +20,7 @@ from prepare_molecular_asset import atom_table, xyz
 from prepare_ras_switch import fit_points
 from prepare_ras_exchange_motion import pair_check, apply
 from prepare_phosphotransfer_motion import covalent_interpolate, group_interpolate, rotation_between, smooth
+from event_timing import phase_progress
 from rigid_path_detour import refine
 from reaction_ledger import validate as validate_reaction_ledger
 
@@ -172,7 +173,7 @@ def main():
     bonds=np.array([[index_map[int(i)],index_map[int(j)]] for i,j in nt['bonds'] if i in index_map and j in index_map])
     intervals={'binding':[0,.36],'hydrolysis':[.36,.52],'release':[.58,1]} if a.mode=='continuous' else {'binding':[.06,.36],'hydrolysis':[.43,.57],'release':[.65,.95]}
     t=np.linspace(0,1,a.frames+1)
-    phases={k:np.clip((t-start)/(end-start),0,1) for k,(start,end) in intervals.items()}
+    phases=phase_progress(t,intervals,before=[('binding','hydrolysis'),('hydrolysis','release')])
     bind=phases['binding'];release=phases['release'];transfer=smooth(phases['hydrolysis'])
     opening=smooth((bind-.08)/.62);relax=smooth((release-.08)/.72)
     gap_q=bind.copy();leaving=t>=intervals['release'][0];gap_q[leaving]=1-smooth(release[leaving]/.9)

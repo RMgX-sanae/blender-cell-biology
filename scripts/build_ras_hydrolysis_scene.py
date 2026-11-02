@@ -9,6 +9,7 @@ import numpy as np
 from mathutils import Matrix
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
+from event_timing import frame_window
 import style_nodes as sn
 import cellular_environment as environment
 from build_phosphotransfer_scene import animated_mesh, visibility, view_layer
@@ -151,7 +152,7 @@ def main():
         dot=sn.point_object(label+' color',np.array([[x-(1.21 if cycle else 1.32),-3.96,8]]),labels)
         sn.instance_spheres(dot,sn.material(label+' legend',material_profile,COLORS[key],'paint'),radius=.10)
     for begin,end,caption in caption_rows:
-        obj=text(caption,0,-5.4,.76);visibility(obj,round(begin*count)+1,round(end*count))
+        obj=text(caption,0,-5.4,.76);visibility(obj,*frame_window(begin,end,count))
     ds.path('Panel separator',[(0,-3.55,8),(0,3.65,8)],22/a.width,
         sn.material('Divider',material_profile,'#dde6e9','paint'),labels)
     environment_groups=[];environment_record=None

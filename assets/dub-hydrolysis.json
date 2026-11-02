@@ -3274,37 +3274,13 @@
       0.98
     ]
   },
-  "captions": [
-    [
-      0,
-      0.08,
-      "双泛素位于催化通道"
-    ],
-    [
-      0.08,
-      0.48,
-      "水中的氧并入远端泛素羧基"
-    ],
-    [
-      0.48,
-      0.52,
-      "异肽键断开"
-    ],
-    [
-      0.52,
-      0.7,
-      "近端泛素离开"
-    ],
-    [
-      0.7,
-      0.98,
-      "远端产物转向并离开"
-    ],
-    [
-      0.98,
-      1,
-      "两个泛素产物分开"
-    ]
+  "caption_texts": [
+    "双泛素位于催化通道",
+    "水中的氧并入远端泛素羧基",
+    "异肽键断开",
+    "近端泛素离开",
+    "远端产物转向并离开",
+    "两个泛素产物分开"
   ],
   "evidence": "Authored bond-preserving torsions and rigid displacement fitted to endpoint geometry and contact constraints. The release order, interpolation and display time are inferred, not observed kinetics."
 }
