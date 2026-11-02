@@ -13,7 +13,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。
 
-**扩展优先级：**新机制先按 [workflow-transfer.md](references/workflow-transfer.md) 选择已验证的工作流，区分可以沿用的步骤、需要替换的项目数据和必须重建的科学规则。优先让 agent 能迁移已有方法，以少量代表性案例验证；不以新增脚本、过程条目或视频数量衡量完善程度。
+**扩展优先级：**先用 [入口与验证范围](references/workflow-entrypoints.md) 找到合适起点，再按 [workflow-transfer.md](references/workflow-transfer.md) 选择已验证的工作流，区分可以沿用的步骤、需要替换的项目数据和必须重建的科学规则。优先让 agent 能迁移已有方法，以少量代表性案例验证；不以新增脚本、过程条目或视频数量衡量完善程度。
 
 ## 接到任务后
 
@@ -66,38 +66,9 @@ description: Build editable Blender models and animations of cells, organelles, 
 - 动画关键帧不是动力学模拟；播放时长不等于生物学时长。布朗运动需说明扩散模型与步长；路径动画不可冒充实验轨迹或 MD。
 - 科学数据图沿用朴素科研风格；Blender 场景可有不同艺术表现，但不能用生图伪造显微图、结构证据或数据图。
 
-## 默认精细制作入口
+## 选择生成入口
 
-| 内容 | 脚本与范围 |
-|---|---|
-| PDB/mmCIF 到可追溯分子资产 | `prepare_molecular_asset.py`，Gemmi 解析、nm 坐标、按链表面/原子数据 |
-| 公开结构候选检索 | `search_public_assets.py`：RCSB 标题/全文及可选物种检索，返回候选 metadata，不自动认定适用性 |
-| 骨架装配与拆解 | `prepare_filament_assets.py` + `build_polymer_scene.py`，复用 8F8R/8F8Q/7AQK/3J6F；模板、命令与边界见 polymer-templates |
-| 肌动蛋白化学状态与完整流程计划检查 | `prepare_actin_states.py` + `build_actin_state_comparison.py` 保留 8A2R/S/T 配体并生成静态对照；`audit_mechanism_plan.py` 检查计划覆盖与闭环，不证明全流程成片完成 |
-| 膜受体、转录复合物、运输 | `build_molecular_scene.py`：3SN6/5FLM/4HNA；只有 motor 内置过程动画 |
-| 曲面受体分布与膜内外朝向 | `prepare_receptor_distribution.py` + `build_receptor_distribution_scene.py`：完整 3SN6 实例、均匀/成簇/极性强度、排除区和全复合物间距；可选浅/深风格与合成器，详见 receptors-and-distributions |
-| 核糖体与复制复合体结构 | `build_complex_scene.py`：9SPI/7PFO 完整装配或完整隐藏部分亚基的内部视图，属于静态结构 |
-| 翻译延伸的底物循环 | `build_translation_scene.py`：9SPI 衍生 tRNA/mRNA，示意的进入、短肽转移、三核苷酸转位；完整单体分层展示，非完整催化循环 |
-| 转录中的一个核苷酸加入 | `prepare_transcription.py` + `build_transcription_scene.py`：5FLM 产物与 CCD CTP，明确标注的底物接近/连接变化/PPi 离开 |
-| 放慢转录并继续下一轮 | `prepare_transcription_next.py` + `extend_transcription_scene.py`：23 秒、连续 C→U 两轮，中间停顿和转位；第二轮构象明确标为教学重构 |
-| 复制叉和两条新链 | `prepare_replication.py` + `build_replication_scene.py`：完整核苷酸、连续/分段延伸、方向标记；CMG 完整后移为结构参考层 |
-| 线粒体 | `build_organelle_scene.py`：内外膜、连续嵴膜、ATP synthase 示意、局部剖切 |
-| 动物细胞总览 | `prepare_cell_geometry.py` + `build_cell_scene.py`：核膜—ER 连通腔体、Golgi、细胞器与骨架 |
-| 中期后的分离与胞质分裂 | `prepare_division.py` + `build_division_scene.py`：连续收缩/分开、逐帧网格缓存 |
-| 重渲染、外部合成交接、视频 | `render_saved.py`、`encode_video.py`；完整命令与限制见 production-workflow |
-| 参考图辅助分析与多风格对照 | `analyze_style_image.py`、`prepare_style_asset.py`、`build_style_scene.py`、`style_nodes.py`；可编辑 GN/材质/合成见 style-library |
-| 可移植完整肌动蛋白案例 | `build_actin_films.py`，项目路径、字体、运行时、质量档位、分步制作与续跑见 portable-actin-films |
-| 可迁移的蛋白局部相互作用 | `prepare_interaction.py` + `build_interaction_scene.py`，来源结合末态与完整配体、自然接近/转向/释放；不自动完成催化或完整通路 |
-| PKAc/SP20 磷酸转移与产物释放 | `prepare_phosphotransfer.py`、`prepare_phosphotransfer_motion.py`、`build_phosphotransfer_scene.py`、`audit_phosphotransfer_scene.py`；完整催化实例，不包含 PKA 上游激活 |
-| Ras/SOS 核苷酸交换 | `prepare_ras_switch.py`、`prepare_ras_exchange_motion.py`、`build_ras_exchange_scene.py`、`audit_ras_exchange_scene.py`；旧 GDP 释放、新 GTP 结合及 SOS 释放，不包含 GAP 水解 |
-| Ras/p120GAP 水解与关闭 | 同一结构准备后运行 `prepare_ras_hydrolysis_motion.py`、`build_ras_hydrolysis_scene.py`、`audit_ras_hydrolysis_scene.py`；水中氧进入 Pi、GDP/Pi 中间态、Pi 释放和构象复位 |
-| Ras 的 GDP→GTP→GDP 连续状态序列 | `prepare_ras_cycle_motion.py` 合并两段准备坐标；复用水解场景生成器与检查器，统一镜头、63 个化学重原子身份及全部伙伴检查；不是封闭物质循环或完整信号通路 |
-| RNF4/Ubc13/Ube2V2 的 K63 净键转移与释放 | `prepare_ubiquitin_transfer.py`、`build_ubiquitin_transfer_scene.py`、`audit_ubiquitin_transfer_scene.py`；默认至结合产物，准备时加 `--release` 继续展示 E2/UEV 及完整双泛素离开；E1 装载仍待实现 |
-| 可组合滤镜与受保护标签 | `apply_render_recipe.py` + `compositor_stack.py`，节点链保存在新工程，按所需 pass 和引擎检查 |
-
-精细入口的风格档案为 [style-studio.json](assets/style-studio.json)、[style-molecular-reference.json](assets/style-molecular-reference.json)、[style-organelle.json](assets/style-organelle.json)。它们控制几何表现、材质、灯光、镜头和合成分支。受体示例默认采用用户选定的侧视剖面（`--membrane-view side`）；`--environment` 增加有身份和尺度的前/中/后景。保持主结构清楚，环境数量和分布注明是否为假设。
-
-其他细胞与 60 个过程由 agent 按配方、来源和验收标准制作具体工程；不能把目录覆盖范围称为已经渲染完成的 60 个动画。
+[入口与验证范围](references/workflow-entrypoints.md) 集中列出静态模型、局部动作、完整案例和配方，以及可直接复用的脚本、实际检查范围和缺失阶段。先按交付类型与事件选择，再读取对应的制作命令；不要将一个案例的通过状态外推到其他蛋白或所有风格组合。
 
 ## 机制白模与旧兼容入口
 
