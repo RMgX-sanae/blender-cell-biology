@@ -14,7 +14,9 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS
+from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS, validate_render_settings
+sys.path.insert(0,str(SKILL/'scripts'))
+from render_cache import valid_png
 
 def scan(folder):
     scene=bpy.context.scene
@@ -91,6 +93,14 @@ def main():
         if chosen!=['all'] and c['id'] not in chosen:continue
         folder=ROOT/'shots'/c['id'];blend=folder/'scene.blend'
         bpy.ops.wm.open_mainfile(filepath=str(blend))
+        scene=bpy.context.scene
+        settings={'engine':'cycles' if scene.render.engine=='CYCLES' else scene.render.engine.removeprefix('BLENDER_').lower(),
+                  'width':scene.render.resolution_x,'height':scene.render.resolution_y,
+                  'percentage':scene.render.resolution_percentage,'fps':scene.render.fps,'fps_base':scene.render.fps_base,
+                  'samples':scene.cycles.samples if scene.render.engine=='CYCLES' else scene.eevee.taa_render_samples,
+                  'compositor':scene.get('selected_compositor'),'frame_start':scene.frame_start,
+                  'frames':scene.frame_end-scene.frame_start+1}
+        validate_render_settings(settings,c)
         keys,report=scan(folder)
         print('AUDITED',c['id'],report['frames'],report['unique_visual_states'],report['framing_warning_frames'],flush=True)
         if a.audit_only:continue
@@ -100,22 +110,27 @@ def main():
         previous=cache/'scene-sha256.txt'
         # A changed scene uses a new namespace; stale frames never count as hits.
         cache=cache/signature[:12];cache.mkdir(exist_ok=True)
-        start=time.monotonic();done=set()
+        start=time.monotonic();done=set();rendered=[];reused=[]
         for f,key in enumerate(keys,1):
             output=cache/(key+'.png')
             if key in done:continue
-            if not output.exists():
+            if not valid_png(output,settings['width'],settings['height']):
                 scene.frame_set(f);scene.render.filepath=str(output)
                 bpy.ops.render.render(write_still=True)
+                if not valid_png(output,settings['width'],settings['height']):
+                    raise ValueError('Rendered PNG failed validation: '+str(output))
+                rendered.append(key)
+            else:reused.append(key)
             done.add(key)
             if len(done)%25==0:
                 progress={'shot':c['id'],'unique_complete':len(done),'unique_total':len(set(keys)),
                           'elapsed_seconds':round(time.monotonic()-start,1)}
                 (ROOT/'render-progress.json').write_text(json.dumps(progress))
                 print('RENDER_PROGRESS',json.dumps(progress),flush=True)
-        index={'scene_sha256':signature,'fps':scene.render.fps,'frames':len(keys),
+        index={'scene_sha256':signature,'fps':scene.render.fps,'frames':len(keys),'render_settings':settings,
                'paths':[str(cache/(key+'.png')) for key in keys],
-               'unique_states':len(done),'elapsed_seconds':time.monotonic()-start}
+               'unique_states':len(done),'rendered_this_run':len(rendered),'validated_cached_states':len(reused),
+               'elapsed_seconds':time.monotonic()-start}
         (folder/'render-index.json').write_text(json.dumps(index,indent=2)+'\n')
         print('RENDER_COMPLETE',c['id'],len(keys),len(done),index['elapsed_seconds'],flush=True)
 

@@ -1,27 +1,48 @@
 """Encode actual rendered 24 fps chapters and assemble narrated route films."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
-from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS
+from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS, validate_render_settings
 from project_context import FFMPEG
+sys.path.insert(0,str(SKILL/'scripts'))
+from render_cache import valid_png
 
 def run(args):subprocess.run([FFMPEG,'-hide_banner','-loglevel','error','-y']+args,check=True)
 def quoted(path):return "'"+str(path).replace("'","'\\''")+"'"
+
+def render_index(shot):
+    folder=ROOT/'shots'/shot['id'];path=folder/'render-index.json'
+    if not path.exists():raise ValueError('Chapter '+shot['id']+' has no render index; run render first')
+    index=json.loads(path.read_text())
+    if 'render_settings' not in index:
+        raise ValueError('Chapter '+shot['id']+' needs a checked render index; rerun render to validate existing PNGs')
+    validate_render_settings(index['render_settings'],shot)
+    if index['scene_sha256']!=hashlib.sha256((folder/'scene.blend').read_bytes()).hexdigest():
+        raise ValueError('Chapter '+shot['id']+' changed after rendering; rerun render before encoding')
+    if index['frames']!=shot['frames'] or len(index['paths'])!=shot['frames'] or index['fps']!=shot['fps']:
+        raise ValueError('Chapter '+shot['id']+' render timing does not match the storyboard; rerun render')
+    return index
+
+def encoding_signature(index):
+    return 'image2-v3:'+str(index['fps'])+':'+OPTIONS['narration']+':'+index['scene_sha256']
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--chapters',default='all');p.add_argument('--routes',action='store_true')
     args=p.parse_args();d=json.loads((ROOT/'storyboard.json').read_text());byid={s['id']:s for s in d['shots']}
     for s in d['shots']:
         if args.chapters!='all' and s['id'] not in args.chapters.split(','):continue
-        folder=ROOT/'shots'/s['id'];idx=folder/'render-index.json'
-        if not idx.exists():continue
-        index=json.loads(idx.read_text());out=folder/'chapter.mp4'
+        folder=ROOT/'shots'/s['id'];index=render_index(s);out=folder/'chapter.mp4'
         encoded=folder/'encoded-scene-sha256.txt'
-        signature='image2-v3:'+str(index['fps'])+':'+OPTIONS['narration']+':'+index['scene_sha256']
+        signature=encoding_signature(index)
         if out.exists() and encoded.exists() and encoded.read_text()==signature:continue
+        for source in set(index['paths']):
+            if not valid_png(Path(source),index['render_settings']['width'],index['render_settings']['height']):
+                raise ValueError('Invalid cached PNG; rerun render before encoding: '+source)
         seq=folder/'sequence';seq.mkdir(exist_ok=True)
         for i,source in enumerate(index['paths'],1):
             link=seq/f'{i:06d}.png'
@@ -36,6 +57,10 @@ def main():
     if not args.routes:return
     for name,route in d['routes'].items():
         assert all((ROOT/'shots'/id/'chapter.mp4').exists() for id in route['shots']),name+' chapters missing'
+        for id in route['shots']:
+            index=render_index(byid[id]);encoded=ROOT/'shots'/id/'encoded-scene-sha256.txt'
+            if not encoded.exists() or encoded.read_text()!=encoding_signature(index):
+                raise ValueError('Chapter '+id+' must be encoded from its current rendered scene before route assembly')
         folder=ROOT/'movies';video_list=folder/(name+'-video.ffconcat');audio_list=folder/(name+'-audio.ffconcat')
         video_list.write_text('ffconcat version 1.0\n'+''.join('file '+quoted(ROOT/'shots'/id/'chapter.mp4')+'\n' for id in route['shots']))
         audio_list.write_text('ffconcat version 1.0\n'+''.join('file '+quoted(ROOT/'shots'/id/'chapter.wav')+'\n' for id in route['shots']))
