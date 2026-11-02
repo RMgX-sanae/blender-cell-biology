@@ -1,0 +1,28 @@
+{
+  "name": "AQP1 tetramer on an illustrative membrane",
+  "source_id": "1J4N",
+  "source_preset": "aqp1-1j4n-assembly1",
+  "chains": ["A", "A-2", "A-3", "A-4"],
+  "chain_colors": {"A": "7CCBD4", "A-2": "8DD5C7", "A-3": "B8D6E7", "A-4": "9CB8DB"},
+  "surface": {"kind": "ellipsoid", "semiaxes_nm": [32,28,25]},
+  "local_positive_z": "outward",
+  "orientation_evidence": "aqp1-asset.json defines inferred +Z extracellular using source-matched P47865 topology. Here +Z faces the exterior of a hypothetical closed plasma-membrane-like surface; the interior is cytoplasmic. The ellipsoid is not a whole-cell size or observed vesicle localization.",
+  "display": {
+    "context_label": "AQP1 四聚体 · 胞外面朝外",
+    "camera_position_nm": [0,-160,80],
+    "camera_target_nm": [0,0,0],
+    "camera_scale_nm": 145,
+    "membrane_palette": {"dark": {"heads":"768081", "core":"566569"}, "light": {"heads":"D0D4C9", "core":"BFC3B8"}},
+    "legend": [{"chain":"A", "label":"AQP1 · 1"}, {"chain":"A-2", "label":"AQP1 · 2"}, {"chain":"A-3", "label":"AQP1 · 3"}, {"chain":"A-4", "label":"AQP1 · 4"}]
+  },
+  "count": 24,
+  "seed": 43,
+  "minimum_anchor_nm": 9,
+  "atom_clearance_nm": 0.20,
+  "excluded_spheres": [],
+  "distribution": "uniform",
+  "fields": {"uniform": {"kind":"uniform"}},
+  "biological_context": "Static geometric transfer check. Tetramer identity follows 1J4N assembly 1; membrane shape, curvature, protein count and distribution are authored hypotheses. Symmetry-copy colors do not imply different subunit functions. Only the uniform mode is specified in this project config.",
+  "sources": [{"url":"https://www.rcsb.org/structure/1J4N", "role":"Bovine AQP1 assembly 1 and construct limits"}, {"url":"https://rest.uniprot.org/uniprotkb/P47865.json", "role":"Sequence and six full transmembrane helices; inference of extracellular direction"}],
+  "construct_limits": ["Selected resolved polymer heavy atoms only; unresolved termini, waters, detergent and glycans are omitted.", "The illustrative envelope does not qualify a water path or pore diameter. No permeation, gating, proton-exclusion or diffusion animation is claimed."]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "aqp1-1j4n-assembly1",
+  "source_id": "1J4N",
+  "source_sha256": "c3bf15a85051ebc27f3ff8e21c44437d308d46f43c0840622577d0cb034a32b6",
+  "chains": [{"chain": "A"}, {"chain": "A-2"}, {"chain": "A-3"}, {"chain": "A-4"}],
+  "selection_note": "Bovine AQP1 biological assembly 1: author-assigned C4 homotetramer. Select all resolved polymer heavy atoms in the four generated chains; do not use the asymmetric unit or assembly 2 octamer.",
+  "orientation": {
+    "origin_angstrom": [46.6655, 46.6655, 27.47958333333333],
+    "basis_columns": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    "note": "Local +Z points extracellularly. For each of four chains, average the first/last four resolved CA atoms of six UniProt P47865 full transmembrane spans, alternating N-side cytoplasmic/extracellular. Average 24 exterior and 24 interior helix ends; their midpoint is the origin and their difference defines Z. Project source X perpendicular to Z and set Y=cross(Z,X). All 249 modeled author-numbered residues match the UniProt sequence. This is an inferred membrane frame, not OPM or an experimentally measured embedding.",
+    "tm_spans_author_numbers": [[12,29], [49,67], [93,111], [136,155], [166,183], [209,226]],
+    "evidence_urls": ["https://www.rcsb.org/structure/1J4N", "https://rest.uniprot.org/uniprotkb/P47865.json"],
+    "uniprot_sha256": "3ba996f827e6077bc1f5182c21c50f6a997fb524c4199394d356a9180ebe0c99"
+  },
+  "limitations": [
+    "Bovine AQP1 X-ray model at 2.2 Angstrom. Each selected chain has 249 modeled residues of a 271-residue sequence; missing terminal residues are not reconstructed.",
+    "The polymer-only envelope omits waters and BNG detergent molecules; no glycans are reconstructed.",
+    "Gaussian envelopes can occlude a narrow channel. This is a static membrane asset, not a qualified pore surface, water trajectory, proton-exclusion demonstration or gating model."
+  ]
+}

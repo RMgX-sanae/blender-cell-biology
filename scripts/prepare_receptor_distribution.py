@@ -251,7 +251,8 @@ def main():
     assets = a.asset_dir.resolve(); source = json.loads((assets/'manifest.json').read_text())
     if source['units'] != 'nm' or not config.get('orientation_evidence'):
         raise ValueError('Require nm assets and explicit local +Z orientation evidence')
-    if config.get('source_preset') != source['preset'] or config.get('source_id') != Path(source['source_file']).stem.upper():
+    source_id = source.get('source_id', Path(source['source_file']).stem.upper())
+    if config.get('source_preset') != source['preset'] or config.get('source_id') != source_id:
         raise ValueError('Configuration/source identity mismatch; requalify another receptor')
     chains = config['chains']
     if set(item['chain'] for item in config['display']['legend']) != set(chains):

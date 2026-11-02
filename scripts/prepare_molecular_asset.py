@@ -2,12 +2,14 @@
 
 Requires numpy, scipy, scikit-image and gemmi. This is an illustrative molecular
 envelope, NOT an experimental density map or an exact solvent-excluded surface.
-The three presets encode selections for the named PDB entries only.
+The three presets encode selections for the named PDB entries only. A project
+config can qualify different polymer selections and a source-coordinate frame.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 
 import gemmi
 import numpy as np
@@ -40,6 +42,46 @@ def atom_table(path):
 
 def xyz(rows):
     return np.array([r[0] for r in rows], dtype=float)
+
+
+def project_selection(table, config, source_sha256):
+    """Validate a declared selection/frame; do not infer its biological meaning."""
+    if config['source_sha256'] != source_sha256:
+        raise ValueError('Project source SHA256 mismatch; requalify the downloaded structure')
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', config['id']):
+        raise ValueError('Project id must use letters, digits, underscore or hyphen')
+    if not isinstance(config['source_id'], str) or not config['source_id'].strip():
+        raise ValueError('Require the source entry id independently of its assembly filename')
+    selected = {}
+    for item in config['chains']:
+        chain = item['chain']
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', chain) or chain not in table or chain in selected:
+            raise ValueError('Require unique existing polymer chains with filename-safe ids: '+chain)
+        rows = table[chain]
+        if 'residue_ranges' in item:
+            ranges = item['residue_ranges']
+            if not ranges or any(len(pair) != 2 or any(type(v) is not int for v in pair)
+                                 or pair[0] > pair[1] for pair in ranges):
+                raise ValueError('Residue ranges require inclusive integer [first,last] pairs')
+            rows = [r for r in rows if any(first <= r[3] <= last for first,last in ranges)]
+        if not rows:
+            raise ValueError('Project selection has no resolved polymer atoms: '+chain)
+        selected[chain] = rows
+    if not selected:
+        raise ValueError('Select at least one polymer chain')
+    frame = config['orientation']
+    origin = np.asarray(frame['origin_angstrom'], dtype=float)
+    basis = np.asarray(frame['basis_columns'], dtype=float)
+    if origin.shape != (3,) or not np.isfinite(origin).all():
+        raise ValueError('Require a finite three-dimensional source origin in Angstrom')
+    if (basis.shape != (3,3) or not np.isfinite(basis).all() or
+            not np.allclose(basis.T@basis, np.eye(3), atol=1e-7, rtol=0) or
+            not np.isclose(np.linalg.det(basis), 1, atol=1e-7, rtol=0)):
+        raise ValueError('Source basis must be a proper rigid rotation; no reflection, scale or shear')
+    if (not config.get('selection_note') or not frame.get('note') or
+            not frame.get('evidence_urls')):
+        raise ValueError('Document selection and orientation evidence; a valid matrix is not biological qualification')
+    return selected, origin, basis
 
 
 def orientation(table, preset):
@@ -99,27 +141,35 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--preset', choices=['generic', 'beta2', 'transcription', 'motor'],
                         default='generic')
+    parser.add_argument('--config', type=Path, help='Project polymer selection and qualified rigid coordinate frame')
     parser.add_argument('--spacing', type=float, default=.75, help='Angstrom')
     parser.add_argument('--sigma', type=float, default=1.15, help='Gaussian sigma, Angstrom')
     parser.add_argument('--level', type=float, default=.55)
     args = parser.parse_args()
     if args.output.exists():
         raise SystemExit('Output already exists; choose a fresh output directory.')
+    if args.config and args.preset != 'generic':
+        parser.error('Choose a project --config or a named --preset, not both')
     expected = {'beta2': '3SN6', 'transcription': '5FLM', 'motor': '4HNA'}
     if args.preset in expected and args.structure.stem.upper() != expected[args.preset]:
         raise SystemExit(f'{args.preset} selection is validated only for {expected[args.preset]}')
     if min(args.spacing, args.sigma, args.level) <= 0:
         raise SystemExit('Surface parameters must be positive.')
+    source_sha256 = hashlib.sha256(args.structure.read_bytes()).hexdigest()
     table = atom_table(args.structure)
-    if args.preset == 'beta2':
+    config = json.loads(args.config.read_text()) if args.config else None
+    if config is not None:
+        table, origin, basis = project_selection(table, config, source_sha256)
+    elif args.preset == 'beta2':
         table = {c: table[c] for c in ('R', 'A', 'B', 'G')}
         table['R'] = [r for r in table['R'] if r[3] < 400]
     elif args.preset == 'motor':
         table = {c: table[c] for c in ('A', 'B', 'K')}
-    origin, basis = orientation(table, args.preset)
+    if config is None:
+        origin, basis = orientation(table, args.preset)
     manifest = {
         'source_file': args.structure.name,
-        'source_sha256': hashlib.sha256(args.structure.read_bytes()).hexdigest(),
+        'source_sha256': source_sha256,
         'entry_url': 'https://www.rcsb.org/structure/' + args.structure.stem.upper(),
         'preset': args.preset, 'units': 'nm', 'model_index': 0,
         'source_origin_angstrom': origin.tolist(), 'source_basis_columns': basis.tolist(),
@@ -132,6 +182,13 @@ def main():
             'Surface is not experimental EM density, an exact SES, or a live-cell conformation.',
             'Any later replication, placement or animation is a schematic unless separately evidenced.'],
         'chains': []}
+    if config is not None:
+        manifest.update(source_id=config['source_id'], preset=config['id'],
+            entry_url='https://www.rcsb.org/structure/'+config['source_id'],
+            project_config=config, config_sha256=hashlib.sha256(args.config.read_bytes()).hexdigest(),
+            selection_note=config['selection_note'], orientation_note=config['orientation']['note'],
+            orientation_sources=config['orientation']['evidence_urls'])
+        manifest['limitations'].extend(config.get('limitations', []))
     if args.preset == 'beta2':
         manifest['selection_note'] = '3SN6 R residues <400 plus Gs A/B/G; exclude engineered T4 fusion and stabilizing nanobody N; omit ligand/ions.'
         manifest['orientation_note'] = 'Inferred from UniProt P07550 TM1–7 endpoint averages; +Z extracellular. Not a measured membrane plane or OPM result.'
