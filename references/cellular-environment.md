@@ -61,6 +61,8 @@ done
 
 `assets/allen-environment-sources.json` 记录公开 OBJ 地址、SHA-256、资源页面及使用条件；`prepare_allen_environment.py` 校验源文件并保留顶点与面，输出外置 NPZ。可用 `--source-dir` 复用已下载的命名 OBJ，但仍校验哈希。生成器只做刚体摆放和均匀缩放，配对膜、DNA、内部结构采用同一个变换；场景记录各对象变换。背景在画面中的位置不是前景模型真实测得的邻域，选择 hiPSC 形态代理也不能自动将前景泛化到该细胞类型。
 
+这些三件套也可作为主体，沿用 [同源细胞展示入口](registered-cell-display.md) 与保存工程检查器。新的准备记录另含 NPZ 哈希；该主体入口同时核对原始 OBJ 与缓存数组。源细胞边界存在开边和非流形边，只适合来源显示，不能直接用于判定封闭胞质体积或膜内外。
+
 Allen 资源按其[使用条款](https://alleninstitute.org/legal/terms-of-use)用于非商业研究/教学，并保留[来源署名](https://alleninstitute.org/legal/citation-policy)。公开展示这些渲染时，在同页说明或项目来源文档注明提供者、模型页面及显示加工方式；不必向画面塞入小字。源 OBJ、准备网格、参考图片和渲染均不加入 skill 或 Git 仓库。商业项目需另行核对该资源授权或选择适用资产。
 
 ## 用显微参考轮廓制作三维 ER

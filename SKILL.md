@@ -49,6 +49,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 分子剖面、遮挡与内部观察窗口 | [section-views.md](references/section-views.md)：用完整单体和前后层次表达 |
 | 不同细胞类型、组织极性与基本形态 | [cells-and-organelles.md](references/cells-and-organelles.md) 的细胞表 |
 | 细胞器、膜层、骨架与内部连接关系 | 同文件的细胞器表和拓扑检查 |
+| 保留同一来源细胞的膜、DNA 与细胞器标记位置 | [同源细胞展示](references/registered-cell-display.md)：共同变换、高对比配色与源网格复核；不把显示表面当封闭区室 |
 | 受体、通道、糖链及空间分布 | [receptors-and-distributions.md](references/receptors-and-distributions.md) |
 | 分裂、DNA/RNA、翻译、运输等动画 | [process-atlas.md](references/process-atlas.md)，只读相关过程组 |
 | 肌动蛋白聚合/解聚、踏车、切断、退火、成束、Arp2/3、封端及微管动态 | [polymer-templates.md](references/polymer-templates.md)：11 个可执行模板 |

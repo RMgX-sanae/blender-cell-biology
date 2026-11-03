@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "rotation_degrees": [65, 0, -25],
+  "display_span": 12,
+  "titles": {"er": "单细胞中的内质网标记", "mito": "单细胞中的线粒体标记", "golgi": "单细胞中的高尔基体标记"},
+  "labels": {"cell": "细胞边界", "dna": "DNA 区域", "er": "内质网标记", "mito": "线粒体标记", "golgi": "高尔基体标记"},
+  "styles": {
+    "dark": {"background": "071A24", "cell": "43BAC6", "dna": "8974DB", "structure": "FFC052"},
+    "light": {"background": "F2F3EE", "cell": "215A6E", "dna": "4C3685", "structure": "AD3B18"}
+  }
+}

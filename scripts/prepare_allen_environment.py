@@ -29,6 +29,31 @@ def parse_obj(path):
     return v,f
 
 
+def load_cell_bundle(directory, cell):
+    """Keep the three source-registered surfaces together; require checked caches."""
+    directory=Path(directory)
+    if cell not in {'er','mito','golgi'}:raise ValueError('Unknown source cell')
+    manifest=json.loads((directory/'manifest.json').read_text())
+    if manifest['kind']!='allen-visual-guide-environment':raise ValueError('Prepare Allen source meshes first')
+    catalog=json.loads((Path(__file__).resolve().parents[1]/'assets/allen-environment-sources.json').read_text())
+    known={e['name']:e for e in catalog['assets']};records={e['name']:e for e in manifest['assets']}
+    data={}
+    for role in ('cell','dna','structure'):
+        name=cell+'-'+role;record=records[name];path=directory/(name+'.npz')
+        if any(record[k]!=known[name][k] for k in ('url','sha256')):
+            raise ValueError('Source identity changed: '+name)
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=record.get('prepared_sha256'):
+            raise ValueError('Prepared mesh hash missing or changed; prepare again: '+name)
+        raw=directory/'sources'/(name+'.obj')
+        if hashlib.sha256(raw.read_bytes()).hexdigest()!=record['sha256']:
+            raise ValueError('Raw source changed: '+name)
+        source=dict(np.load(path,allow_pickle=False));vertices,faces=parse_obj(raw)
+        if not np.array_equal(source['vertices'],vertices) or not np.array_equal(source['faces'],faces):
+            raise ValueError('Prepared mesh differs from raw source: '+name)
+        data[role]=source
+    return data,{role:records[cell+'-'+role] for role in data}
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path,required=True)
@@ -49,7 +74,8 @@ def main():
         path=raw/(name+'.obj');path.write_bytes(data)
         vertices,faces=parse_obj(path)
         np.savez_compressed(a.output/(name+'.npz'),vertices=vertices,faces=faces)
-        records.append({**entry,'vertices':len(vertices),'triangles':len(faces),
+        records.append({**entry,'prepared_sha256':hashlib.sha256((a.output/(name+'.npz')).read_bytes()).hexdigest(),
+                        'vertices':len(vertices),'triangles':len(faces),
                         'bounds':[vertices.min(0).tolist(),vertices.max(0).tolist()]})
     catalog.update(kind='allen-visual-guide-environment',assets=records,
                    coordinates='Original mesh coordinates retained; the scene adapter uses recorded rigid placement and uniform scale.')

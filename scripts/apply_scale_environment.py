@@ -34,8 +34,8 @@ def geometry_signature(objects):
     return digest.hexdigest()
 
 
-def surface(name, color, opacity=1):
-    mat = ds.material(name, color, .65, .008)
+def surface(name, color, opacity=1, bump=.008):
+    mat = ds.material(name, color, .65, bump)
     shader = mat.node_tree.nodes.get('Principled BSDF')
     shader.inputs['Emission Color'].default_value = (*ds.linear(color), 1)
     shader.inputs['Emission Strength'].default_value = .18
