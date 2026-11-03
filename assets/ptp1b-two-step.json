@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "kind": "ptp1b-two-step-net-reaction",
+  "timing": {
+    "transfer": [
+      0.09,
+      0.3
+    ],
+    "peptide_release": [
+      0.33,
+      0.48
+    ],
+    "q_turn": [
+      0.5,
+      0.6
+    ],
+    "water_entry": [
+      0.62,
+      0.73
+    ],
+    "hydrolysis": [
+      0.76,
+      0.92
+    ]
+  },
+  "routes": {
+    "peptide_release": {
+      "direction": [
+        0.01552945772259036,
+        -0.3163723327787582,
+        0.9485079772964321
+      ],
+      "turn_radians": 0.20001121739799763,
+      "bend_fraction": 0.08670006366870558,
+      "distance_nm": 4.0,
+      "used_fractions": [
+        0.5,
+        1.0
+      ],
+      "dense_samples": 1001,
+      "minimum_distance_A": 2.4498167094138763,
+      "passed": true,
+      "optimizer_success": true,
+      "maximum_rigid_bond_change_A": 0.0,
+      "scope": "Authored rigid departure only. The unused arrival half is not qualified."
+    },
+    "water_entry": {
+      "direction": [
+        0.019821778534906322,
+        -0.22585894276355012,
+        0.9739583333333334
+      ],
+      "turn_radians": 0.4,
+      "bend_fraction": 0.18,
+      "distance_nm": 4.0,
+      "used_fractions": [
+        0.0,
+        0.5
+      ],
+      "screen_samples": 1001,
+      "minimum_distance_A": 2.4895408151148244,
+      "passed": true,
+      "baseline_bidirectional_passed": true,
+      "source_motion_function": "interaction_motion.matrices",
+      "scope": "Authored rigid path, not observed transport or energy minimization."
+    }
+  },
+  "scope": "Finite pre-bound substrate to two-step net dephosphorylation and bound Pi. Peptide departure and modeled water ingress included. Pi release, substrate association, WPD opening/closing, proton relay, native ER anchor and repeated solvent loading are not implemented.",
+  "rejected_extension": {
+    "stage": "Pi release through the fixed closed source pocket",
+    "reason": "The tested rigid arc failed the 2.38 A contact screen. This does not rule out every rigid route. A release extension must qualify its own path and any source-supported active-site changes; do not relax the threshold or hide collisions."
+  },
+  "caption_texts": [
+    "磷酸化底物已结合",
+    "磷酰基转移至 Cys215",
+    "共价酶中间体",
+    "去磷酸化底物离开",
+    "Gln262 侧链转向",
+    "水进入反应位置",
+    "水解共价中间体",
+    "Pi 已形成 · Cys215 恢复"
+  ]
+}

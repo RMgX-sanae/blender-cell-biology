@@ -9,6 +9,8 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **默认背景偏好：**图片和视频优先采用有景深虚化的细胞微结构环境，按所处区室选择有身份的结构，并保留前后层次。主反应区、关键分子与文字保持清楚；项目指定纯色、透明底或其他参考风格时按项目选择。实施与可运行示例见 [cellular-environment.md](references/cellular-environment.md)。
 
+**默认配色偏好：**主体、关键位点和结构线尽量选择与背景对比高的颜色。深底用较亮前景，浅底用较深前景；同时区分相邻对象，保留各实体在不同镜头中的语义颜色。以最终渲染结果检查亮度和轮廓，不只比较材质色值；背景应衬托主体。
+
 **质量优先：**先读 [quality-standard.md](references/quality-standard.md) 和 [production-workflow.md](references/production-workflow.md)。默认使用精细制作入口。旧 `build_scene.py` 仅作机制白模，不得再当作成品示例；“可运行、方向正确”不能替代精细建模、参考风格复现和连续动画的验收。
 
 **分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。
@@ -42,6 +44,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
 | 泛素的共价连接、链型识别与产物释放 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移，可选连续释放；完整原子、工程突变恢复与双视图，不包含 E1 装载或全通路 |
 | 把连接工作流迁移到共价键水解 | [dub-workflow-transfer.md](references/dub-workflow-transfer.md)：AMSH-LP 专属端态与水氧映射，共用运动/双视图/合成；已结合底物到产物离开，未实现底物进入与复位 |
+| 经过共价酶中间体的两步反应，或复用分子双视图 | [ptp1b-workflow-transfer.md](references/ptp1b-workflow-transfer.md)：PTP1B 的固定身份、局部构象和两步去磷酸化；[molecular-sequence-display.md](references/molecular-sequence-display.md) 定义共用显示输入。PTP1B 结束于结合态 Pi，不是完整催化循环 |
 | 独立重建 Arp2/3 与 formin 完整案例 | [portable-actin-films.md](references/portable-actin-films.md)：公开坐标到两条完整视频，不依赖原制作目录；局部接触诊断仍须审核 |
 | 分子剖面、遮挡与内部观察窗口 | [section-views.md](references/section-views.md)：用完整单体和前后层次表达 |
 | 不同细胞类型、组织极性与基本形态 | [cells-and-organelles.md](references/cells-and-organelles.md) 的细胞表 |

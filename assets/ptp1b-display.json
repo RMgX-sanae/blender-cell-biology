@@ -1,0 +1,350 @@
+{
+  "version": 1,
+  "title": "PTP1B · 两步去磷酸化",
+  "views": [
+    {
+      "id": "overview",
+      "title": "底物与酶",
+      "basis_columns": [
+        [
+          0.06514077562668683,
+          0.995747638059718,
+          -0.06514077562668683
+        ],
+        [
+          -0.6306863469059679,
+          -0.00950493565836514,
+          -0.7759796311917828
+        ],
+        [
+          -0.7732990438227365,
+          0.09163131286095955,
+          0.6273852814070621
+        ]
+      ],
+      "center_nm": [
+        -0.16949909052353287,
+        -2.8963583150301173,
+        -1.7130101354941392
+      ],
+      "span_nm": 7.813834499382834,
+      "actors": {
+        "enzyme": {
+          "representation": "surface"
+        },
+        "peptide": {
+          "representation": "sticks",
+          "bond_file": "peptide.npz",
+          "radius_nm": 0.052
+        },
+        "phosphoryl": {
+          "representation": "sticks",
+          "bonds": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ]
+          ],
+          "radius_nm": 0.052
+        },
+        "water": {
+          "representation": "spheres",
+          "radius_nm": 0.08
+        }
+      },
+      "keep_visible": [
+        "enzyme"
+      ]
+    },
+    {
+      "id": "detail",
+      "title": "骨架与反应中心",
+      "basis_columns": [
+        [
+          -0.29993736803818316,
+          -0.7780255020088179,
+          -0.5520089614111842
+        ],
+        [
+          0.10659111407752334,
+          0.5476942306194109,
+          -0.8298610511079091
+        ],
+        [
+          0.9479851843009152,
+          -0.30774558968430116,
+          -0.08134336098183956
+        ]
+      ],
+      "center_nm": [
+        -0.5461458730805246,
+        -3.050163985698144,
+        -0.6298018681576144
+      ],
+      "span_nm": 1.8,
+      "actors": {
+        "enzyme": {
+          "representation": "sticks",
+          "radius_nm": 0.0,
+          "bond_radius_nm": 0.012,
+          "edge_semantics": "Consecutive C-alpha trace plus chemical bonds within selected complete active-site residues 181,215,221,262. C-alpha links are backbone guides, not covalent bonds; all source atom points remain intact.",
+          "color_key": "enzyme_context",
+          "bond_file": "enzyme_context.npz"
+        },
+        "peptide": {
+          "representation": "sticks",
+          "bond_file": "peptide.npz",
+          "radius_nm": 0.052
+        },
+        "phosphoryl": {
+          "representation": "sticks",
+          "bonds": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ]
+          ],
+          "radius_nm": 0.052
+        },
+        "water": {
+          "representation": "spheres",
+          "radius_nm": 0.08
+        }
+      },
+      "keep_visible": [],
+      "framing_note": "Detail viewport crops the image of the intact source construct; no molecular geometry is removed."
+    }
+  ],
+  "colors": {
+    "dark": {
+      "enzyme": "#8baab8",
+      "peptide": "#7EE0ED",
+      "phosphoryl": "#FFD36B",
+      "water": "#FF957A",
+      "cys": "#98F4B3",
+      "gln": "#CAB4FF",
+      "enzyme_context": "#6DA2B3"
+    },
+    "light": {
+      "enzyme": "#587c93",
+      "peptide": "#006f7a",
+      "phosphoryl": "#9f6a15",
+      "water": "#b65337",
+      "cys": "#247144",
+      "gln": "#654487",
+      "enzyme_context": "#395862"
+    }
+  },
+  "highlights": [
+    {
+      "id": "Phosphorus",
+      "component": "phosphoryl",
+      "indices": [
+        0
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ],
+      "radius_nm": 0.075
+    },
+    {
+      "id": "Water oxygen",
+      "component": "water",
+      "indices": [
+        0
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ],
+      "radius_nm": 0.075
+    },
+    {
+      "id": "Cys215 sulfur",
+      "component": "enzyme",
+      "indices": [
+        1774
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ],
+      "radius_nm": 0.075,
+      "color_key": "cys"
+    },
+    {
+      "id": "Gln262 oxygen",
+      "component": "enzyme",
+      "indices": [
+        2135
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.06,
+      "color_key": "gln"
+    }
+  ],
+  "bond_annotations": [
+    {
+      "id": "Substrate phosphate bond",
+      "atoms": [
+        [
+          "peptide",
+          41
+        ],
+        [
+          "phosphoryl",
+          0
+        ]
+      ],
+      "interval": [
+        0.0,
+        0.095
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ]
+    },
+    {
+      "id": "Covalent intermediate bond",
+      "atoms": [
+        [
+          "enzyme",
+          1774
+        ],
+        [
+          "phosphoryl",
+          0
+        ]
+      ],
+      "interval": [
+        0.3,
+        0.76
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ]
+    },
+    {
+      "id": "Water-derived phosphate oxygen",
+      "atoms": [
+        [
+          "phosphoryl",
+          0
+        ],
+        [
+          "water",
+          0
+        ]
+      ],
+      "interval": [
+        0.92,
+        1.0001
+      ],
+      "views": [
+        "overview",
+        "detail"
+      ]
+    }
+  ],
+  "background_components": [
+    "ptp1b",
+    "ubiquitin",
+    "mdm2"
+  ],
+  "legend": [
+    [
+      "enzyme",
+      "PTP1B"
+    ],
+    [
+      "peptide",
+      "底物肽"
+    ],
+    [
+      "phosphoryl",
+      "磷酰基"
+    ],
+    [
+      "water",
+      "水中的氧"
+    ],
+    [
+      "cys",
+      "Cys215"
+    ],
+    [
+      "gln",
+      "Gln262"
+    ]
+  ],
+  "captions": [
+    [
+      0.0,
+      0.09,
+      "磷酸化底物已结合"
+    ],
+    [
+      0.09,
+      0.3,
+      "磷酰基转移至 Cys215"
+    ],
+    [
+      0.3,
+      0.33,
+      "共价酶中间体"
+    ],
+    [
+      0.33,
+      0.5,
+      "去磷酸化底物离开"
+    ],
+    [
+      0.5,
+      0.62,
+      "Gln262 侧链转向"
+    ],
+    [
+      0.62,
+      0.76,
+      "水进入反应位置"
+    ],
+    [
+      0.76,
+      0.92,
+      "水解共价中间体"
+    ],
+    [
+      0.92,
+      1.0,
+      "Pi 已形成 · Cys215 恢复"
+    ]
+  ],
+  "key_fractions": [
+    0.0,
+    0.31,
+    0.57,
+    0.69,
+    0.98
+  ]
+}

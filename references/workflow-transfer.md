@@ -29,6 +29,7 @@
 | 同一批原子的连续反应 | `reaction_ledger.py` 的 `validate_sequence` 或 `--sequence` | 核对阶段交接和独立定义的总反应；固定所选原子集合，不自动处理开放物质池或坐标交接 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
 | 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
+| 已检查坐标序列的项目显示 | `build_molecular_sequence_scene.py`、`audit_molecular_sequence_scene.py`，见 [输入约定](molecular-sequence-display.md) | PTP1B 与 AMSH-LP 共享两图原子、标记、背景和保存检查；新机制仍提供经过检查的 nm 坐标、身份、反应账本和显示配置 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
 | 对已有画面追加调色 | `apply_render_recipe.py`、`publish_composite_outputs`，见 [合成输出约定](render-recipes.md) | 保留已合成的分屏/背景及独立文字；多视图不能直接借用一个视图的法线/深度，缺少对齐 pass 时拒绝对应配方 |
 | 保存后渲染与视频检查 | `render_saved.py`、`encode_video.py`、`audit_video.py` | 可以共用执行步骤；场景内的机制检查仍按本例定义，成功解码不能证明科学正确 |
@@ -107,7 +108,7 @@ PY
 
 这里采用**固定的所选原子集合**。等待反应的水、已离开的产物也要在每段账本中保留身份和相应键；离开画面不等于删除物质。选择只检查反应中心时，明确其他原子未被验证。不同范围的局部账本（如下面的两轮转录）不能直接拼接；需要先定义持续状态及进入/离开的物质池，而不是取交集忽略缺失对象。这个入口不检查坐标连续、质子/电荷、开放池交换，也不证明催化循环已闭合。
 
-方法用 PTP1B 两步净反应的**局部图原型**验证：同一磷酰基经过酶的共价中间体，再进入无机磷酸盐；水氧的身份同时保留。反应依据为 [Brandão 等的原始研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC2871455/)，原子和组分内连接来自 [RCSB CCD](https://www.wwpdb.org/data/ccd)。两步及总反应各包含 23 个重原子；没有据此新增 PTP1B 模型或视频。原型不含氢、键级或相邻残基连接；磷酸氧的几何对应、C215S/Q262A 构建体恢复、过渡态类似物和完整酶构象仍待单独处理。反例中每步都能通过，但改换交接原子、改变中间连接或交换总反应的氧身份时，序列检查会失败。
+最初用 PTP1B 两步净反应的 **23 重原子局部图原型**验证交接；反例中每步都能通过，但改换交接原子、改变中间连接或交换总反应的氧身份时，序列检查会失败。反应依据为 [Brandão 等的原始研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC2871455/)，组分内连接参考 [RCSB CCD](https://www.wwpdb.org/data/ccd)。随后 [PTP1B 几何迁移](ptp1b-workflow-transfer.md)以持续的 3I7Z 构建体扩展到 2,482 个所选重原子，另行处理局部中间体、Q262 扭转、水位置和碰撞；不能把早先的图检查当作几何已经通过。两版仍不含质子/电荷或完整酶循环。
 
 ## 把身份检查用于核苷酸加入
 
