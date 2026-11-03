@@ -9,7 +9,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **默认背景偏好：**图片和视频优先采用有景深虚化的细胞微结构环境，按所处区室选择有身份的结构，并保留前后层次。主反应区、关键分子与文字保持清楚；项目指定纯色、透明底或其他参考风格时按项目选择。实施与可运行示例见 [cellular-environment.md](references/cellular-environment.md)。
 
-**默认配色偏好：**主体、关键位点和结构线尽量选择与背景对比高的颜色。深底用较亮前景，浅底用较深前景；同时区分相邻对象，保留各实体在不同镜头中的语义颜色。以最终渲染结果检查亮度和轮廓，不只比较材质色值；背景应衬托主体。
+**默认配色偏好：**主体、关键位点和结构线尽量选择与背景对比高的颜色。深底用较亮前景，浅底用较深前景；同时区分相邻对象，保留各实体在不同镜头中的语义颜色。以最终渲染结果检查亮度和轮廓，不只比较材质色值；背景应衬托主体。机制特写减少无关骨架线，优先让反应物、关键残基和必要连接可辨认，高对比也要有主次。
 
 **质量优先：**先读 [quality-standard.md](references/quality-standard.md) 和 [production-workflow.md](references/production-workflow.md)。默认使用精细制作入口。旧 `build_scene.py` 仅作机制白模，不得再当作成品示例；“可运行、方向正确”不能替代精细建模、参考风格复现和连续动画的验收。
 

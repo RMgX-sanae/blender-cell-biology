@@ -66,7 +66,7 @@
     },
     {
       "id": "detail",
-      "title": "骨架与反应中心",
+      "title": "反应位点特写",
       "basis_columns": [
         [
           -0.29993736803818316,
@@ -94,15 +94,119 @@
         "enzyme": {
           "representation": "sticks",
           "radius_nm": 0.0,
-          "bond_radius_nm": 0.012,
-          "edge_semantics": "Consecutive C-alpha trace plus chemical bonds within selected complete active-site residues 181,215,221,262. C-alpha links are backbone guides, not covalent bonds; all source atom points remain intact.",
-          "color_key": "enzyme_context",
-          "bond_file": "enzyme_context.npz"
+          "bond_radius_nm": 0.016,
+          "bonds": [
+            [
+              1769,
+              1770
+            ],
+            [
+              1770,
+              1771
+            ],
+            [
+              1771,
+              1772
+            ],
+            [
+              1770,
+              1773
+            ],
+            [
+              1773,
+              1774
+            ],
+            [
+              2128,
+              2129
+            ],
+            [
+              2129,
+              2130
+            ],
+            [
+              2130,
+              2131
+            ],
+            [
+              2129,
+              2132
+            ],
+            [
+              2132,
+              2133
+            ],
+            [
+              2133,
+              2134
+            ],
+            [
+              2134,
+              2135
+            ],
+            [
+              2134,
+              2136
+            ]
+          ],
+          "edge_semantics": "Chemical bonds within Cys215 and Gln262 only. The complete enzyme coordinate inventory remains; all other enzyme lines are omitted from this detail representation. No C-alpha guides.",
+          "color_key": "enzyme_context"
         },
         "peptide": {
           "representation": "sticks",
-          "bond_file": "peptide.npz",
-          "radius_nm": 0.052
+          "radius_nm": 0.0,
+          "bond_radius_nm": 0.018,
+          "bonds": [
+            [
+              30,
+              31
+            ],
+            [
+              31,
+              32
+            ],
+            [
+              32,
+              33
+            ],
+            [
+              31,
+              34
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              35,
+              36
+            ],
+            [
+              35,
+              37
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              37,
+              39
+            ],
+            [
+              38,
+              40
+            ],
+            [
+              39,
+              40
+            ],
+            [
+              40,
+              41
+            ]
+          ],
+          "edge_semantics": "Chemical bonds within substrate Tyr992 only. The complete six-residue peptide coordinate inventory and its overview remain intact; this detail representation omits the other residues."
         },
         "phosphoryl": {
           "representation": "sticks",
@@ -128,7 +232,7 @@
         }
       },
       "keep_visible": [],
-      "framing_note": "Detail viewport crops the image of the intact source construct; no molecular geometry is removed."
+      "framing_note": "Selected chemical bonds and colored atoms show Cys215, Gln262 and substrate Tyr992; other source atoms remain in the scene but are omitted from this detail representation. No C-alpha guides or Boolean section. Departing substrate is clipped by the image window."
     }
   ],
   "colors": {
@@ -139,7 +243,7 @@
       "water": "#FF957A",
       "cys": "#98F4B3",
       "gln": "#CAB4FF",
-      "enzyme_context": "#6DA2B3"
+      "enzyme_context": "#5B7E8D"
     },
     "light": {
       "enzyme": "#587c93",
@@ -148,7 +252,7 @@
       "water": "#b65337",
       "cys": "#247144",
       "gln": "#654487",
-      "enzyme_context": "#395862"
+      "enzyme_context": "#536671"
     }
   },
   "highlights": [
@@ -200,6 +304,175 @@
       ],
       "radius_nm": 0.06,
       "color_key": "gln"
+    },
+    {
+      "id": "CYS215 residue atoms",
+      "component": "enzyme",
+      "indices": [
+        1769,
+        1770,
+        1771,
+        1772,
+        1773,
+        1774
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.03,
+      "color_key": "cys"
+    },
+    {
+      "id": "GLN262 residue atoms",
+      "component": "enzyme",
+      "indices": [
+        2128,
+        2129,
+        2130,
+        2131,
+        2132,
+        2133,
+        2134,
+        2135,
+        2136
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.03,
+      "color_key": "gln"
+    },
+    {
+      "id": "Substrate Tyr992 N",
+      "component": "peptide",
+      "indices": [
+        30
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CA",
+      "component": "peptide",
+      "indices": [
+        31
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 C",
+      "component": "peptide",
+      "indices": [
+        32
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 O",
+      "component": "peptide",
+      "indices": [
+        33
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CB",
+      "component": "peptide",
+      "indices": [
+        34
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CG",
+      "component": "peptide",
+      "indices": [
+        35
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CD1",
+      "component": "peptide",
+      "indices": [
+        36
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CD2",
+      "component": "peptide",
+      "indices": [
+        37
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CE1",
+      "component": "peptide",
+      "indices": [
+        38
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CE2",
+      "component": "peptide",
+      "indices": [
+        39
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 CZ",
+      "component": "peptide",
+      "indices": [
+        40
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
+    },
+    {
+      "id": "Substrate Tyr992 OH",
+      "component": "peptide",
+      "indices": [
+        41
+      ],
+      "views": [
+        "detail"
+      ],
+      "radius_nm": 0.04
     }
   ],
   "bond_annotations": [
@@ -279,7 +552,7 @@
     ],
     [
       "peptide",
-      "底物肽"
+      "底物 Tyr992"
     ],
     [
       "phosphoryl",
