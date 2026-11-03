@@ -155,6 +155,8 @@ UTP 以 CCD 化学连接为基础，借用源结构 A–T 配对的空间朝向�
 
 两轮准备目录保留 CTP 账本，并新增 `reaction-ledger-utp.json`：C20 的 20 个重原子继续作为同一链端，UTP 的 29 个重原子分配到 U21 和另一份 PPi。两轮 PPi 使用不同来源 ID；检查 C20 的身份和元素跨阶段一致。第二个局部账本不重新纳入第一轮离开的 PPi 或上游 RNA，因此不能据此宣称完整物质回收。可用通用入口重新检查保存文件：`"$PYTHON" "$SKILL/scripts/reaction_ledger.py" "$PROJECT/transcription_two_cycle_substrate/reaction-ledger-utp.json" --output "$PROJECT/utp-ledger-audit.json"`。
 
+同一准备步骤另写 `reaction-sequence.json`，显式保留等待的 UTP、第一份 PPi 和先前形成的 P19–P20 连接；两轮均使用同一套 81 个所选重原子，并与独立构造的净反应核对。可运行 `"$PYTHON" "$SKILL/scripts/reaction_ledger.py" "$PROJECT/transcription_two_cycle_substrate/reaction-sequence.json" --sequence --output "$PROJECT/two-cycle-sequence-audit.json"`。这扩大的是所选图的持续追踪范围，不是完整细胞物质池或新动画验证；迁移时如何选择边界见 [转录的身份检查](workflow-transfer.md#把身份检查用于核苷酸加入)。
+
 `audit_transcription_cycles.py` 检查每轮 29→20+9 重原子计量、保留的完整核酸和 12 条 Pol II 链、552 帧中的 DNA 连接长度、U 的进入/成键附近距离、主体和标签边界以及 U 碱基遮挡。第一轮 PPi 的离场和第二轮 UTP 的入场允许完整对象跨越画框；反应停顿阶段须完整可见。数值通过之后仍需查看实际关键帧，并在编码后检查最终 MP4。
 
 ## 复制：连续与分段延伸

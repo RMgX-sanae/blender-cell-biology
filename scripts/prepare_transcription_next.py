@@ -17,6 +17,8 @@ from scipy.optimize import least_squares
 from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation
 from prepare_transcription import addition_ledger
+from reaction_ledger import validate_sequence
+from copy import deepcopy
 
 
 def fit(x, y):
@@ -25,6 +27,63 @@ def fit(x, y):
     if np.linalg.det(vt.T @ u.T) < 0: vt[-1] *= -1
     rotation = vt.T @ u.T
     return rotation, cy-rotation @ cx
+
+
+def addition_sequence(rna, ctp, utp, first, second):
+    """Retain waiting UTP, first PPi and the upstream link across both additions.
+
+    This is specific to the existing C20/U21 example, not an open-pool solver.
+    The net state/map is built from the source arrays, not composed stage output.
+    """
+    selected={i:f'RNA:P:{int(number)}:'+str(rna['atom_names'][i])
+              for i,number in enumerate(rna['residue_numbers']) if int(number) in (19,20)}
+    primer={i:identity for i,identity in selected.items() if identity.startswith('RNA:P:19:')}
+    primer_atoms=[[identity,str(rna['elements'][i])] for i,identity in primer.items()]
+    native_atoms=[[identity,str(rna['elements'][i])] for i,identity in selected.items()]
+    primer_edges=[[primer[i],primer[j]] for i,j in rna['bonds'] if i in primer and j in primer]
+    native_edges=[[selected[i],selected[j]] for i,j in rna['bonds'] if i in selected and j in selected]
+    retained_edges=[[selected[i],selected[j]] for i,j in rna['bonds']
+                    if i in selected and j in selected and (i in primer or j in primer)]
+
+    def nucleotide(component,residue,data):
+        names=list(map(str,data['atom_names']));core=list(map(str,data['product_names']))
+        incoming=[f'{component}_for_P{residue}:'+name for name in names]
+        product=[f'RNA:P:{residue}:'+name for name in core]
+        product += [f'PPi_from_P{residue}:'+name for name in names[len(core):]]
+        elements=list(map(str,data['elements']))
+        pairs=[(int(i),int(j)) for i,j in data['bonds']]
+        return {'reactants':[[identity,e] for identity,e in zip(incoming,elements)],
+            'products':[[identity,e] for identity,e in zip(product,elements)],
+            'map':list(map(list,zip(incoming,product))),
+            'reactant_bonds':[[incoming[i],incoming[j]] for i,j in pairs],
+            'product_bonds':[[product[i],product[j]] for i,j in pairs if (i<len(core))==(j<len(core))],
+            'ppi_atoms':[[product[i],elements[i]] for i in range(len(core),len(names))],
+            'ppi_bonds':[[product[i],product[j]] for i,j in pairs if i>=len(core) and j>=len(core)]}
+    c=nucleotide('CTP',20,ctp);u=nucleotide('UTP',21,utp)
+    scope='Fixed selected inventory: P19, CTP and waiting UTP become P19-P20-P21 and two retained PPi molecules. Earlier RNA, polymerase, template, solvent, metals and hydrogens are outside this graph.'
+    bond_scope='Selected RNA/NTP/PPi heavy-atom subgraph including the P19-P20 link in stage two. No bond orders, protonation, coordinates or unlimited material reservoir.'
+
+    def extend(book,waiting_atoms,unchanged_edges):
+        book={key:deepcopy(value) for key,value in book.items()}
+        for side in ('reactant','product'):
+            book[side+'_atoms']+=deepcopy(waiting_atoms);book[side+'_bonds']+=deepcopy(unchanged_edges)
+        book['atom_map'] += [[identity,identity] for identity,_ in waiting_atoms]
+        book['scope']=scope;book['bond_scope']=bond_scope
+        return book
+    stages=[extend(first,u['reactants'],u['reactant_bonds']),
+            extend(second,primer_atoms+c['ppi_atoms'],retained_edges+c['ppi_bonds'])]
+    # Independent target: two 3-prime additions, two alpha-phosphate cleavages.
+    # The second nucleophile is still named as its incoming CTP atom at net start.
+    net={'version':1,'scope':scope,'bond_scope':bond_scope,
+        'reactant_atoms':primer_atoms+c['reactants']+u['reactants'],
+        'product_atoms':native_atoms+c['ppi_atoms']+u['products'],
+        'atom_map':[[identity,identity] for identity,_ in primer_atoms]+c['map']+u['map'],
+        'reactant_bonds':primer_edges+c['reactant_bonds']+u['reactant_bonds'],
+        'product_bonds':native_edges+c['ppi_bonds']+u['product_bonds']+[["RNA:P:20:O3'",'RNA:P:21:P']],
+        'break':[['CTP_for_P20:PA','CTP_for_P20:O3A'],['UTP_for_P21:PA','UTP_for_P21:O3A']],
+        'form':[["RNA:P:19:O3'",'CTP_for_P20:PA'],["CTP_for_P20:O3'",'UTP_for_P21:PA']]}
+    sequence={'version':1,'stages':stages,'net':net}
+    return sequence,validate_sequence(sequence)
 
 
 def main():
@@ -140,11 +199,18 @@ def main():
     reused={identity:element for identity,element in book['reactant_atoms'] if identity.startswith('RNA:P:20:')}
     if retained != reused or len(retained) != 20:
         raise ValueError('The C20 product must become the same RNA end in the next addition')
+    sequence,sequence_receipt=addition_sequence(data['P'],ctp,
+        {'atom_names':ordered,'elements':elements[order],'bonds':bonds,'product_names':product_names},
+        first_book,book)
     a.output.mkdir(parents=True)
     ledger_records={}
     for component,spec,audit in [('ctp',first_book,first_receipt),('utp',book,receipt)]:
         path=a.output/f'reaction-ledger-{component}.json';path.write_text(json.dumps(spec,indent=2)+'\n')
         ledger_records[component]={'file':path.name,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'audit':audit}
+    sequence_file=a.output/'reaction-sequence.json'
+    sequence_file.write_text(json.dumps(sequence,indent=2)+'\n')
+    first['reaction_sequence']={'file':sequence_file.name,
+        'sha256':hashlib.sha256(sequence_file.read_bytes()).hexdigest(),'audit':sequence_receipt}
     first['reaction_ledger']=ledger_records['ctp']
     shutil.copy2(a.substrate_dir/'ctp.npz',a.output/'ctp.npz')
     np.savez_compressed(a.output/'utp.npz',atoms=coords.astype(np.float32),atom_names=np.array(ordered),
