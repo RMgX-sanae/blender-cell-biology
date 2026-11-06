@@ -30,7 +30,7 @@
 | 翻译的 tRNA 进入、肽转移和转位 | [精细制作流程](production-workflow.md) 的翻译段：`build_translation_scene.py` → `audit_translation.py` | **既有片段**：9SPI 衍生的局部底物运动 | 起始、终止、eEF1A/eEF2、GTP 水解和完整催化循环 |
 | DNA 复制叉与新链方向 | [精细制作流程](production-workflow.md) 的复制段：`prepare_replication.py` → `build_replication_scene.py` | **既有片段**：连续/分段延伸示意，完整 CMG 位于结构参考层 | 起始、引物处理、连接与终止；不能当作完整复制机制 |
 | 中期后的染色体分离与胞质分裂 | [精细制作流程](production-workflow.md) 的分裂段：`prepare_division.py` → `build_division_scene.py` | **既有片段**：四条已复制染色体、连续收缩和整体分开 | 前期、核膜重建、中体、ESCRT 与分子级切断 |
-| 囊泡出芽/切断/识别/融合，或其他未列出的全过程 | [过程目录](process-atlas.md)、[装配分镜](assembly-storyboards.md) → [迁移方法](workflow-transfer.md) | **配方**：运输白模只覆盖沿轨道移动 | 需实现改变的膜连通性、区室侧别和物质交接；不要直接复用刚体进出作为膜融合 |
+| 囊泡出芽/切断/对接/开孔与内容交接 | [囊泡拓扑](vesicle-topology.md)：`prepare_vesicle_topology.py` → `blender_vesicle_topology.py build/audit` | **独立重建的几何原型**：55 个数值状态、22 个膜边界网格、完整探针身份/侧别及选定的静态 Blender 快照；旧运输白模仍只覆盖沿轨道移动 | 被覆/去被覆、目标路线融合机器、能量/回收及连续场景；不能把几何原型称为完整机制 |
 
 要做连续循环时，先确认本例能否闭合对象状态、物质池和运动接缝。教学片段的末帧跳回首帧并不会自动成为合格循环；完整 actin 案例的分章剪辑也不等于无缝循环。
 

@@ -56,6 +56,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 在细胞内部按体积边界和排除掩膜放置完整对象 | [体积分布](references/volume-distributions.md)：源体素区域、完整评估网格、刚体矩阵、保存场景及独立包含检查；当前为静态布局 |
 | 受体、通道、糖链及空间分布 | [receptors-and-distributions.md](references/receptors-and-distributions.md) |
 | 分裂、DNA/RNA、翻译、运输等动画 | [process-atlas.md](references/process-atlas.md)，只读相关过程组 |
+| 囊泡出芽、切断、对接和开孔的膜拓扑与货物交接 | [vesicle-topology.md](references/vesicle-topology.md)：数值检查、关键网格和静态 Blender 快照；分子机器及完整连续机制仍待实现 |
 | 肌动蛋白聚合/解聚、踏车、切断、退火、成束、Arp2/3、封端及微管动态 | [polymer-templates.md](references/polymer-templates.md)：11 个可执行模板 |
 | 肌动蛋白上游到下游：Arp2/3 与 formin 两条完整路线 | [actin-full-cycle.md](references/actin-full-cycle.md)：两套各 25 阶段的机制计划、状态闭环、资产选择、配体对照及已渲染的本地完整视频案例；其他情境需按项目制作 |
 | formin、cofilin、中间丝、septin、FtsZ、ESCRT-III、clathrin、COPII 装配 | [assembly-storyboards.md](references/assembly-storyboards.md)：可复制的分镜与资产选择模板，按项目实现 |

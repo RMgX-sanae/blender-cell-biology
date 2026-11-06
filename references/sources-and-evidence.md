@@ -32,7 +32,7 @@
 | P07 | [Fast and efficient DNA replication with purified human proteins](https://www.nature.com/articles/s41586-022-04759-1) | 人类复制体系与前导/后随链合成 | 出版商检索摘要；不能用摘要指定所有催化速率 |
 | P08 | [Dynamics of DNA replication loops](https://www.nature.com/articles/nature07512) | 后随链环及方向性问题的实验背景 | 出版商检索摘要；选择具体实验系统，不跨物种混用组分 |
 | P09 | [Transcribing mammalian Pol II](https://www.nature.com/articles/nature16482)；[activated Pol II complex](https://www.nature.com/articles/s41586-018-0440-4) | 转录复合物结构、延伸因子和核酸路径的检索起点 | 出版商检索摘要；详细导入前核对结构 accession |
-| P10 | [Tethering complex and SNARE fusion](https://www.nature.com/articles/nature24469) | 特定体系的膜系留/融合实验 | 出版商检索摘要；拓扑序列不等于可量化的自由能轨迹 |
+| P10 | [Tethering complex and SNARE fusion](https://www.nature.com/articles/nature24469) | 酵母液泡体系的系留与 SNARE 融合实验 | 出版商检索摘要；不能作为哺乳动物 EEA1/早期内体机制的直接证据，拓扑序列不等于可量化的自由能轨迹 |
 | P11 | [Autophagic non-selective degradation mechanism](https://www.nature.com/articles/s41467-023-41525-x) | 隔离膜扩展并闭合形成双膜自噬体 | 出版商检索摘要；须核对物种和实验条件 |
 | P12 | [Piecemeal mitochondrial inner-membrane removal](https://www.nature.com/articles/s41586-024-07835-w) | 一种特定线粒体–溶酶体过程的原始研究 | 出版商检索摘要；不可推广为所有线粒体自噬的通用形态 |
 | P13 | [5FLM](https://www.rcsb.org/structure/5FLM) | 哺乳动物 Pol II 延伸复合体的已建模蛋白、DNA、RNA 坐标 | RCSB 条目、坐标与 API 元数据读取；A–L 蛋白、N/T DNA、P RNA 已导入并渲染，静态结构不能给出转录动力学 |
