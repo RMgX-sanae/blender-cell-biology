@@ -13,6 +13,8 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **质量优先：**先读 [quality-standard.md](references/quality-standard.md) 和 [production-workflow.md](references/production-workflow.md)。默认使用精细制作入口。旧 `build_scene.py` 仅作机制白模，不得再当作成品示例；“可运行、方向正确”不能替代精细建模、参考风格复现和连续动画的验收。
 
+**验证效率与产物清理：**开发与迁移默认采用必要的数值检查、少量正式尺寸关键帧和变化区间的低成本短预览；需要交付成片时才完整渲染。用户授权持续清理本任务可重建的大型中间产物，保留来源、参数、检查记录和当前交付。具体取样、原速短预览及清理办法见 [review-and-retention.md](references/review-and-retention.md)。
+
 **分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。
 
 **扩展优先级：**先用 [入口与验证范围](references/workflow-entrypoints.md) 找到合适起点，再按 [workflow-transfer.md](references/workflow-transfer.md) 选择已验证的工作流，区分可以沿用的步骤、需要替换的项目数据和必须重建的科学规则。优先让 agent 能迁移已有方法，以少量代表性案例验证；不以新增脚本、过程条目或视频数量衡量完善程度。
@@ -26,13 +28,14 @@ description: Build editable Blender models and animations of cells, organelles, 
    用户要求“全过程/上游到下游”时，按 [mechanistic-depth.md](references/mechanistic-depth.md) 建立因果事件表、化学状态和物质回收闭环；局部动作的改善不能替代缺失的机制。
    动画形式另行选择：**分步教学**用分段、停顿和同步解释；**连续循环**保持运动、镜头和首尾衔接。它独立于材质风格、渲染引擎和合成器。用户此次选择连续循环时，不自动插入章节卡、停顿或旁白。实现与接缝检查见 [blender-workflow.md](references/blender-workflow.md)。
 5. 先做低分辨率静态白模和关键时点分镜，确认生物学拓扑与画面可读性，再加材质、环境拥挤和动画。可在首个模型、动画分镜、最终视频阶段询问满意度；无必要时不要让每一步都等待批准。
-6. 实际运行 Blender，抽查关键帧，查看动画文件，再交付工程、生成脚本、来源和简化说明。检查办法见 [validation.md](references/validation.md)。未运行的部分标为“配方/待验证”，不得称为已验证自动化能力。
+6. 实际运行 Blender，按本次改动检查关键帧或短运动预览，交付可重建工程、生成脚本、来源和简化说明；任务明确需要完整视频时再完成成片检查。检查办法见 [validation.md](references/validation.md)。未执行的部分如实标注，局部预览不代表整片已逐帧查看。
 
 ## 按任务读取
 
 | 任务 | 读取 |
 |---|---|
 | 精细模型、真实结构资产、连续动画、可复现渲染命令 | [production-workflow.md](references/production-workflow.md)，默认入口 |
+| 高效迭代、关键帧/短预览、清理大型中间产物 | [review-and-retention.md](references/review-and-retention.md)：按改动选择检查范围、抽帧保持原速、记录清理范围 |
 | 将已验证流程用于其他蛋白、反应、装配或膜环境 | [workflow-transfer.md](references/workflow-transfer.md)：迁移层级、实际复用入口、项目配置示例及有针对性的验收 |
 | 寻找、选择、缓存和复用网上公开资产 | [public-assets-first.md](references/public-assets-first.md)，所有新对象先走此流程 |
 | 参考图、截图、视频关键帧的风格识别与模仿 | [style-from-reference.md](references/style-from-reference.md) |

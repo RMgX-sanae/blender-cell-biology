@@ -11,11 +11,28 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from render_cache import valid_png
 
 
+def selected_frames(spec, first, last):
+    if spec=='all':return list(range(first,last+1))
+    selected=set()
+    for part in spec.split(','):
+        values=[int(x) for x in part.split(':')]
+        if len(values)==1:selected.add(values[0])
+        elif len(values) in [2,3]:
+            start,end=values[:2];step=values[2] if len(values)==3 else 1
+            if step<=0 or start>end:raise ValueError('Require increasing ranges and a positive step')
+            if start<first or end>last:raise ValueError('Range outside saved scene')
+            selected.update(range(start,end+1,step))
+        else:raise ValueError('Use frames or inclusive START:END[:STEP] ranges')
+    if not selected or min(selected)<first or max(selected)>last:raise ValueError('Frame outside saved scene')
+    return sorted(selected)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True)
-    p.add_argument('--frames',default='all',help='all or comma-separated integer frames')
+    p.add_argument('--frames',default='all',help='all, integer frames or inclusive START:END[:STEP] ranges, comma-separated')
     p.add_argument('--width',type=int)
+    p.add_argument('--samples',type=int,help='Temporary Eevee/Cycles sample count for review; does not resave the scene')
     p.add_argument('--compositor',help='Exact saved COMP_, COMP_STYLE_ or COMP_STACK_ suffix; does not change the .blend')
     p.add_argument('--exr',action='store_true',help='Scene-linear multilayer EXR for external compositing')
     p.add_argument('--resume',action='store_true',help='Reuse only matching scene/settings and fully validated PNG frames')
@@ -28,9 +45,14 @@ def main():
         if group is None:raise SystemExit('Requested compositor branch is missing from this saved scene.')
         scene.compositing_node_group=group
         scene['selected_compositor']=args.compositor
-    frames=list(range(scene.frame_start,scene.frame_end+1)) if args.frames=='all' else [int(f) for f in args.frames.split(',')]
-    if any(f<scene.frame_start or f>scene.frame_end for f in frames):
-        raise SystemExit('Requested frame outside saved scene range.')
+    try:frames=selected_frames(args.frames,scene.frame_start,scene.frame_end)
+    except ValueError as error:p.error(str(error))
+    if args.width is not None and args.width<=0:p.error('Width must be positive')
+    if args.samples is not None:
+        if args.samples<=0:p.error('Samples must be positive')
+        if scene.render.engine=='CYCLES':scene.cycles.samples=args.samples
+        elif scene.render.engine=='BLENDER_EEVEE':scene.eevee.taa_render_samples=args.samples
+        else:p.error('Sample override supports Eevee and Cycles')
     if args.resume and args.exr:raise SystemExit('Resume validation currently supports PNG; export EXR to a fresh directory.')
     if args.directory.exists() and not args.resume:raise SystemExit('Choose a fresh render directory or explicitly request --resume.')
     args.directory.mkdir(parents=True,exist_ok=True)
@@ -71,7 +93,9 @@ def main():
                'render_script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                'blender':bpy.app.version_string,'engine':scene.render.engine,
                'resolution':[scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage],
-               'fps':scene.render.fps,'compositor':scene.get('selected_compositor'),'exr':args.exr}
+               'fps':scene.render.fps,'fps_base':scene.render.fps_base,
+               'samples':scene.cycles.samples if scene.render.engine=='CYCLES' else scene.eevee.taa_render_samples if scene.render.engine=='BLENDER_EEVEE' else None,
+               'compositor':scene.get('selected_compositor'),'exr':args.exr}
     receipt=args.directory/'render-signature.json'
     if receipt.exists():
         if json.loads(receipt.read_text())!=signature:raise SystemExit('Cached scene/settings differ; use a fresh render directory.')
@@ -92,6 +116,9 @@ def main():
         rendered.append(frame)
     (args.directory/'render-report.json').write_text(json.dumps({
         'source_blend':bpy.data.filepath,'frames':frames,'fps':scene.render.fps,
+        'fps_base':scene.render.fps_base,'samples':signature['samples'],
+        'scene_frame_range':[scene.frame_start,scene.frame_end],
+        'source_seconds':[(frame-scene.frame_start)*scene.render.fps_base/scene.render.fps for frame in frames],
         'resolution':[scene.render.resolution_x,scene.render.resolution_y],
         'seconds':time.monotonic()-started,'blender':bpy.app.version_string,
         'rendered_this_run':rendered,'validated_cached_frames':skipped,

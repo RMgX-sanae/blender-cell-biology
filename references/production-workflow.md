@@ -4,6 +4,8 @@
 
 先从 [入口与验证范围](workflow-entrypoints.md) 选择实际覆盖所需事件的入口；新目标按 [workflow-transfer.md](workflow-transfer.md) 从最接近的已验证工作流开始，复用适用模块，只实现改变的科学内容。以下专用实例也是迁移的参考调用点，不是要求逐一复制的完整脚本套件。
 
+开发和迁移验证按 [高效预览与产物保留](review-and-retention.md) 选择关键帧和短区间；以下完整帧序列及编码命令用于需要成片的交付阶段，不是每次修改都要执行的检查步骤。数值检查覆盖必要的全部姿态，不要求把这些姿态全部渲染成像素。
+
 ## 准备结构资产
 
 先按 [public-assets-first.md](public-assets-first.md) 检索并核对可用坐标、分割或现成模型；已有适用缓存就复用。肌动蛋白与微管的 11 个可执行模板和命令见 [polymer-templates.md](polymer-templates.md)，其他 8 个装配过程的项目分镜见 [assembly-storyboards.md](assembly-storyboards.md)。
