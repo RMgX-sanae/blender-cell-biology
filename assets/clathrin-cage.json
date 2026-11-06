@@ -1,0 +1,16 @@
+{
+  "id": "clathrin-1XI4-cage",
+  "source_id": "1XI4",
+  "source_sha256": "4dcab431d35133772b750f047d71adc0bbc3a59e0ec4a723dd69ce67b2927309",
+  "reference_sha256": "a5495392ea6024cf2badb86e3a7cd48908e201f350278d89087fc71e3c7a2884",
+  "assembly_id": "1",
+  "groups": [
+    {"id":"ABC","heavy":["A","B","C"],"light":["J","K","L"]},
+    {"id":"DEF","heavy":["D","E","F"],"light":["M","N","O"]},
+    {"id":"GHI","heavy":["G","H","I"],"light":["P","Q","R"]}
+  ],
+  "surface": {"spacing_angstrom":1.2,"sigma_angstrom":2.0,"isovalue":0.4},
+  "evidence_urls": ["https://www.rcsb.org/structure/1XI4","https://www.nature.com/articles/nature03079"],
+  "selection_note": "Retain all modeled heavy-chain CA sites1-1630 and light-chain CA sites95-164. Groups follow the source trimer hubs; complete native sequences are not reconstructed.",
+  "limits": "7.9-A bovine fitted CA model from in-vitro coats, not full-atom sterics or a native membrane-associated assembly trajectory. Display envelopes are authored. Partial light chains and unresolved heavy-chain tail remain absent."
+}
