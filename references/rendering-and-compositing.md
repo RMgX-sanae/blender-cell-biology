@@ -44,6 +44,8 @@ Blender 5.x 可使用 `scene.compositing_node_group` 和 `NodeGroupOutput`；较
 
 ## 外部合成器交接
 
+已有可执行入口：[Natron 线性调色与独立文字](natron-compositing.md)。从既有完整布局导出三个线性 EXR 层，保存并重开 `.ntp`，检查实际像素后用原 Blender 显示变换输出；已在 PTP1B、AMSH-LP 的少量正式尺寸帧上执行。其他合成器与更复杂 passes 按下面原则逐项核定。
+
 1. 提前确认 color management、fps、frame range、分辨率和 alpha 约定。输出场景线性多层 OpenEXR：Combined/RGBA、需要的 diffuse/specular/emission、Z、Cryptomatte 或对象 mask；只开所需 pass。
 2. 主体、膜、关键 cargo、环境和标注可分 View Layer；所有层共享同一相机和时间。相互遮挡/投影需要 holdout 或 shadow catcher，不能各自渲染后直接相加。
 3. Fusion/Natron 等节点式流程：读取 EXR→线性色彩管理→按 mask 处理→合并→显示变换→标注→输出。AE 项目则明确 32-bit/线性工作流程与导入 alpha。具体控件按已安装版本核对。

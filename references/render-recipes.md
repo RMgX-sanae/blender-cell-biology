@@ -1,6 +1,6 @@
 # 渲染滤镜与合成器组合
 
-先完成结构、摄影和动画，再选择合成；滤镜不能修复错误拓扑、缺失机制或严重穿插。当前入口是 Blender 原生可编辑节点，外部 Fusion/Natron/After Effects 仍按项目确认可用并实际执行后才能声明支持。
+先完成结构、摄影和动画，再选择合成；滤镜不能修复错误拓扑、缺失机制或严重穿插。这里的配方使用 Blender 原生可编辑节点；另有已实际执行的 [Natron 调色与独立文字入口](natron-compositing.md)。Fusion/After Effects 等仍按项目确认可用并执行后才能声明支持。
 
 `assets/render-recipes.json` 定义有序滤镜链，`compositor_stack.py` 实际构建节点。材质风格、渲染引擎、动画模式和合成配方相互独立。
 

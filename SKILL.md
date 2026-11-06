@@ -68,7 +68,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 将机制变成 Blender 动画 | [blender-workflow.md](references/blender-workflow.md) |
 | V 型 ATPase 的整体与 c 环双视图连续循环 | [vatpase-loop.md](references/vatpase-loop.md)：公开结构准备、可移植生成器、同步检查及渲染命令 |
 | PDB/mmCIF、EM/分割网格进入 Blender | [data-import.md](references/data-import.md) |
-| 风格、Eevee/Cycles、合成节点和外部合成 | [rendering-and-compositing.md](references/rendering-and-compositing.md) |
+| 风格、Eevee/Cycles、合成节点和外部合成 | [rendering-and-compositing.md](references/rendering-and-compositing.md)；[Natron 实际入口](references/natron-compositing.md) 提供线性调色、文字保护、可编辑工程与像素核验 |
 
 ## 不可被视觉效果改变的约束
 
