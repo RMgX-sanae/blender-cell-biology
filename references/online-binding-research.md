@@ -29,6 +29,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 2PTC --output "$PROJECT/sources"
 - 不同来源单体或同源替代：沿用 [单体候选](monomer-binding.md)，明确被替换的构象/构建体及其推断性质。
 - 涉及化学变化或全过程：转到对应机制工作流；一个结合结构不会自动给出反应顺序、所有过渡态或完整循环。
 - 比较同一蛋白的不同来源状态：使用 [来源状态对照](source-state-comparison.md) 的项目配置，核对链的实际蛋白身份、关键残基、类似物和辅因子后再生成分开的静态模型。翻译终止实例中，同名 `jj` 链可分别代表 eRF3 或 ABCE1，顶层 mutation 字段也没有直接列出 AAQ；不能依赖这两个字段自动拼接机制。
+  需要逐残基对应时，可调用 `scripts/source_residue_mapping.py` 的 `correspondence(first_cif, second_cif, first_sifts, second_sifts, chains, insertions=())`。`chains` 明确指定两侧作者链与 UniProt accession；函数读取 SIFTS XML/XML.gz，返回两侧实际解析的 Cα 及对应记录。它检查条目身份、作者编号和插入码、残基名、canonical 位置的唯一性，并列出两侧未匹配区；不会把未解析残基补成坐标。工程插入仅接受逐项审查的例外，突变或修饰位点需要另行处理，不能借这个同残基对应工具自动恢复为天然序列。
 - 要画具体位点的接触/共价键：用 [位点连接检查](site-link-checks.md) 把审查后的作者原子身份、CCD 元素/键表、实际距离和连接注释核对起来。类似物、突变和冲突注释不能直接进入天然反应动画。
 - 有两个分别解析的结合态且要表达竞争占位：使用 [多伙伴交接](binding-handoff.md) 审查共同宿主配准、完整姿态冲突及伴随配体。不同物种或旧模型的界面解释不能未经核对直接拼接；每个伙伴对宿主合格后，仍检查伙伴之间的同步运动。
 
@@ -49,5 +50,36 @@ python3 "$SKILL/scripts/fetch_structure.py" 2PTC --output "$PROJECT/sources"
 | I:15 Lys | P00974:Lys50 |
 
 这些是本条目的核对实例，不是供别的蛋白套用的编号偏移。脚本的普通关键词检索实测返回了其他相关条目，定向网页检索和条目读取才确定 2PTC；因此不得把返回的前几项或最高分直接当作最终选择。
+
+### 两个构象的编号也可能不同：AP2 实测迁移
+
+联网读取同一研究的 [6YAE 关闭态](https://www.rcsb.org/structure/6YAE)、[6YAF 膜结合开放态](https://www.rcsb.org/structure/6YAF)及[原始研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC7375805/)，再取得对应 [6YAE SIFTS](https://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/6yae.xml.gz) 和 [6YAF SIFTS](https://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/6yaf.xml.gz)。首次研究默认联网下载，重复建模直接读取已记录哈希的文件。
+
+这里不能把同名 `M:350` 视为同一个位置：6YAF 的 M:350 Lys 对应 UniProt P84092:Lys339、6YAE 的 M:339；6YAF 的 M:367 Lys、M:368 Arg 分别对应 canonical 356、357。6YAF 的 M:237–247 为工程插入，不能当作原生结合伙伴。α 链两侧的 A:272 Glu 也没有 canonical 对应；本例在核对相邻映射及构建体后单独记录它的同源工程插入身份，而不是给全部残基强行加减一个常数。
+
+本次四条核心链实际解析 1717/1762 个 Cα。工具核对了 1710 对 canonical 残基及一对明确审查的 α 插入；关闭态仍有 6 个、开放态有 51 个解析位置未成对。未匹配可以来自不同的解析范围或工程片段，不代表发生了生理性缺失/新增。源结构的分辨率、构建体和膜条件仍需原文判断；**对应成功不证明两者间的运动路径，也不等于完成 AP2 激活或货物捕获动画。**
+
+工程中的调用示例（文件放在 skill 外）：
+
+```python
+from source_residue_mapping import correspondence
+chains = [dict(first=c, second=c, uniprot=u) for c, u in
+          [('A', 'P18484'), ('B', 'P63010'), ('M', 'P84092'), ('S', 'P62743')]]
+insertions = [dict(first=['A', '272'], second=['A', '272'], name='GLU',
+                   reason='Reviewed shared insertion between canonical P18484 positions 271 and 272')]
+observed, report = correspondence(
+    sources/'6YAE.cif', sources/'6YAF.cif',
+    sources/'6yae.xml.gz', sources/'6yaf.xml.gz', chains, insertions)
+# observed 保留两侧实际坐标；report 可写入项目 JSON，包含身份、未匹配区和输入哈希。
+```
+
+将 `scripts` 加入项目 Python 的模块路径后调用，所需环境为既有 Gemmi/NumPy 环境。代表性检查：
+
+```bash
+"$PROJECT_PYTHON" "$SKILL/scripts/test_source_residue_mapping.py" \
+  --sources "$PROJECT/sources" --output "$PROJECT/residue-mapping-tests.json"
+```
+
+它同时拒绝交换 SIFTS 条目、错选蛋白、重复目标链、把天然位点覆盖成插入、未经审查的插入，以及残基名/编号被改变的映射。其他蛋白使用自己的链选择、原始资料与位点检查，不能照抄 AP2 的数量或编号。
 
 联网不意味着所有相互作用都有唯一已知构型。若结构/文献冲突，按物种、状态和实验条件分支；若只能访问摘要，注明访问层级。不得把模型预测、数据库预测组合或人工摆放升级为实验结构。用户明确离线或实际网络不可用时，说明本次证据缺口并用已核定缓存继续可做的部分。
