@@ -14,6 +14,7 @@ import style_nodes as sn
 import cellular_environment as environment
 from build_phosphotransfer_scene import visibility
 from compositor_stack import build_stack
+from panel_compositor import publish_panel_sources
 
 
 def digest(path):
@@ -107,6 +108,7 @@ def paired_composite(scene, close, annotations, bg_layers, background_color, wid
     over = sn.node(tree, 'CompositorNodeAlphaOver'); tree.links.new(crop.outputs[0], over.inputs['Background']); tree.links.new(annotate.outputs['Image'], over.inputs['Foreground'])
     tree.links.new(over.outputs['Image'], base.inputs['Foreground'])
     tree.links.new(environment.composite(tree, bg_layers, background_color, width), base.inputs['Background'])
+    publish_panel_sources(tree, {'overview': (left_render.node, mix.inputs[2]), 'detail': (right_render, mix.inputs[1])})
     # The original render-layer passes no longer describe both composed panels.
     tree['display_passes'] = '[]'
 

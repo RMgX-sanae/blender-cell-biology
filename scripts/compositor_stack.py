@@ -101,6 +101,99 @@ def publish_composite_outputs(tree, beauty, labels=None, passes=None):
     tree['display_passes'] = json.dumps(list(passes or {}))
 
 
+def filter_image(scene, t, image, data_outputs, filters, panel=False):
+    """Apply the same ordered operators to a full image or an opaque panel color."""
+    actual = []
+    for settings in filters:
+        f = dict(settings)
+        kind = f['type']
+        if kind == 'exposure':
+            n = node(t, 'CompositorNodeExposure', 'Artistic exposure in stops')
+            n.inputs['Exposure'].default_value = f['stops']
+            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
+        elif kind == 'color_balance':
+            n = node(t, 'CompositorNodeColorBalance', 'Lift / gamma / gain; preserve identity colors when required')
+            n.inputs['Type'].default_value = 'Lift/Gamma/Gain'
+            for key in ['Lift', 'Gamma', 'Gain']:
+                socket = next(s for s in n.inputs if s.name == key and s.bl_idname == 'NodeSocketColor')
+                socket.default_value = (*f.get(key.lower(), [1, 1, 1]), 1)
+            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
+        elif kind == 'saturation':
+            n = node(t, 'CompositorNodeHueSat')
+            n.inputs['Saturation'].default_value = f['amount']
+            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
+        elif kind == 'contrast':
+            n = node(t, 'CompositorNodeBrightContrast')
+            n.inputs['Contrast'].default_value = f['amount']
+            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
+        elif kind == 'bloom':
+            n = node(t, 'CompositorNodeGlare', 'Small highlights only; no inferred fluorescent intensity')
+            n.inputs['Type'].default_value = 'Fog Glow'
+            n.inputs['Threshold'].default_value = f.get('threshold', 1.4)
+            n.inputs['Strength'].default_value = f.get('strength', .08)
+            n.inputs['Size'].default_value = f.get('size', .25)
+            t.links.new(image, n.inputs['Image']); image = n.outputs['Image']
+        elif kind == 'outline':
+            normal = node(t, 'CompositorNodeFilter', 'Normals show structural creases without cutting the mesh')
+            normal.inputs['Type'].default_value = 'Sobel'
+            t.links.new(data_outputs['Normal'], normal.inputs['Image'])
+            gray = node(t, 'CompositorNodeRGBToBW'); t.links.new(normal.outputs[0], gray.inputs[0])
+            edge = math_node(t, 'MULTIPLY', gray.outputs[0], f.get('strength', .18))
+            silhouette = node(t, 'CompositorNodeFilter'); silhouette.inputs['Type'].default_value = 'Sobel'
+            t.links.new(data_outputs['Alpha'], silhouette.inputs['Image'])
+            edge = math_node(t, 'ADD', edge, math_node(t, 'MULTIPLY', silhouette.outputs[0], f.get('silhouette', .3)))
+            tone = math_node(t, 'MAXIMUM', math_node(t, 'SUBTRACT', 1, edge), .1)
+            image = mix(t, image, tone, 1, 'MULTIPLY')
+        elif kind == 'depth_fog':
+            near, far = f['range'] if 'range' in f else depth_bounds(scene)
+            if far <= near: raise ValueError('depth_fog range must increase')
+            f['range'] = [near, far]
+            mapped = node(t, 'ShaderNodeMapRange', 'Fixed scene-unit range; not optical attenuation')
+            mapped.inputs['From Min'].default_value = near
+            mapped.inputs['From Max'].default_value = far
+            mapped.clamp = True
+            t.links.new(data_outputs['Depth'], mapped.inputs['Value'])
+            factor = mapped.outputs[0] if panel else math_node(t, 'MULTIPLY', mapped.outputs[0], data_outputs['Alpha'])
+            factor = math_node(t, 'MULTIPLY', factor, f.get('strength', .2))
+            image = mix(t, image, (*linear(f.get('color', '#597c8b')), 1), factor)
+        elif kind == 'ambient_occlusion':
+            ao = mix(t, (1, 1, 1, 1), data_outputs['Ambient Occlusion'], f.get('strength', .2))
+            image = mix(t, image, ao, 1, 'MULTIPLY')
+        elif kind == 'vignette':
+            ellipse = node(t, 'CompositorNodeEllipseMask', 'Optional frame-edge grading; inspect peripheral events')
+            ellipse.inputs['Position'].default_value = (.5, .5)
+            ellipse.inputs['Size'].default_value = tuple(f.get('size', [.9, .85]))
+            blur = node(t, 'CompositorNodeBlur')
+            size = min(scene.render.resolution_x, scene.render.resolution_y) * .2
+            blur.inputs['Size'].default_value = (size, size)
+            t.links.new(ellipse.outputs[0], blur.inputs['Image'])
+            tone = math_node(t, 'ADD', math_node(t, 'MULTIPLY', blur.outputs[0], f.get('strength', .12)), 1-f.get('strength', .12))
+            image = mix(t, image, tone, 1, 'MULTIPLY')
+        elif kind == 'grain':
+            n = node(t, 'CompositorNodeImage', 'Packed fixed grain; no frame-to-frame random flicker')
+            n.image = grain_image(scene.render.resolution_x, scene.render.resolution_y, f.get('amount', .02))
+            image = mix(t, image, n.outputs['Image'], 1, 'MULTIPLY')
+        elif kind == 'duotone':
+            gray = node(t, 'CompositorNodeRGBToBW'); t.links.new(image, gray.inputs[0])
+            colored = ramp(t, gray.outputs[0], [(0, f['shadows']), (1, f['highlights'])])
+            image = mix(t, image, colored, f.get('strength', 1))
+        elif kind == 'subject_focus':
+            index = int(f.get('object_index', 1))
+            if not any(o.pass_index == index and not o.hide_render for o in scene.objects):
+                raise ValueError(f'No visible objects assigned pass_index={index}')
+            mask = node(t, 'CompositorNodeIDMask', 'Whole-object selection; no geometry slicing')
+            mask.inputs['Index'].default_value = index
+            mask.inputs['Anti-Alias'].default_value = True
+            t.links.new(data_outputs['Object Index'], mask.inputs['ID value'])
+            grade = node(t, 'CompositorNodeHueSat')
+            grade.inputs['Saturation'].default_value = f.get('background_saturation', .15)
+            grade.inputs['Value'].default_value = f.get('background_value', .65)
+            t.links.new(image, grade.inputs['Image'])
+            image = mix(t, grade.outputs[0], image, mask.outputs[0])
+        actual.append(f)
+    return image, actual
+
+
 def build_stack(scene, recipe, name=None, source=None):
     if not hasattr(scene, 'compositing_node_group'):
         raise RuntimeError('This stack uses Blender 5.x compositor sockets; check the installed API before adapting')
@@ -151,94 +244,7 @@ def build_stack(scene, recipe, name=None, source=None):
         exported_passes = {key: layers.outputs[key] for key in required}
         data_outputs = layers.outputs
     t.use_fake_user = True
-    actual = []
-    for settings in filters:
-        f = dict(settings)
-        kind = f['type']
-        if kind == 'exposure':
-            n = node(t, 'CompositorNodeExposure', 'Artistic exposure in stops')
-            n.inputs['Exposure'].default_value = f['stops']
-            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
-        elif kind == 'color_balance':
-            n = node(t, 'CompositorNodeColorBalance', 'Lift / gamma / gain; preserve identity colors when required')
-            n.inputs['Type'].default_value = 'Lift/Gamma/Gain'
-            for key in ['Lift', 'Gamma', 'Gain']:
-                socket = next(s for s in n.inputs if s.name == key and s.bl_idname == 'NodeSocketColor')
-                socket.default_value = (*f.get(key.lower(), [1, 1, 1]), 1)
-            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
-        elif kind == 'saturation':
-            n = node(t, 'CompositorNodeHueSat')
-            n.inputs['Saturation'].default_value = f['amount']
-            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
-        elif kind == 'contrast':
-            n = node(t, 'CompositorNodeBrightContrast')
-            n.inputs['Contrast'].default_value = f['amount']
-            t.links.new(image, n.inputs['Image']); image = n.outputs[0]
-        elif kind == 'bloom':
-            n = node(t, 'CompositorNodeGlare', 'Small highlights only; no inferred fluorescent intensity')
-            n.inputs['Type'].default_value = 'Fog Glow'
-            n.inputs['Threshold'].default_value = f.get('threshold', 1.4)
-            n.inputs['Strength'].default_value = f.get('strength', .08)
-            n.inputs['Size'].default_value = f.get('size', .25)
-            t.links.new(image, n.inputs['Image']); image = n.outputs['Image']
-        elif kind == 'outline':
-            normal = node(t, 'CompositorNodeFilter', 'Normals show structural creases without cutting the mesh')
-            normal.inputs['Type'].default_value = 'Sobel'
-            t.links.new(data_outputs['Normal'], normal.inputs['Image'])
-            gray = node(t, 'CompositorNodeRGBToBW'); t.links.new(normal.outputs[0], gray.inputs[0])
-            edge = math_node(t, 'MULTIPLY', gray.outputs[0], f.get('strength', .18))
-            silhouette = node(t, 'CompositorNodeFilter'); silhouette.inputs['Type'].default_value = 'Sobel'
-            t.links.new(data_outputs['Alpha'], silhouette.inputs['Image'])
-            edge = math_node(t, 'ADD', edge, math_node(t, 'MULTIPLY', silhouette.outputs[0], f.get('silhouette', .3)))
-            tone = math_node(t, 'MAXIMUM', math_node(t, 'SUBTRACT', 1, edge), .1)
-            image = mix(t, image, tone, 1, 'MULTIPLY')
-        elif kind == 'depth_fog':
-            near, far = f.get('range', depth_bounds(scene))
-            if far <= near: raise ValueError('depth_fog range must increase')
-            f['range'] = [near, far]
-            mapped = node(t, 'ShaderNodeMapRange', 'Fixed scene-unit range; not optical attenuation')
-            mapped.inputs['From Min'].default_value = near
-            mapped.inputs['From Max'].default_value = far
-            mapped.clamp = True
-            t.links.new(data_outputs['Depth'], mapped.inputs['Value'])
-            factor = math_node(t, 'MULTIPLY', mapped.outputs[0], data_outputs['Alpha'])
-            factor = math_node(t, 'MULTIPLY', factor, f.get('strength', .2))
-            image = mix(t, image, (*linear(f.get('color', '#597c8b')), 1), factor)
-        elif kind == 'ambient_occlusion':
-            ao = mix(t, (1, 1, 1, 1), data_outputs['Ambient Occlusion'], f.get('strength', .2))
-            image = mix(t, image, ao, 1, 'MULTIPLY')
-        elif kind == 'vignette':
-            ellipse = node(t, 'CompositorNodeEllipseMask', 'Optional frame-edge grading; inspect peripheral events')
-            ellipse.inputs['Position'].default_value = (.5, .5)
-            ellipse.inputs['Size'].default_value = tuple(f.get('size', [.9, .85]))
-            blur = node(t, 'CompositorNodeBlur')
-            size = min(scene.render.resolution_x, scene.render.resolution_y) * .2
-            blur.inputs['Size'].default_value = (size, size)
-            t.links.new(ellipse.outputs[0], blur.inputs['Image'])
-            tone = math_node(t, 'ADD', math_node(t, 'MULTIPLY', blur.outputs[0], f.get('strength', .12)), 1-f.get('strength', .12))
-            image = mix(t, image, tone, 1, 'MULTIPLY')
-        elif kind == 'grain':
-            n = node(t, 'CompositorNodeImage', 'Packed fixed grain; no frame-to-frame random flicker')
-            n.image = grain_image(scene.render.resolution_x, scene.render.resolution_y, f.get('amount', .02))
-            image = mix(t, image, n.outputs['Image'], 1, 'MULTIPLY')
-        elif kind == 'duotone':
-            gray = node(t, 'CompositorNodeRGBToBW'); t.links.new(image, gray.inputs[0])
-            colored = ramp(t, gray.outputs[0], [(0, f['shadows']), (1, f['highlights'])])
-            image = mix(t, image, colored, f.get('strength', 1))
-        elif kind == 'subject_focus':
-            index = int(f.get('object_index', 1))
-            if not any(o.pass_index == index and not o.hide_render for o in scene.objects):
-                raise ValueError(f'No visible objects assigned pass_index={index}')
-            mask = node(t, 'CompositorNodeIDMask', 'Whole-object selection; no geometry slicing')
-            mask.inputs['Index'].default_value = index
-            mask.inputs['Anti-Alias'].default_value = True
-            t.links.new(data_outputs['Object Index'], mask.inputs['ID value'])
-            grade = node(t, 'CompositorNodeHueSat')
-            grade.inputs['Saturation'].default_value = f.get('background_saturation', .15)
-            grade.inputs['Value'].default_value = f.get('background_value', .65)
-            t.links.new(image, grade.inputs['Image'])
-            image = mix(t, grade.outputs[0], image, mask.outputs[0])
-        actual.append(f)
+    image, actual = filter_image(scene, t, image, data_outputs, filters)
     beauty = image; label_image = None
     if labels:
         if source is not None:

@@ -8,6 +8,7 @@ import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from compositor_stack import build_stack
+from panel_compositor import build_panel_stack
 
 
 def main():
@@ -21,8 +22,11 @@ def main():
     p.add_argument('--frame', type=int, default=1)
     p.add_argument('--subject', action='append', default=[], help='Exact object or collection name; assigns whole objects index 1')
     p.add_argument('--render', action='store_true')
+    p.add_argument('--scope', choices=('layout', 'panels'), default='layout')
+    p.add_argument('--panels', nargs='+', help='Published panel names; requires --scope panels')
     a = p.parse_args(sys.argv[sys.argv.index('--')+1:])
     if a.output.exists(): p.error('Use a fresh output directory')
+    if a.panels and a.scope != 'panels': p.error('--panels requires --scope panels')
     recipe = next((r for r in json.loads(a.recipes.read_text())['recipes'] if r['id'] == a.recipe), None)
     if recipe is None: p.error('Recipe not found in the specified file')
     scene = bpy.context.scene
@@ -46,14 +50,16 @@ def main():
             obj.pass_index=1
     scene.frame_set(a.frame); bpy.context.view_layer.update()
     source = bpy.data.filepath
-    report = build_stack(scene, recipe, source=scene.compositing_node_group)
+    report = (build_panel_stack(scene, recipe, scene.compositing_node_group, a.panels) if a.scope == 'panels'
+              else build_stack(scene, recipe, source=scene.compositing_node_group))
     a.output.mkdir(parents=True)
     scene.render.image_settings.file_format = 'PNG'
     scene.render.filepath = str(a.output/f'frame_{a.frame:04d}.png')
     bpy.ops.wm.save_as_mainfile(filepath=str(a.output/'scene.blend'))
     if a.render: bpy.ops.render.render(write_still=True)
     report.update(source_blend=source, recipe=recipe, blender=bpy.app.version_string, frame=a.frame,
-                  resolution=[scene.render.resolution_x,scene.render.resolution_y], rendered=a.render)
+                  resolution=[scene.render.resolution_x,scene.render.resolution_y], rendered=a.render,
+                  subject_objects=sorted(selected))
     if source:
         with Path(source).open('rb') as stream:
             report['source_blend_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -62,6 +68,10 @@ def main():
             record = json.loads(manifest.read_text())
             record.setdefault('display_postprocessing', []).append(report)
             (a.output/'manifest.json').write_text(json.dumps(record, ensure_ascii=False, indent=2))
+            if record.get('kind') == 'molecular-sequence-scene':
+                display = Path(source).with_name('display.json')
+                if not display.is_file(): raise ValueError('Molecular sequence display record missing beside its source scene')
+                (a.output/'display.json').write_bytes(display.read_bytes())
     (a.output/'render-recipe-report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
 
 

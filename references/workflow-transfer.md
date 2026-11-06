@@ -36,6 +36,7 @@
 | 已检查坐标序列的项目显示 | `build_molecular_sequence_scene.py`、`audit_molecular_sequence_scene.py`，见 [输入约定](molecular-sequence-display.md) | PTP1B 与 AMSH-LP 共享两图原子、标记、背景和保存检查；新机制仍提供经过检查的 nm 坐标、身份、反应账本和显示配置 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
 | 对已有画面追加调色 | `apply_render_recipe.py`、`publish_composite_outputs`，见 [合成输出约定](render-recipes.md) | 保留已合成的分屏/背景及独立文字；多视图不能直接借用一个视图的法线/深度，缺少对齐 pass 时拒绝对应配方 |
+| 双视图分别处理深度、轮廓与对象强调 | `panel_compositor.py`、`publish_panel_sources`，见 [各视图通道](render-recipes.md) | PTP1B/AMSH-LP 已重建检查；先用各自 Render Layers 的 pass 和原 alpha 处理，再回到原布局并叠加文字。明确每个视图的深度范围与主体选择；不改变反应几何或扩充机制 |
 | 保存后渲染与视频检查 | `render_saved.py`、`encode_video.py`、`audit_video.py` | 可以共用执行步骤；场景内的机制检查仍按本例定义，成功解码不能证明科学正确 |
 
 复用这些脚本时把实际 skill 的 `scripts` 目录加入导入路径，不绑定作者机器的绝对路径。先查看函数签名和一个现有调用点，保持 Å/nm、帧数及数组形状一致。不要假定不同机制的 manifest 可以直接互换。

@@ -1,0 +1,19 @@
+{
+  "scope": "Per-panel PTP1B display examples. Depth ranges are chosen in rendered scene units, not transferable molecular distances or optical attenuation constants. Requalify ranges for another display.",
+  "recipes": [
+    {
+      "id": "ptp1b-panel-depth",
+      "filters": [
+        {"type": "depth_fog", "panel_ranges": {"overview": [34, 46], "detail": [30, 50]}, "color": "#688998", "strength": 0.25},
+        {"type": "bloom", "threshold": 1.5, "strength": 0.06}
+      ]
+    },
+    {
+      "id": "ptp1b-substrate-focus",
+      "engines": ["cycles"],
+      "filters": [
+        {"type": "subject_focus", "object_index": 1, "background_saturation": 1.0, "background_value": 0.68}
+      ]
+    }
+  ]
+}
