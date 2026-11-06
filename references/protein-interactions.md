@@ -19,7 +19,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 1BRS --output "$PROJECT/sources"
   --font-en /installed/fonts/Times-New-Roman.ttf --style cinematic --render
 ```
 
-完整视频及实际工程检查：
+实际工程检查如下；完整视频命令仅用于需要成片交付时。开发迁移优先使用 [关键帧与短预览](review-and-retention.md)。
 
 ```bash
 "$BLENDER" -b "$PROJECT/scene/scene.blend" --python-exit-code 1 \
@@ -76,13 +76,59 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 
 同一移动伙伴及其配体共用刚体变换，身份保持不变。保存第 N+1 帧的闭环姿态，导出 1…N 帧，检查虚拟末态与第 1 帧相同。源表面是坐标衍生显示包络，不是实验密度；未解析区域不自行补全。
 
-工程审计检查保存后的完整源几何、身份、每帧姿态和相机边界。相机按整个运动的模型包围盒取景，不能只按结合态取景。完整视频解码和时间戳检查之后，仍需查看编码后的接近、接触、释放和首尾帧；低于严重重叠阈值的检查不证明分子动力学合理。
+工程审计检查保存后的完整源几何、身份、每帧姿态和相机边界。动画相机按整个运动的模型包围盒取景，不能只按结合态取景。开发检查使用关键帧与必要的短片段；需要完整视频交付时，再做完整解码、时间戳和编码画面检查。低于严重重叠阈值的检查不证明分子动力学合理。
 
-相互作用特写提供 `cinematic`、`teaching`、`clay`、`illustrative`、`fluorescence` 外观；这些外观与 `loop`/`teaching` 动画模式分别选择。荧光外观是发光标记与形状提示，不是光学成像模拟。原子描边外观要求 Eevee。两伙伴使用可区分的颜色及对应图例；文字独立合成，避免描边、颗粒和景深掩盖文字。更换颜色滤镜后重新核对图例与分子颜色。
+检查静态细节时可用 `--snapshot-frame FRAME` 单独生成只含一个源姿态的静态工程，相机会按该姿态取景。`--visible-actors` 只隐藏列外的完整实体，保留其几何及身份，并在工程和审计中列明；至少显示每个伙伴的一个实体。用 `--moving-label` 准确标明实际显示的亚基。静态工程的第 1 帧对应声明的源帧，检查器只报告一个保存姿态，不将它算作整段运动或接缝验证。
+
+相互作用特写提供 `cinematic`、`teaching`、`clay`、`illustrative`、`fluorescence` 外观；这些外观与 `loop`/`teaching` 动画模式分别选择。荧光外观是发光标记与形状提示，不是光学成像模拟。原子描边外观要求 Eevee。两伙伴使用可区分的颜色及对应图例；`--partner-colors '#ffc43d' '#d6a1bc'` 可按项目设置固定/移动伙伴颜色，图例同步使用，不能以配色改变身份。文字独立合成，避免描边、颗粒和景深掩盖文字。更换颜色滤镜后重新核对图例与分子颜色。
 
 构建器选用的合成树还导出 `Beauty`/`Labels`，可按 [合成配方](render-recipes.md#对现有工程应用) 用 `apply_render_recipe.py` 追加调色。文字经过独立支路，图例色点随分子一起处理；没有宣称导出 Normal/Depth 等 pass，所以需要这些 pass 的配方仍会拒绝。2PTC 的独立重建检查中，原五张关键帧和追加 neutral 的画面逐像素一致；soft-cinema 改变画面，独立文字缓冲逐像素一致，两种保存版本各 193 个姿态通过检查。该结果不代表全部外观组合或完整调色视频已验收。
 
 ## 继续扩展其他作用时
+
+### 将结合路径放到膜旁：AP2–货物短肽
+
+[6YAF](https://www.rcsb.org/structure/6YAF) 提供 AP2 核心及六残基 TGN38 来源短肽；[原研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC7375805/)是膜重构体系，不能直接当成完整天然受体或完整细胞摄取过程。此入口从已打开的 AP2 核心开始，保留全部已建模链；尚未实现关闭到打开、PIP2 的原子模型、被覆招募或回收。
+
+`prepare_ap2_capture.py` 沿用现有结合路径和完整链表面生成器，增加三项约束：从 [EMD-10748](https://www.ebi.ac.uk/emdb/EMD-10748) 已检查的密度峰确定局部膜坐标；逐姿态检查整套原子包络与显示网格位于所声明的疏水核心之外；让示意脂质避开整个运动区间。未解析的货物连接段只画为细管，固定连接源短肽 N 端和同一示意脂质，不能当成已知原子骨架。脂质数目、排布和疏水核心界限是制作假设。
+
+```bash
+"$PYTHON" "$SKILL/scripts/fetch_structure.py" 6YAF --output "$PROJECT/sources"
+"$PYTHON" "$SKILL/scripts/prepare_ap2_capture.py" \
+  --sources "$PROJECT/sources" --output "$PROJECT/assets" --mode teaching --frames 240
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_interaction_scene.py" -- \
+  --asset-dir "$PROJECT/assets" --output "$PROJECT/scene" \
+  --font-en /installed/fonts/Times-New-Roman.ttf --style clay --engine cycles \
+  --partner-colors '#ffc43d' '#d6a1bc'
+"$BLENDER" --disable-autoexec -b "$PROJECT/scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_interaction_scene.py" -- --output "$PROJECT/saved-audit.json"
+"$BLENDER" --disable-autoexec -b "$PROJECT/scene/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/review" --frames 121 --width 1280 --samples 24
+
+# 同一结合姿态的完整 mu2 亚基特写；其他 AP2 亚基保留但隐藏
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_interaction_scene.py" -- \
+  --asset-dir "$PROJECT/assets" --output "$PROJECT/detail" \
+  --font-en /installed/fonts/Times-New-Roman.ttf --style clay --engine cycles \
+  --visible-actors anchor_P moving_M --moving-label 'AP2 mu2' \
+  --snapshot-frame 121 --partner-colors '#ffc43d' '#d6a1bc'
+"$BLENDER" --disable-autoexec -b "$PROJECT/detail/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_interaction_scene.py" -- --output "$PROJECT/detail-audit.json"
+"$BLENDER" --disable-autoexec -b "$PROJECT/detail/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- --directory "$PROJECT/detail-review" --frames 1
+```
+
+准备入口下载缺少的密度图，核对所选坐标和图的哈希；来源改变时重新资格确认。基础结合入口只准备路径；此例的 `requires_membrane` 会阻止未经膜检查的资产进入场景。编排仍可选择 `teaching` 或 `loop`，两种都仅是局部结合/释放示意，不能将重复结合称为整个内吞循环。
+
+项目配置可用 `motion_distance_nm` 明确设置接近距离；省略时沿用既有默认。该字段不改变源结合构象，也不代替路径检查。对另一膜结合蛋白，先更换有依据的膜坐标、朝向、允许接触区与锚定关系，再使用同样的完整对象检查。当前脂质显示按源 Z 轴构建，不能只旋转法向字段而不转换全部坐标。
+
+第一张正面图虽几何通过，货物仍被遮住；只调整观察方向也未提供足够清晰的特写。因此总览保留全部亚基，静态局部图完整保留 mu2 与货物肽，隐藏完整 alpha、beta2 和 sigma2 亚基，并使用金色短肽与淡紫主体。模型未切开、拉伸或放大短肽；静态特写不代表 AP2 的游离亚基完成识别。保存工程还核对脂质显示、肽端—脂质连接身份及膜侧别；全景检查全部姿态，特写只检查声明的源姿态。原子中心/包络检查不等于分子动力学。
+
+2026-11-06 从解压脚本及新下载的坐标/密度图重建：26 个资产与姿态数组、膜参数完全相同；全景的 241 个保存姿态通过，静态特写另查源第 121 帧。两张总览及一张特写完成视觉检查；特写重渲染与已检查图最大相差一个 8-bit 通道值，未声称逐像素一致。10 个保存工程破坏案例被拒绝，另检查完整对象过膜、坏平面、无膜准备及错误接近距离。未渲染完整影片；本次不扩大到 AP2 激活或内吞完成。
+
+### 其他机制
 
 磷酸转移已有独立的 [PKAc/SP20 实例](phosphotransfer.md)，包含供体、产物及原子身份变化。它与局部结合入口分别实现，不把结合视频重新命名为催化视频。
 
@@ -99,4 +145,4 @@ python3 "$SKILL/scripts/audit_video.py" "$PROJECT/scene/preview.mp4" \
 | 马达与通道 | 接触/闸门状态、能量与方向、膜侧别、货物/离子连续性 |
 | 聚合/拆解 | 成核与已有端延伸区分、位点占有、完整单体身份、化学老化与回收 |
 
-这些额外作用需要专门的事件与状态实现；当前局部结合生成器没有自动完成它们。新机制完成与否以实际工程和完整视频验证记录为准。
+这些额外作用需要专门的事件与状态实现；当前局部结合生成器没有自动完成它们。新机制完成与否以实际工程和对应范围的验证记录为准；需要交付完整视频时再补成片检查。

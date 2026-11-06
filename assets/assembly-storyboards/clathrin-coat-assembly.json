@@ -10,6 +10,18 @@
       "pdb_id": "6WCJ",
       "use_and_limits": "clathrin minicoat 非对称顶点结构",
       "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/1XI4",
+      "pdb_id": "1XI4",
+      "use_and_limits": "D6 coat C-alpha model. Deposited assembly1 contains36 modeled triskelia; heavy chains1-1630 and light-chain segments95-164. Unresolved regions are not complete proteins. Bovine source, distinct from the porcine-clathrin AP2 membrane reconstitution.",
+      "access_level": "Coordinates and assembly1 downloaded;216 chains and183600 sites inspected,12 source operators available. No complete coat animation implemented by this storyboard."
+    },
+    {
+      "entry_url": "https://www.rcsb.org/structure/6YAI",
+      "pdb_id": "6YAI",
+      "use_and_limits": "Local clathrin fragments with one AP2 beta2 appendage; not a whole cage or full AP2 molecule. The flexible core-to-appendage hinge is unresolved.",
+      "access_level": "Coordinates and primary methods inspected; full-actor reconstruction pending."
     }
   ],
   "actors": [

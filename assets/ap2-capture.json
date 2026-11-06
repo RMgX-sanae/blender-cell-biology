@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "examples": [{
+    "id": "ap2-cargo-membrane", "pdb": "6YAF",
+    "anchor": ["P"], "moving": ["A", "B", "M", "S"],
+    "anchor_label": "Cargo motif", "moving_label": "AP2 core",
+    "interaction": "Membrane-side recognition of a TGN38-derived YxxPhi peptide by a pre-open AP2 core",
+    "ligands": [], "source": "https://www.rcsb.org/structure/6YAF",
+    "doi": "10.1126/sciadv.aba8381", "motion_distance_nm": 6.0, "requires_membrane": true,
+    "limits": "6YAF is a 9.1-A subtomogram-fitted core and six-residue cargo peptide from a reconstituted system. AP2 hinges/appendages and PIP2 molecules are not atomically resolved here. The path starts in a pre-open conformation; no activation, uptake completion or kinetics is inferred."
+  }]
+}

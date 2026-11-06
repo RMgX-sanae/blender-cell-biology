@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 import sys
 
 import bpy
@@ -13,6 +14,7 @@ import detail_scene as ds
 import style_nodes as sn
 from compositor_stack import isolate_labels, publish_composite_outputs
 from interaction_assets import verify_assets
+from interaction_membrane import build_display
 
 
 def main():
@@ -25,22 +27,37 @@ def main():
     p.add_argument('--crowder-dir',type=Path)
     p.add_argument('--width',type=int,default=1280)
     p.add_argument('--samples',type=int,default=24)
+    p.add_argument('--visible-actors',nargs='+',help='Show selected whole actors; keep omitted geometry in the scene')
+    p.add_argument('--moving-label',help='Accurate display name when showing selected moving subunits')
+    p.add_argument('--partner-colors',nargs=2,metavar=('ANCHOR','MOVING'),help='Two sRGB #RRGGBB colors, also used by the legend')
+    p.add_argument('--snapshot-frame',type=int,help='Build a static review with framing for one prepared pose')
     p.add_argument('--render',action='store_true')
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     if a.output.exists():p.error('Use a fresh output directory')
     if a.style=='illustrative' and a.engine!='eevee':p.error('The selected toon material requires Eevee')
     if not a.font_en.is_file():p.error('Supply an installed Times New Roman Regular font file')
+    if a.partner_colors and any(not re.fullmatch(r'#[0-9a-fA-F]{6}',c) for c in a.partner_colors):
+        p.error('Partner colors must be #RRGGBB')
     m=json.loads((a.asset_dir/'manifest.json').read_text())
     integrity=verify_assets(a.asset_dir,m)
+    visible=set(a.visible_actors or [actor['id'] for actor in m['actors']])
+    if visible-set(actor['id'] for actor in m['actors']) or any(not any(actor['id'] in visible and actor['role']==role for actor in m['actors']) for role in ['moving','anchor']):
+        p.error('Select known whole actors, with at least one actor from each partner')
+    if m['example'].get('requires_membrane') and not (m.get('membrane') and m.get('membrane_screen_passed')):
+        p.error('This example requires qualified membrane preparation')
     if not m['motion']['collision_screen_passed']:
         p.error('The prepared path has unresolved deep-overlap frames; inspect and refine it first')
     poses=np.load(a.asset_dir/'motion.npz')['matrices'];n=m['frames']
+    if a.snapshot_frame is not None:
+        if not 1<=a.snapshot_frame<=len(poses):p.error('Snapshot frame is outside the prepared poses')
+        poses=poses[a.snapshot_frame-1:a.snapshot_frame];n=1
     library=json.loads((Path(__file__).resolve().parents[1]/'assets/style-library.json').read_text())
     profile=dict(library['profiles'][a.style])
     if a.style=='illustrative':
         profile['palette']=['#78a8e8','#d69a68','#5d87c0']
     if a.style=='fluorescence':
         profile.update(emission_strength=2.4,emission_depth=.85)
+    if a.partner_colors:profile['palette']=a.partner_colors+profile['palette'][2:]
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
     molecules=ds.collection('Interaction partners');environment=ds.collection('Environment');labels=ds.collection('Labels')
     rigs={}
@@ -48,7 +65,8 @@ def main():
         rig=bpy.data.objects.new(role,None);molecules.objects.link(rig);rigs[role]=rig
     points={'anchor':[],'moving':[]};bounds={'anchor':[],'moving':[]};objects=[]
     for actor in m['actors']:
-        d=np.load(a.asset_dir/actor['file']);points[actor['role']].append(d['atoms'])
+        d=np.load(a.asset_dir/actor['file'])
+        if actor['id'] in visible:points[actor['role']].append(d['atoms'])
         color=profile['palette'][0 if actor['role']=='anchor' else 1]
         if actor['kind']=='polymer':
             mat=sn.material(actor['id'],profile,color)
@@ -62,12 +80,13 @@ def main():
             obj=sn.point_object(actor['id'],d['atoms'],molecules)
             sn.instance_spheres(obj,mat,radius=.11,subdivisions=2)
         obj.parent=rigs[actor['role']];obj['biological_id']=actor['id']
+        obj.hide_render=actor['id'] not in visible
         obj['source_structure']=m['example']['pdb'];obj['source_asset']=str((a.asset_dir/actor['file']).resolve())
         objects.append(obj)
         extent=d['atoms'] if obj.modifiers else d['vertices']
         padding=.14 if obj.modifiers else 0
         lo=extent.min(0)-padding;hi=extent.max(0)+padding
-        bounds[actor['role']].append(np.array([[x,y,z] for x in [lo[0],hi[0]] for y in [lo[1],hi[1]] for z in [lo[2],hi[2]]]))
+        if actor['id'] in visible:bounds[actor['role']].append(np.array([[x,y,z] for x in [lo[0],hi[0]] for y in [lo[1],hi[1]] for z in [lo[2],hi[2]]]))
     moving=rigs['moving'];moving.rotation_mode='QUATERNION'
     for f,pose in enumerate(poses,1):
         position,rotation,scale=Matrix(pose).decompose()
@@ -83,6 +102,11 @@ def main():
     right=mobile.mean(0)-anchor.mean(0);right/=np.linalg.norm(right)
     up=np.eye(3)[np.argmin(abs(right))];up-=right*np.dot(up,right);up/=np.linalg.norm(up)
     front=np.cross(right,up)
+    if m.get('membrane'):
+        view=m['membrane']['view'];az,el=np.radians([view['azimuth_degrees'],view['elevation_degrees']])
+        front=np.array([np.cos(az)*np.cos(el),np.sin(az)*np.cos(el),np.sin(el)])
+        right=np.array([-np.sin(az),np.cos(az),0]);up=np.cross(front,right)
+        build_display(m['membrane'],environment,profile)
     projected=[]
     basis=np.column_stack([right,up,front])
     anchor_bounds=np.concatenate(bounds['anchor']);mobile_bounds=np.concatenate(bounds['moving'])
@@ -90,6 +114,9 @@ def main():
         xyz=np.concatenate([anchor_bounds,mobile_bounds@pose[:3,:3].T+pose[:3,3]])
         projected.append(xyz@basis)
     projected=np.concatenate(projected);lo=projected.min(0);hi=projected.max(0)
+    if m.get('membrane'):
+        membrane_bottom=np.asarray(m['membrane']['origin_nm'])-np.asarray(m['membrane']['normal'])*m['membrane']['head_offset_nm']
+        lo[1]=min(lo[1],float(membrane_bottom@basis[:,1])-.5)
     center=((lo+hi)/2)@basis.T
     width=max((hi[0]-lo[0])*1.25,(hi[1]-lo[1])*16/9*1.5)
     a.fps=m['fps'];a.frames=n;a.compositor='clean'
@@ -124,14 +151,15 @@ def main():
         obj.rotation_euler=scene.camera.rotation_euler
         data.materials.append(ink if color is None else sn.material(body,profile,color,'paint'))
         return obj
-    text(m['example']['anchor_label']+' / '+m['example']['moving_label'],0,width*.24,width*.035)
+    moving_label=a.moving_label or m['example']['moving_label']
+    text(m['example']['anchor_label']+' / '+moving_label,0,width*.24,width*.035)
     text(m['example']['anchor_label'],-width*.22,-width*.235,width*.028)
-    text(m['example']['moving_label'],width*.22,-width*.235,width*.028)
+    text(moving_label,width*.22,-width*.235,width*.028)
     for role,x,color in [('anchor',-.40,profile['palette'][0]),('moving',.04,profile['palette'][1])]:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=width*.009,
             location=scene.camera.matrix_world@Vector((width*x,-width*.225,-width*2)))
         dot=bpy.context.object;dot.name=role+' legend color'
-        dot['legend_for_objects']=json.dumps([actor['id'] for actor in m['actors'] if actor['role']==role])
+        dot['legend_for_objects']=json.dumps([actor['id'] for actor in m['actors'] if actor['role']==role and actor['id'] in visible])
         dot.data.materials.append(sn.material(dot.name,profile,color,'paint'))
     typography=isolate_labels(scene,profile['background'])
     tree=scene.compositing_node_group
@@ -154,17 +182,19 @@ def main():
             obj['source_structure']='1UBQ';obj['distribution_evidence']='illustrative, not measured concentration'
     scene['interaction_asset_dir']=str(a.asset_dir.resolve())
     scene['interaction_manifest_sha256']=integrity['manifest_sha256']
-    scene['animation_evidence']='Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics'
+    scene['interaction_visible_actors']=json.dumps(sorted(visible))
+    if a.snapshot_frame is not None:scene['interaction_snapshot_frame']=a.snapshot_frame
+    scene['animation_evidence']='Static review of one prepared pose; no motion validation' if a.snapshot_frame is not None else 'Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics'
     scene['animation_mode']=m['mode'];scene['source_limits']=m['example']['limits']
     scene.frame_set(1);bpy.context.view_layer.update()
     a.output.mkdir(parents=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(a.output/'scene.blend'))
     if a.render:
-        for frame in [1,n//4+1,n//2+1,3*n//4+1,n]:
+        for frame in sorted(set([1,n//4+1,n//2+1,3*n//4+1,n])):
             scene.frame_set(frame);scene.render.filepath=str(a.output/f'key_{frame:04d}.png')
             bpy.ops.render.render(write_still=True)
     (a.output/'manifest.json').write_text(json.dumps({'asset':m,'style':a.style,'engine':a.engine,
-        'source_objects':[o.name for o in objects],'camera_scale_nm':width,'fps':m['fps'],'frames':n,
+        'source_objects':[o.name for o in objects],'visible_actors':sorted(visible),'snapshot_source_frame':a.snapshot_frame,'camera_scale_nm':width,'fps':m['fps'],'frames':n,
         'partner_colors':profile['palette'][:2],'protected_typography':typography,
         'rendered_keyframes':a.render,'font_en':str(a.font_en),'environment_illustrative':bool(a.crowder_dir),
         'camera_dof':'Art-directed for readability; camera optics are not a microscope simulation'},ensure_ascii=False,indent=2))

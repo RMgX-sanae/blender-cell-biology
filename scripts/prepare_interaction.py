@@ -69,6 +69,9 @@ def main():
     if a.output.exists():p.error('Use a fresh output directory')
     e=next((e for e in json.loads(a.examples.read_text())['examples'] if e['id']==a.example),None)
     if e is None:p.error('Unknown example; provide an explicit reviewed specification')
+    distance=e.get('motion_distance_nm')
+    if distance is not None and (isinstance(distance,bool) or not isinstance(distance,(int,float)) or not np.isfinite(distance) or distance<=0):
+        raise ValueError('motion_distance_nm must be a finite positive distance')
     source=a.sources/(e['pdb']+'.cif');meta=json.loads(source.with_suffix('.cif.source.json').read_text())
     assert hashlib.sha256(source.read_bytes()).hexdigest()==meta['sha256']
     assert meta['id'].upper()==e['pdb'].upper()
@@ -106,7 +109,7 @@ def main():
                 if source_chain==chain:write_ligand(role,source_chain,residue,atoms_ligand)
         for source_chain,residue,atoms_ligand in ligands[role]:
             if source_chain not in e[role]:write_ligand(role,source_chain,residue,atoms_ligand)
-    poses,report=plan(np.concatenate(sets['moving']),np.concatenate(sets['anchor']),frames=a.frames,mode=a.mode)
+    poses,report=plan(np.concatenate(sets['moving']),np.concatenate(sets['anchor']),frames=a.frames,mode=a.mode,distance=distance)
     np.savez_compressed(a.output/'motion.npz',matrices=poses)
     manifest={'example':e,'source':meta,'source_origin_angstrom':origin.tolist(),'units':'nm',
               'actors':records,'fps':a.fps,'frames':a.frames,'mode':a.mode,'motion':report,
