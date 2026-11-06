@@ -8,7 +8,9 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 
+import gemmi
 import numpy as np
 from scipy.optimize import least_squares
 from scipy.spatial import cKDTree
@@ -17,6 +19,7 @@ from scipy.spatial.transform import Rotation
 
 from interaction_motion import contacts, plan
 from prepare_molecular_asset import atom_table, surface, xyz
+from prepare_interaction import select_ligands
 
 
 def sha(path):
@@ -38,22 +41,46 @@ def transform(points, matrix):
     return points @ matrix[:3, :3].T + matrix[:3, 3]
 
 
-def load_chain(sources, spec):
+def checked_source(sources, spec):
     path = sources / (spec['pdb'] + '.cif')
     meta = json.loads(path.with_suffix('.cif.source.json').read_text())
     if sha(path) != spec['sha256'] or meta['sha256'] != spec['sha256'] or meta['id'].upper() != spec['pdb']:
         raise ValueError('Requalify the source file and metadata: ' + spec['pdb'])
-    rows = atom_table(path)[spec['chain']]
-    if len({(r[3], r[2]) for r in rows}) != len(rows):
-        raise ValueError('Ambiguous author residue/atom identities; insertion-code mapping is not supported here')
+    return path
+
+
+def residue_id(row):
+    return str(row[3])+row[5] if len(row) > 5 and row[5] else row[3]
+
+
+def valid_residue_id(value):
+    return type(value) is int or isinstance(value, str) and re.fullmatch(r'-?\d+[A-Za-z]', value) is not None
+
+
+def load_chain(sources, spec):
+    rows = atom_table(checked_source(sources, spec), include_insertion_codes=True)[spec['chain']]
+    if len({(residue_id(r), r[2]) for r in rows}) != len(rows):
+        raise ValueError('Ambiguous author residue/insertion-code/atom identities')
     if not spec.get('selection_note'):
         raise ValueError('Explain the construct, missing regions and exclusion of nonpolymers')
     return rows
 
 
+def load_companions(sources, spec, role):
+    if 'ligand_instances' not in spec: return []
+    selected = select_ligands(gemmi.read_structure(str(checked_source(sources, spec)))[0], spec)
+    if any(entries for owner, entries in selected.items() if owner != role):
+        raise ValueError('A monomer companion must belong to its declared source partner')
+    for chain, residue, atoms in selected[role]:
+        name = role+'_'+chain+'_'+residue.name+'_'+str(residue.seqid)
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', name):
+            raise ValueError('Require a filename-safe companion identity')
+    return selected[role]
+
+
 def fit_template(first, second, mapping):
-    a = {r[3]: r for r in first if r[2] == 'CA'}
-    b = {r[3]: r for r in second if r[2] == 'CA'}
+    a = {residue_id(r): r for r in first if r[2] == 'CA'}
+    b = {residue_id(r): r for r in second if r[2] == 'CA'}
     pairs = mapping['residue_pairs']
     if (len(pairs) < 3 or len({p[0] for p in pairs}) != len(pairs)
             or len({p[1] for p in pairs}) != len(pairs)
@@ -87,13 +114,13 @@ def restraint_indices(rows, restraints):
     for item in restraints:
         pair = (item['anchor'], item['moving'])
         key = (*pair, item.get('anchor_atom'), item.get('moving_atom'))
-        if key in seen or any(type(value) is not int for value in pair):
-            raise ValueError('Require distinct integer author residue pairs')
+        if key in seen or any(not valid_residue_id(value) for value in pair):
+            raise ValueError('Require distinct author residue pairs, with explicit insertion codes when present')
         seen.add(key)
         lo, hi = item['range_nm']
         if not np.isfinite([lo, hi]).all() or not 0 < lo < hi or not item.get('evidence'):
             raise ValueError('Each restraint requires positive distance bounds and its evidence/assumption')
-        indices = [np.flatnonzero([r[3] == item[role] and (not item.get(role+'_atom') or r[2] == item[role+'_atom'])
+        indices = [np.flatnonzero([residue_id(r) == item[role] and (not item.get(role+'_atom') or r[2] == item[role+'_atom'])
                                   for r in rows[role]]) for role in ['anchor', 'moving']]
         if any(len(idx) == 0 for idx in indices):
             raise ValueError('Restraint selects a missing residue')
@@ -207,6 +234,7 @@ def main():
         if not isinstance(settings[key], (int, float)) or isinstance(settings[key], bool) or not np.isfinite(settings[key]) or settings[key] <= 0:
             raise ValueError('Require a positive finite search setting: ' + key)
     rows = {role: load_chain(args.sources, config[role]) for role in ['anchor', 'moving']}
+    companions = {role: load_companions(args.sources, config[role], role) for role in rows}
     restraints = restraint_indices(rows, config['restraints'])
     points = {}; fits = {}; matrices = {}
     for role in rows:
@@ -221,6 +249,10 @@ def main():
     # The template origin is shared; independent monomer coordinates have no shared frame.
     origin = points['anchor'].mean(0) if args.method == 'template' else np.zeros(3)
     points = {role: p-origin for role, p in points.items()}
+    companion_points = {role: [transform(np.array([list(atom.pos) for atom in atoms]), matrices[role])*.1-origin
+                              for _, _, atoms in entries] for role, entries in companions.items()}
+    # Polymer atoms stay first so residue restraint indices remain unchanged.
+    points = {role: np.concatenate([p, *companion_points[role]]) for role, p in points.items()}
     direct = check_pose(points['anchor'], points['moving'], restraints, settings['atom_guard_nm']) if args.method == 'template' else None
     attempts, candidates = search(points['anchor'], points['moving'], restraints, args.method, settings)
     args.output.mkdir(parents=True)
@@ -230,7 +262,7 @@ def main():
               'monomer_to_base_matrices_angstrom': {role: m.tolist() for role, m in matrices.items()},
               'shared_origin_nm': origin.tolist(), 'direct_transfer_screen': direct,
               'attempts': attempts, 'candidates': candidates,
-              'limits': 'Candidates describe geometric hypotheses on one specified interface, not demonstrated alternative biological binding modes. No force field, side-chain relaxation, water, affinity, confidence probability or physical trajectory. Restraint-derived examples are not independent blind predictions.'}
+              'limits': 'Candidates describe geometric hypotheses on one specified interface, not demonstrated alternative biological binding modes. Explicit source-bound nonpolymers follow their owner rigidly and enter cross-partner screening. No force field, side-chain relaxation, bulk solvent, affinity, confidence probability or physical trajectory. Restraint-derived examples are not independent blind predictions.'}
     report_path = args.output/'candidates.json'
     report_path.write_text(json.dumps(report, indent=2)+'\n')
     if args.candidate > len(candidates):
@@ -253,13 +285,26 @@ def main():
     if not motion['collision_screen_passed']: raise ValueError('Candidate passed endpoint screening but its approach path failed')
     folder = args.output/'interaction'; folder.mkdir(); actors = []
     for role, source_rows in rows.items():
-        vertices, faces = surface(points[role]*10, .7, 1.1, .55)
+        polymer = points[role][:len(source_rows)]
+        vertices, faces = surface(polymer*10, .7, 1.1, .55)
         file = role+'.npz'
-        np.savez_compressed(folder/file, atoms=points[role], vertices=vertices*.1, faces=faces,
+        insertion = {'insertion_codes': np.array([r[5] for r in source_rows])} if any(r[5] for r in source_rows) else {}
+        np.savez_compressed(folder/file, atoms=polymer, vertices=vertices*.1, faces=faces, **insertion,
                             atom_names=np.array([r[2] for r in source_rows]), elements=np.array([r[1] for r in source_rows]),
                             residue_numbers=np.array([r[3] for r in source_rows]), residue_names=np.array([r[4] for r in source_rows]))
         actors.append({'id': role+'_monomer', 'role': role, 'kind': 'polymer', 'file': file,
                        'chain': config[role]['chain'], 'source_pdb': config[role]['pdb'], 'atoms': len(source_rows)})
+        offset = len(source_rows)
+        for chain, residue, atoms in companions[role]:
+            name = role+'_'+chain+'_'+residue.name+'_'+str(residue.seqid); file = name+'.npz'
+            np.savez_compressed(folder/file, atoms=points[role][offset:offset+len(atoms)],
+                                elements=np.array([atom.element.name for atom in atoms]),
+                                atom_names=np.array([atom.name for atom in atoms]))
+            actors.append({'id': name, 'role': role, 'kind': 'ligand', 'file': file, 'chain': chain,
+                           'source_pdb': config[role]['pdb'], 'ccd': residue.name, 'residue_number': residue.seqid.num,
+                           'insertion_code': residue.seqid.icode.strip(), 'atom_names': [atom.name for atom in atoms],
+                           'atoms': len(atoms)})
+            offset += len(atoms)
     np.savez_compressed(folder/'motion.npz', matrices=poses)
     manifest = {'input_kind': 'separate_monomers', 'example': {'id': config['id'], 'pdb': config['anchor']['pdb']+'+'+config['moving']['pdb'],
                            'anchor_label': config['anchor']['label'], 'moving_label': config['moving']['label'], 'limits': report['limits']},
@@ -268,7 +313,7 @@ def main():
                     'endpoint_screen': endpoint, 'report_file': str(report_path.resolve()), 'report_sha256': sha(report_path)},
                 'display_title': 'Binding hypothesis: '+config['anchor']['label']+' / '+config['moving']['label'],
                 'animation_evidence': 'Illustrative rigid motion toward a constrained binding hypothesis; neither a measured complex nor kinetics',
-                'source_config': config, 'data_sha256': {name: sha(folder/name) for name in ['anchor.npz', 'moving.npz', 'motion.npz']}}
+                'source_config': config, 'data_sha256': {name: sha(folder/name) for name in [*(a['file'] for a in actors), 'motion.npz']}}
     (folder/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
     print(json.dumps({'method': args.method, 'candidates': len(candidates), 'selected': chosen['id'], 'endpoint': endpoint,
                       'path_passed': motion['collision_screen_passed'], 'minimum_path_center_nm': float(minimum.min())}))

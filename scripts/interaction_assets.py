@@ -19,6 +19,16 @@ def verify_assets(folder, manifest):
         for actor in manifest['actors']:
             if actor.get('source_pdb') != manifest['source_config'][actor['role']]['pdb']:
                 raise ValueError('Monomer actor lost its individual source identity')
+        config = manifest['source_config']
+        polymers = sorted((a['role'], a['chain']) for a in manifest['actors'] if a['kind'] == 'polymer')
+        if polymers != [(role, config[role]['chain']) for role in ['anchor', 'moving']]:
+            raise ValueError('Retain exactly the two declared monomer chains')
+        expected = sorted((role, item['chain'], item['component'], item['residue_number'], item.get('insertion_code', ''))
+                          for role in ['anchor', 'moving'] for item in config[role].get('ligand_instances', []))
+        actual = sorted((a['role'], a['chain'], a['ccd'], a['residue_number'], a.get('insertion_code', ''))
+                        for a in manifest['actors'] if a['kind'] == 'ligand')
+        if actual != expected:
+            raise ValueError('Retain each declared monomer companion with its original partner ownership')
     required = {'motion.npz', *(actor['file'] for actor in manifest['actors'])}
     hashes = manifest.get('data_sha256', {})
     if set(hashes) != required:

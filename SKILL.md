@@ -7,6 +7,8 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 把生物学问题转成有来源、可编辑、可复现的 `.blend` 工程及图片/动画。支持清晰教学示意和写实细胞环境；风格、渲染引擎、合成器分别选择。中文交流为默认，标签按交付语言设置。
 
+**默认联网：**默认用户使用本 skill 时能够联网。涉及新蛋白、结合位点、构象或组装方式时，agent 主动查询相关结构库和原始研究，核对位点对应、伙伴、状态与化学计量；不要等用户逐个提供 accession，也不要因当前下载只有单体就停止查找。按 [联网核对结合与组装](references/online-binding-research.md) 选择有依据的构型，再接入生成器。仅在用户明确要求离线或实际网络不可用时说明限制并使用已有证据；已核定工程的重复渲染直接复用缓存。
+
 **默认背景偏好：**图片和视频优先采用有景深虚化的细胞微结构环境，按所处区室选择有身份的结构，并保留前后层次。主反应区、关键分子与文字保持清楚；项目指定纯色、透明底或其他参考风格时按项目选择。实施与可运行示例见 [cellular-environment.md](references/cellular-environment.md)。
 
 **默认配色偏好：**主体、关键位点和结构线尽量选择与背景对比高的颜色。深底用较亮前景，浅底用较深前景；同时区分相邻对象，保留各实体在不同镜头中的语义颜色。以最终渲染结果检查亮度和轮廓，不只比较材质色值；背景应衬托主体。机制特写减少无关骨架线，优先让反应物、关键残基和必要连接可辨认，高对比也要有主次。
@@ -43,6 +45,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 组合渲染滤镜、保护文字、主体强调与景深层次 | [render-recipes.md](references/render-recipes.md)：可编辑有序节点链、双视图各自的深度/法线/对象通道、引擎限制与实际画面检查 |
 | 细胞、细胞器、膜和分子的背景风格对照 | [cellular-environment.md](references/cellular-environment.md)：按尺度选择环境，浅/深底、独立景深层与高反差分隔线 |
 | 将结合/释放动作推广到不同蛋白、肽段与抑制剂 | [protein-interactions.md](references/protein-interactions.md)：明确源构象、保留配体、膜侧约束、逐帧路径检查与独立动画模式 |
+| 联网查找正确的位点对应、结合构象与亚基组合 | [online-binding-research.md](references/online-binding-research.md)：主动查结构与原始证据、映射编号、核对 assembly/状态/配体，再选择直接复用或候选建模 |
 | 只有单体结构，探索可能的蛋白结合姿态 | [monomer-binding.md](references/monomer-binding.md)：模板迁移或界面约束生成候选、完整单体与严格穿插检查，再接入已有动画；候选不冒充实验复合物 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
 | GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
@@ -83,7 +86,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 ## 机制白模与旧兼容入口
 
-以下命令的 `SKILL` 与 `BLENDER` 均指向实际安装位置；在项目新目录输出，避免覆盖已有工程。生成器使用标准 `bpy`，不要求联网或付费插件。默认 seed 固定。
+以下命令的 `SKILL` 与 `BLENDER` 均指向实际安装位置；在项目新目录输出，避免覆盖已有工程。来源核定和资产下载默认联网；已有合格输入后的 `bpy` 生成与渲染可在本地执行，无需付费插件。默认 seed 固定。
 
 ```bash
 BLENDER='/actual/path/to/blender'

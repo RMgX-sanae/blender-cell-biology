@@ -18,7 +18,7 @@ from scipy.spatial import cKDTree
 from skimage.measure import marching_cubes
 
 
-def atom_table(path):
+def atom_table(path, include_insertion_codes=False):
     structure = gemmi.read_structure(str(path))
     result = {}
     for chain in structure[0]:
@@ -33,8 +33,8 @@ def atom_table(path):
                     continue
                 if atom.altloc not in ('\x00', 'A'):
                     continue
-                rows.append((list(atom.pos), atom.element.name, atom.name,
-                             residue.seqid.num, residue.name))
+                row = (list(atom.pos), atom.element.name, atom.name, residue.seqid.num, residue.name)
+                rows.append(row + (residue.seqid.icode.strip(),) if include_insertion_codes else row)
         if rows:
             result[chain.name] = rows
     return result

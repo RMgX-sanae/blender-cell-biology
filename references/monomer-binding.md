@@ -1,6 +1,6 @@
 # 从单体结构构建结合候选
 
-用户要求只有单体时也尽力实现可能的结合方式。先核对物种、构建体、定位、配体、寡聚状态和可用界面证据，再选择下面的路线。不要因没有现成复合物就结束，也不要把两个表面接触的模型称为已证实的结合。
+用户要求只有单体时也尽力实现可能的结合方式，并默认联网。先执行 [联网结合研究](online-binding-research.md)，主动寻找适用复合物、构象与界面证据，核对物种、构建体、定位、配体和寡聚状态，再选择下面的路线。直接可用的实验复合物优先走 `prepare_interaction.py`；本页用于确实需要组合不同来源单体的情况。不要把两个表面接触的模型称为已证实的结合。
 
 | 输入证据 | 可执行路线 | 输出含义 |
 |---|---|---|
@@ -66,7 +66,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 1BRS --output "$PROJECT/sources"
 
 ## 项目输入与检查
 
-复制配置后替换两个来源、SHA256、作者链、准确标签与构建体说明。模板路线还替换模板与显式 CA 映射。约束路线可删除整个 `template` 字段；每条约束给 `anchor`/`moving` 作者残基编号、可选 `anchor_atom`/`moving_atom`、`range_nm` 和来源/假设。省略 atom 字段表示两残基所选重原子间的最小距离；CA 约束与侧链最小距离不能混淆。交联上限需按试剂、位点和可达性另定，不能沿用本例数值。
+复制配置后替换两个来源、SHA256、作者链、准确标签与构建体说明。模板路线还替换模板与显式 CA 映射。约束路线可删除整个 `template` 字段；每条约束给 `anchor`/`moving` 作者残基编号、可选 `anchor_atom`/`moving_atom`、`range_nm` 和来源/假设。普通编号用整数（如 `184`），带字母插入码时用字符串（如 `"184A"`）；映射与约束都区分这两个身份。输出保持整数 `residue_numbers`，有插入码时另存 `insertion_codes`。省略 atom 字段表示两残基所选重原子间的最小距离；CA 约束与侧链最小距离不能混淆。交联上限需按试剂、位点和可达性另定，不能沿用本例数值。
 
 输出 `candidates.json` 保存全部尝试、刚体变换、筛除理由、聚类和映射；`interaction/manifest.json` 保存选中候选、原子来源、端态与路径检查。候选排序的 `geometric_penalty` 只含几何约束罚项及对初始姿态的小偏移惩罚；不同初始化的分数也不是统一的物理量，更不能解释为概率或亲和力。聚类阈值控制显示冗余，不证明新的功能状态。
 
@@ -75,3 +75,24 @@ python3 "$SKILL/scripts/fetch_structure.py" 1BRS --output "$PROJECT/sources"
 测试独立从原始单体核对全部身份与刚体坐标，用稠密全原子距离复核路径，并拒绝拉伸、镜像、未申报突变、错误映射、丢失残基、错误来源、候选冒充测量值和重叠豁免。保存工程另核对几何、父对象、逐帧变换、取景及可读的 `Binding hypothesis` 标识。这个必要的短标签不替代来源文档，也不增加细小的解释字幕。
 
 将候选用于新机制时先保留独立分支：配体占据、核苷酸状态、竞争伙伴、同源/异源寡聚、不同界面和化学计量可能决定不同结合方式。每个分支需要自己的依据、约束与可达路径。柔性变化明显或所有刚体候选失败时，转入有来源的构象集合/专门柔性建模；当前脚本不能通过几何得分判断真实结合是否存在。
+
+## 来源配体与结合态构象的迁移
+
+每个 `anchor`/`moving` 来源可显式添加 `ligand_instances` 与 `ligand_selection_note`，沿用 [配体实例选择](protein-interactions.md#明确保留哪一份配体) 的字段。`owner_role` 必须与这个来源伙伴相同。源配体与蛋白共享拟合、候选及逐帧刚体变换，单独保存原子身份和来源，进入两伙伴之间的全部穿插检查；不会把钙离子并入蛋白表面，也不会用复合物里的另一份离子替代单体的离子。仅支持明确选择的 NonPolymer 重原子；共价修饰、分支糖链、溶剂交换和配体动力学另行建模。
+
+`assets/binding-source-conformer.json` 是一个有意保留来源差异的迁移对照：游离 trypsin [2PTN](https://www.rcsb.org/structure/2PTN) A 链及其 A:480 钙，与网上查得的 [2PTC](https://www.rcsb.org/structure/2PTC) I 链 **结合态 BPTI** 组合，用 E/I 作参考。包含 1,564 + 422 个聚合物重原子和 1 个钙；trypsin 的 `184A`、`188A`、`221A` 保持独立身份。它不是两个游离单体对接成功，也不是测得的混合来源复合物。一般教学任务已有合适 2PTC 时直接沿用其完整结合态；这个对照用于检查需要保留单独来源时的代码迁移。
+
+```bash
+python3 "$SKILL/scripts/fetch_structure.py" 2PTN --output "$PROJECT/sources"
+python3 "$SKILL/scripts/fetch_structure.py" 2PTC --output "$PROJECT/sources"
+"$PYTHON" "$SKILL/scripts/prepare_binding_candidates.py" \
+  --config "$SKILL/assets/binding-source-conformer.json" --sources "$PROJECT/sources" \
+  --method template --candidate 2 --output "$PROJECT/transfer" --frames 144 --fps 24
+"$PYTHON" "$SKILL/scripts/test_binding_candidates.py" \
+  --sources "$PROJECT/sources" --prepared "$PROJECT/transfer" \
+  --output "$PROJECT/transfer/source-check.json"
+```
+
+本例要求五对指定原子的接近范围，不能用 CA 位置通过冒充侧链接触通过。两组尝试使用游离 BPTI 4PTI、6PTI 时均未满足既定几何检查，失败报告留在项目；6PTI 的源磷酸也参与了那次尝试。查得结合态后，迁移对照保留了 13 个几何候选；第一名的接近路径仍有穿插，第二名才通过 145 个姿态的严格检查。几何排序不替代路径检查。原子近邻约束通过也不能证明氢键方向、质子状态、催化、亲和力或真实结合路径。记录构象替换，不通过删除失败来源、拉伸模型或改变检查门槛掩盖差异。
+
+该对照已从解压源码和重新在线下载的 2PTN/2PTC 重建：19 个几何/身份/运动数组及候选、运动记录相同；原 Barnase 对照的 15 数组保持相同。源数据检查拒绝 22 类错误配置，另把插入码抹掉或钙移位并重算文件哈希，仍被原始来源检查拒绝；实际保存后把钙挂到另一伙伴的工程也被拒绝。两次保存工程的 145 个姿态通过检查，接近/结合关键帧作了技术复核，重建结合帧最大相差一个 8-bit 通道值。未渲染整片，未把该对照列为自由单体诱导契合或天然相互作用预测。

@@ -1,6 +1,6 @@
 # 按任务选择入口与验证范围
 
-先确定交付是静态结构、局部动作还是完整过程，再选下面的入口。新蛋白或新机制接着读 [workflow-transfer.md](workflow-transfer.md)，只替换必要的数据和科学规则；已有源构象、反应位点或路径不会因更换名称而自动适用。
+先确定交付是静态结构、局部动作还是完整过程，再选下面的入口。默认联网，新蛋白/位点/状态主动走 [结合与组装研究](online-binding-research.md)，然后读 [workflow-transfer.md](workflow-transfer.md)，只替换必要的数据和科学规则；已有源构象、反应位点或路径不会因更换名称而自动适用。
 
 ## 怎样读验证状态
 
@@ -18,7 +18,7 @@
 | 用户需要 | 首选入口与操作 | 当前验证范围 | 需要另做的部分 |
 |---|---|---|---|
 | 换蛋白/肽段，展示结合、转向、落位和释放 | [局部相互作用](protein-interactions.md)：项目 JSON → `prepare_interaction.py` → `build_interaction_scene.py` | **局部验证**：Barnase/Barstar、MDM2/p53、trypsin/BPTI；项目配置及配体实例选择已重建，保存工程和关键帧已检查 | 新目标的装配、配体归属和进入路径；催化不能由结合动画代替 |
-| 只有两个单体，探索结合姿态并展示动作 | [单体候选](monomer-binding.md)：`prepare_binding_candidates.py` → 共用结合场景/检查器 | **独立重建的候选入口**：1A2P/1A19 的模板路线及约束路线，完整 1,576 个重原子；各 15 数组相同、145 姿态与保存工程/关键帧检查 | 本例约束来自已知 1BRS，非盲预测；侧链接触部分未恢复，柔性、辅因子、膜和新界面另做 |
+| 只有两个单体，探索结合姿态并展示动作 | [单体候选](monomer-binding.md)：`prepare_binding_candidates.py` → 共用结合场景/检查器 | **独立重建的候选入口**：1A2P/1A19 的模板路线及约束路线，完整 1,576 个重原子；另有 2PTN/2PTC 结合态来源迁移对照，保留插入码和钙，19 数组相同、145 姿态检查 | 原示例约束来自已知 1BRS，非盲预测；2PTN/4PTI、2PTN/6PTI 游离组合未通过。源配体随伙伴保留；柔性、配体交换、膜和新界面另做 |
 | 在膜旁进行货物识别 | [膜侧结合](protein-interactions.md)：`prepare_ap2_capture.py` → 既有相互作用场景/检查器 | **独立重建的局部入口**：6YAF/EMD-10748，26 个资产/轨迹数组相同；241 个保存姿态与总览/单姿态特写检查。脂质及连接段为示意；未验收完整影片 | AP2 激活、PIP2 原子模型、被覆招募及摄取全过程；另一膜环境需要重新定义约束 |
 | clathrin 单体及源被覆模型 | [源被覆](clathrin-assembly.md)：`prepare_clathrin_assembly.py` → `blender_clathrin_assembly.py build/audit` | **独立重建的静态模型**：36 个已建模单体、216 条链、18 份共享网格，144 数组相同；保存工程及深/浅色静帧 | 轻链缺失区、AP2/膜衔接和生长/去被覆运动；两种邻居环境的刚体路径搜索未通过 |
 | 激酶的磷酸转移与产物离开 | [PKAc/SP20](phosphotransfer.md)：`prepare_phosphotransfer.py` → `prepare_phosphotransfer_motion.py` → `build_phosphotransfer_scene.py` | **独立重建**：24 秒局部催化示例、原子身份及保存工程 | PKA 上游激活；其他激酶的底物、反应端态和运动 |
