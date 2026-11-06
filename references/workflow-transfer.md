@@ -25,6 +25,7 @@
 | 分子视频的共用运行链 | `check_runtime.py` | 在新环境检查实际资产准备、Blender 读取/渲染及编码/解码；不认证机制、特定滤镜或项目额外依赖，见 production-workflow |
 | 来源下载与留痕 | `fetch_structure.py`、`search_public_assets.py` | 下载成功不等于选中了正确构建体；继续核对状态、突变、缺失区和装配 |
 | 按选定链准备资产 | `prepare_molecular_asset.py --config` 及 `atom_table`、`xyz`、`surface`，见 [项目配置](molecular-asset-config.md) | 可替换聚合物链/残基和有依据的刚体坐标系；使用者另行选择必要配体，不得因默认过滤而丢失反应物 |
+| 不同伙伴/配体/构建体的来源端态 | `prepare_source_states.py` → `build_source_state_comparison.py` → `audit_source_states.py`，见 [来源状态对照](source-state-comparison.md) | 复用原子/配体选择、CA 拟合和显示，新增链身份/位点核对；完整状态共用一个刚体变换。静态对照不是构象轨迹，AAQ/GMPPCP 等仍保留 |
 | 从不对称单元恢复源装配 | `prepare_clathrin_assembly.py` 的 `rigid`、`compare_reference`，见 [clathrin](clathrin-assembly.md) | 复用刚体与逐身份/坐标对应检查；源单体分组及实际装配操作另行资格确认。静态重建不证明生长轨迹 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
 | 单体起步的结合候选 | `prepare_binding_candidates.py` → 共用结合场景，见 [单体候选](monomer-binding.md) | 明确 CA 映射或界面约束；候选端态及路径不允许来源接触豁免。保留未满足的侧链诊断，几何筛查不是结合预测准确率 |

@@ -117,7 +117,7 @@
 
 确定物种与核糖体结构，mRNA 5′→3′ 穿过小亚基。详细循环可拆为：带氨基酸 tRNA 在 A 位点被选择；P 位点肽链转移到 A 位点 tRNA；转位使 tRNA 身份在 A/P/E 间转换；空 tRNA 离开。肽 N 端先出现，新增残基加在 C 端。起始时不能机械照搬延伸 A 位点装载。
 
-为避免双重移动，只固定核糖体或 mRNA 之一再定义相对运动；nascent chain 的 C 端经 tRNA 留在核糖体内部的催化中心附近，N 端经出口隧道显露。用重采样曲线释放 N 端，不把 C 端锚在隧道外口。终止由释放因子识别 stop codon 的机制表示，不画“终止密码子对应的普通 tRNA”。精细底物示例仅使用短肽符号，尚未显示出口隧道中的长肽、延伸因子、混合态或完整循环，见 [production-workflow.md](production-workflow.md)。
+为避免双重移动，只固定核糖体或 mRNA 之一再定义相对运动；nascent chain 的 C 端经 tRNA 留在核糖体内部的催化中心附近，N 端经出口隧道显露。用重采样曲线释放 N 端，不把 C 端锚在隧道外口。终止由释放因子识别 stop codon 的机制表示，不画“终止密码子对应的普通 tRNA”。精细底物示例仅使用短肽符号，尚未显示出口隧道中的长肽、延伸因子、混合态或完整循环，见 [production-workflow.md](production-workflow.md)。终止相关的 5LZT/5LZU/5LZV 已有 [来源状态对照](source-state-comparison.md)：核定 eRF1/eRF3/ABCE1、UGA、类似物和 AAQ 后显示分开的静态模型；未实现终止或回收轨迹，也不直接拼接到 9SPI 延伸例。
 
 ### 囊泡完整循环：拓扑切换是重点
 

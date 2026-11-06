@@ -1,0 +1,467 @@
+{
+  "reference": "5LZU",
+  "alignment": {
+    "chain": "ii",
+    "author_residues": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135
+    ],
+    "minimum_CA_coverage": 0.3,
+    "maximum_rmsd_angstrom": 1.5,
+    "note": "Explicit same-numbered conserved eRF1 N-domain CA fit only. One rigid transform per complete source state; no domain morph or state-specific scale. The 5LZT N-domain fit is 1.1211 A (not identical); the 1.5 A comparison gate permits that observed difference without deforming coordinates and is not an interface/contact tolerance."
+  },
+  "origin_angstrom": [
+    261.23366538461534,
+    289.6126500000001,
+    254.93927692307693
+  ],
+  "basis_columns": [
+    [
+      0.4263764194957487,
+      -0.0907026902685939,
+      0.8999867615004261
+    ],
+    [
+      0.79760558248156,
+      0.5069935364822029,
+      -0.32677651194588725
+    ],
+    [
+      -0.4266479622501866,
+      0.8571642642710373,
+      0.2885150608970953
+    ]
+  ],
+  "states": [
+    {
+      "pdb": "5LZT",
+      "sha256": "2fefe3427c151cfcbc32e30efbfd3f95135b9519e6e7809770e8bb39e227a6a2",
+      "assembly_id": "1",
+      "title": "识别终止密码子",
+      "state_label": "GMPPCP · 水解受阻",
+      "chains": [
+        {
+          "chain": "ii",
+          "description": "eRF1",
+          "uniprot": "P62495",
+          "label": "eRF1",
+          "color": "F59A80",
+          "sites": [
+            {
+              "residue": 183,
+              "name": "GLY",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 184,
+              "name": "GLY",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 185,
+              "name": "GLN",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ],
+          "source_organism": "Homo sapiens"
+        },
+        {
+          "chain": "jj",
+          "description": "eRF3a",
+          "uniprot": "P15170",
+          "label": "eRF3",
+          "color": "63BFE8",
+          "source_organism": "Homo sapiens"
+        },
+        {
+          "chain": "2",
+          "description": "P-site tRNA",
+          "label": "P-tRNA",
+          "color": "E2C365"
+        },
+        {
+          "chain": "hh",
+          "description": "mRNA (UGA stop codon)",
+          "label": "mRNA",
+          "color": "E7E6D9",
+          "sites": [
+            {
+              "residue": 49,
+              "name": "U",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 50,
+              "name": "G",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 51,
+              "name": "A",
+              "atoms": [
+                "P"
+              ]
+            }
+          ]
+        }
+      ],
+      "ligand_instances": [
+        {
+          "chain": "hh",
+          "residue_number": 100,
+          "component": "MG",
+          "owner_role": "anchor"
+        },
+        {
+          "chain": "jj",
+          "residue_number": 700,
+          "component": "GCP",
+          "owner_role": "anchor"
+        },
+        {
+          "chain": "jj",
+          "residue_number": 701,
+          "component": "MG",
+          "owner_role": "anchor"
+        }
+      ],
+      "selection_note": "Local source-state comparison of complete modeled eRF1, P-tRNA, mRNA and any modeled eRF3/ABCE1; other whole ribosomal components, nascent chain and E-tRNA omitted for visibility. All listed ligands retain source coordinates under the same rigid transform; anchor is a static group, not a physiological ownership assertion. Reconstituted rabbit ribosome with human eRF1/eRF3; ABCE1 is rabbit. Do not connect these independent constructs into a native reaction trajectory."
+    },
+    {
+      "pdb": "5LZU",
+      "sha256": "865c38870d3092ed523abaf51f516a22668d3e6d99ada9ce3084d22ac84bbdfd",
+      "assembly_id": "1",
+      "title": "eRF1 进入催化中心",
+      "state_label": "野生型 GGQ",
+      "chains": [
+        {
+          "chain": "ii",
+          "description": "Eukaryotic peptide chain release factor subunit 1",
+          "uniprot": "P62495",
+          "label": "eRF1",
+          "color": "F59A80",
+          "sites": [
+            {
+              "residue": 183,
+              "name": "GLY",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 184,
+              "name": "GLY",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 185,
+              "name": "GLN",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ],
+          "source_organism": "Homo sapiens"
+        },
+        {
+          "chain": "2",
+          "description": "P-site tRNA",
+          "label": "P-tRNA",
+          "color": "E2C365"
+        },
+        {
+          "chain": "hh",
+          "description": "mRNA (UGA stop codon)",
+          "label": "mRNA",
+          "color": "E7E6D9",
+          "sites": [
+            {
+              "residue": 49,
+              "name": "U",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 50,
+              "name": "G",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 51,
+              "name": "A",
+              "atoms": [
+                "P"
+              ]
+            }
+          ]
+        }
+      ],
+      "ligand_instances": [
+        {
+          "chain": "hh",
+          "residue_number": 100,
+          "component": "MG",
+          "owner_role": "anchor"
+        }
+      ],
+      "selection_note": "Local source-state comparison of complete modeled eRF1, P-tRNA, mRNA and any modeled eRF3/ABCE1; other whole ribosomal components, nascent chain and E-tRNA omitted for visibility. All listed ligands retain source coordinates under the same rigid transform; anchor is a static group, not a physiological ownership assertion. Reconstituted rabbit ribosome with human eRF1/eRF3; ABCE1 is rabbit. Do not connect these independent constructs into a native reaction trajectory."
+    },
+    {
+      "pdb": "5LZV",
+      "sha256": "ffa910d8ec692012af945147081ee2feb9add53e67a9274ae19d40a300c494a9",
+      "assembly_id": "1",
+      "title": "ABCE1 结合状态",
+      "state_label": "AAQ 突变 · 释放受阻",
+      "chains": [
+        {
+          "chain": "ii",
+          "description": "eRF1(AAQ)",
+          "uniprot": "P62495",
+          "label": "eRF1(AAQ)",
+          "color": "F59A80",
+          "sites": [
+            {
+              "residue": 183,
+              "name": "ALA",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 184,
+              "name": "ALA",
+              "atoms": [
+                "CA"
+              ]
+            },
+            {
+              "residue": 185,
+              "name": "GLN",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ],
+          "source_organism": "Homo sapiens"
+        },
+        {
+          "chain": "jj",
+          "description": "ABCE1",
+          "uniprot": "G1SG72",
+          "label": "ABCE1",
+          "color": "79D4B8",
+          "source_organism": "Oryctolagus cuniculus"
+        },
+        {
+          "chain": "2",
+          "description": "P-site tRNA",
+          "label": "P-tRNA",
+          "color": "E2C365"
+        },
+        {
+          "chain": "hh",
+          "description": "mRNA (UGA stop codon)",
+          "label": "mRNA",
+          "color": "E7E6D9",
+          "sites": [
+            {
+              "residue": 49,
+              "name": "U",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 50,
+              "name": "G",
+              "atoms": [
+                "P"
+              ]
+            },
+            {
+              "residue": 51,
+              "name": "A",
+              "atoms": [
+                "P"
+              ]
+            }
+          ]
+        }
+      ],
+      "ligand_instances": [
+        {
+          "chain": "hh",
+          "residue_number": 100,
+          "component": "MG",
+          "owner_role": "anchor"
+        },
+        {
+          "chain": "jj",
+          "residue_number": 600,
+          "component": "SF4",
+          "owner_role": "anchor"
+        },
+        {
+          "chain": "jj",
+          "residue_number": 601,
+          "component": "SF4",
+          "owner_role": "anchor"
+        }
+      ],
+      "selection_note": "Local source-state comparison of complete modeled eRF1, P-tRNA, mRNA and any modeled eRF3/ABCE1; other whole ribosomal components, nascent chain and E-tRNA omitted for visibility. All listed ligands retain source coordinates under the same rigid transform; anchor is a static group, not a physiological ownership assertion. Reconstituted rabbit ribosome with human eRF1/eRF3; ABCE1 is rabbit. Do not connect these independent constructs into a native reaction trajectory."
+    }
+  ],
+  "paper_url": "https://doi.org/10.1016/j.cell.2016.10.046",
+  "paper_accessed": "Author PDF, Results/Figure 7 and STAR Methods termination complexes",
+  "limitations": [
+    "Static structural comparison of different trapped preparations, not a reaction or full translation cycle.",
+    "5LZT contains GCP (GMPPCP), not native GTP; the GTPase N-terminal extension is not resolved.",
+    "5LZV retains eRF1 G183A/G184A and two ABCE1 SF4 clusters. No ATP modeled; absence does not establish a nucleotide-free physiological state.",
+    "5LZU has accommodated wild-type eRF1; coordinate absence of nascent chain alone is not proof of the complete release pathway.",
+    "Omitted complete components form a display selection, not a dissociated biological state.",
+    "No peptidyl-tRNA hydrolysis, ABCE1 ATP cycle, subunit splitting, mRNA/tRNA release or recycling trajectory is modeled."
+  ]
+}

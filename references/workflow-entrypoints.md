@@ -39,6 +39,8 @@
 
 ## 静态结构与空间分布
 
+不同来源状态先走 [来源状态对照](source-state-comparison.md)：`prepare_source_states.py` → `build_source_state_comparison.py` → `audit_source_states.py`。5LZT/5LZU/5LZV 的终止相关局部复合物已核对 23,633 个聚合物重原子和 52 个配体重原子，分别保留 eRF3/GMPPCP、野生型 eRF1 与 AAQ/ABCE1。它是完整所选链的静态对照；没有实现翻译终止化学、ABCE1 亚基分离或回收，也不把三份构建体拼成天然反应轨迹。
+
 | 用户需要 | 首选入口 | 当前验证范围与边界 |
 |---|---|---|
 | 从 PDB/mmCIF 准备可追溯资产 | [公共资产](public-assets-first.md)、[数据导入](data-import.md)：`fetch_structure.py`、`search_public_assets.py`、`prepare_molecular_asset.py` | 多个案例共用并已实际重建。先核对链、配体、单位和功能装配；`generic` 默认过滤不适用于所有反应物 |

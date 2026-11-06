@@ -27,6 +27,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 2PTC --output "$PROJECT/sources"
 - 合适的实验结合态：沿用 [局部相互作用](protein-interactions.md) 的项目选择表、`prepare_interaction.py` 和保存检查。
 - 不同来源单体或同源替代：沿用 [单体候选](monomer-binding.md)，明确被替换的构象/构建体及其推断性质。
 - 涉及化学变化或全过程：转到对应机制工作流；一个结合结构不会自动给出反应顺序、所有过渡态或完整循环。
+- 比较同一蛋白的不同来源状态：使用 [来源状态对照](source-state-comparison.md) 的项目配置，核对链的实际蛋白身份、关键残基、类似物和辅因子后再生成分开的静态模型。翻译终止实例中，同名 `jj` 链可分别代表 eRF3 或 ABCE1，顶层 mutation 字段也没有直接列出 AAQ；不能依赖这两个字段自动拼接机制。
 
 ## 留下可复核的决定
 
