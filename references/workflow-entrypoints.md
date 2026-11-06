@@ -15,6 +15,8 @@
 
 ## 分子动作与过程
 
+需要画位点连线时，先使用 [位点连接检查](site-link-checks.md) 的 `audit_site_links.py`。它检查已审查来源的原子身份、CCD、指定距离和连接注释；不是盲对接、全局结构验证或机制动画。RF1 肽酰 tRNA 类似物与 trypsin–BPTI 已有可运行配置。
+
 | 用户需要 | 首选入口与操作 | 当前验证范围 | 需要另做的部分 |
 |---|---|---|---|
 | 换蛋白/肽段，展示结合、转向、落位和释放 | [局部相互作用](protein-interactions.md)：项目 JSON → `prepare_interaction.py` → `build_interaction_scene.py` | **局部验证**：Barnase/Barstar、MDM2/p53、trypsin/BPTI；项目配置及配体实例选择已重建，保存工程和关键帧已检查 | 新目标的装配、配体归属和进入路径；催化不能由结合动画代替 |

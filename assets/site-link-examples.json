@@ -1,0 +1,316 @@
+{
+  "cases": [
+    {
+      "id": "rf1-analogue",
+      "interpretation": "9MTP pre-release experimental amide-linked analogue, not a native ester or an observed reaction trajectory. Preserve methylated Q230. Numerical windows screen these reviewed pairs only.",
+      "evidence": [
+        "https://doi.org/10.1126/science.ads9030",
+        "https://www.rcsb.org/structure/9MTP",
+        "https://www.rcsb.org/ligand/8AN",
+        "https://www.rcsb.org/ligand/MEQ"
+      ],
+      "source": {
+        "pdb": "9MTP",
+        "sha256": "b677da4459668086d82433606610883dc18699158b6c8cadfb861957664e6509",
+        "assembly_id": "1",
+        "chains": [
+          {
+            "chain": "1w",
+            "description": "Peptide chain release factor 1",
+            "uniprot": "P96077"
+          },
+          {
+            "chain": "1x",
+            "description": "P-site Peptidyl-tRNA fMEAAAKC-tRNAcys RNA-part"
+          },
+          {
+            "chain": "1z",
+            "description": "P-site Peptidyl-tRNA fMEAAAKC-tRNAcys Peptide-part"
+          }
+        ],
+        "ligand_instances": [],
+        "selection_note": "Check selected polymer sites only. Other polymers, ions and waters are outside this site audit; no claim of a complete reaction model."
+      },
+      "ccd_sha256": {
+        "8AN": "49007db6c22c4f4cf639af428bac23fd51111727e9b57338278edc4e6b41eb54",
+        "CYS": "b28c79381f9f41fe57a9e97468fc8101d5fd1064272a22da1eed6d05d27a24cc",
+        "MEQ": "44878087d055ad8898c0179f67c3b2b36455f863f3b1ea1c3d368ff719b20e2b"
+      },
+      "sites": {
+        "peptide_C": {
+          "chain": "1z",
+          "residue": 7,
+          "component": "CYS",
+          "atom": "C",
+          "element": "C"
+        },
+        "tRNA_N3": {
+          "chain": "1x",
+          "residue": 76,
+          "component": "8AN",
+          "atom": "N3'",
+          "element": "N"
+        },
+        "tRNA_C3": {
+          "chain": "1x",
+          "residue": 76,
+          "component": "8AN",
+          "atom": "C3'",
+          "element": "C"
+        },
+        "tRNA_O2": {
+          "chain": "1x",
+          "residue": 76,
+          "component": "8AN",
+          "atom": "O2'",
+          "element": "O"
+        },
+        "Q230_NE2": {
+          "chain": "1w",
+          "residue": 230,
+          "component": "MEQ",
+          "atom": "NE2",
+          "element": "N"
+        },
+        "Q230_methyl": {
+          "chain": "1w",
+          "residue": 230,
+          "component": "MEQ",
+          "atom": "CE",
+          "element": "C"
+        }
+      },
+      "relations": [
+        {
+          "id": "synthetic_amide",
+          "sites": [
+            "peptide_C",
+            "tRNA_N3"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.2,
+            1.5
+          ],
+          "annotation": "required"
+        },
+        {
+          "id": "ribose_to_amino_substituent",
+          "sites": [
+            "tRNA_C3",
+            "tRNA_N3"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.3,
+            1.6
+          ],
+          "annotation": "required"
+        },
+        {
+          "id": "methylated_glutamine",
+          "sites": [
+            "Q230_NE2",
+            "Q230_methyl"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.3,
+            1.6
+          ],
+          "annotation": "required"
+        },
+        {
+          "id": "O2_to_carbonyl_proximity",
+          "sites": [
+            "tRNA_O2",
+            "peptide_C"
+          ],
+          "kind": "noncovalent",
+          "distance_angstrom": [
+            3.0,
+            4.0
+          ],
+          "annotation": "inspect"
+        }
+      ]
+    },
+    {
+      "id": "rf1-deacylated",
+      "interpretation": "9MTT separate post-release source snapshot: native A76, methylated Q230, no retained peptide product. Passing this check does not make a 9MTP-to-9MTT native atom map or release trajectory.",
+      "evidence": [
+        "https://doi.org/10.1126/science.ads9030",
+        "https://www.rcsb.org/structure/9MTT"
+      ],
+      "source": {
+        "pdb": "9MTT",
+        "sha256": "7858ba300d431f388242e8680a89a9ad2549a5e76dadd53cb22656bc7059ad26",
+        "assembly_id": "1",
+        "chains": [
+          {
+            "chain": "1w",
+            "description": "Peptide chain release factor 1",
+            "uniprot": "P96077"
+          },
+          {
+            "chain": "1x",
+            "description": "P-site deacylated-tRNAcys"
+          }
+        ],
+        "ligand_instances": [],
+        "selection_note": "Check selected polymer sites only. Other polymers, ions and waters are outside this site audit; no claim of a complete reaction model."
+      },
+      "ccd_sha256": {
+        "A": "46db841d33a8147dcd5a3802123e362d708c875f9ba7db457525f094ab55179a",
+        "MEQ": "44878087d055ad8898c0179f67c3b2b36455f863f3b1ea1c3d368ff719b20e2b"
+      },
+      "sites": {
+        "tRNA_O3": {
+          "chain": "1x",
+          "residue": 76,
+          "component": "A",
+          "atom": "O3'",
+          "element": "O"
+        },
+        "tRNA_C3": {
+          "chain": "1x",
+          "residue": 76,
+          "component": "A",
+          "atom": "C3'",
+          "element": "C"
+        },
+        "Q230_NE2": {
+          "chain": "1w",
+          "residue": 230,
+          "component": "MEQ",
+          "atom": "NE2",
+          "element": "N"
+        },
+        "Q230_methyl": {
+          "chain": "1w",
+          "residue": 230,
+          "component": "MEQ",
+          "atom": "CE",
+          "element": "C"
+        }
+      },
+      "relations": [
+        {
+          "id": "ribose_hydroxyl",
+          "sites": [
+            "tRNA_C3",
+            "tRNA_O3"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.3,
+            1.6
+          ],
+          "annotation": "required"
+        },
+        {
+          "id": "methylated_glutamine",
+          "sites": [
+            "Q230_NE2",
+            "Q230_methyl"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.3,
+            1.6
+          ],
+          "annotation": "required"
+        }
+      ]
+    },
+    {
+      "id": "trypsin-bpti",
+      "interpretation": "2PTC E/I inhibitor interface in assembly 1. The close Ser195 OG / Lys15 carbonyl contact is not treated as a covalent enzyme-substrate bond. Preserve the BPTI Cys5-Cys55 disulfide.",
+      "evidence": [
+        "https://www.rcsb.org/structure/2PTC"
+      ],
+      "source": {
+        "pdb": "2PTC",
+        "sha256": "4b663a459fbbcb1052892c1ac2a1278ad8695f446e757133cbda0b780497e2df",
+        "assembly_id": "1",
+        "chains": [
+          {
+            "chain": "E",
+            "description": "BETA-TRYPSIN",
+            "uniprot": "P00760"
+          },
+          {
+            "chain": "I",
+            "description": "TRYPSIN INHIBITOR",
+            "uniprot": "P00974"
+          }
+        ],
+        "ligand_instances": [],
+        "selection_note": "Check selected polymer sites only. Other polymers, ions and waters are outside this site audit; no claim of a complete reaction model."
+      },
+      "ccd_sha256": {
+        "SER": "46db0296a07732854d2c3ca67ed0f74f4c82ddc5698d0e59f433039a5d7c88a0",
+        "LYS": "318a0f6fa8f98682b35e1793517d5b683b9045c1e6174bc564b7d43e07e4c07c",
+        "CYS": "b28c79381f9f41fe57a9e97468fc8101d5fd1064272a22da1eed6d05d27a24cc"
+      },
+      "sites": {
+        "S195_OG": {
+          "chain": "E",
+          "residue": 195,
+          "component": "SER",
+          "atom": "OG",
+          "element": "O"
+        },
+        "K15_C": {
+          "chain": "I",
+          "residue": 15,
+          "component": "LYS",
+          "atom": "C",
+          "element": "C"
+        },
+        "C5_SG": {
+          "chain": "I",
+          "residue": 5,
+          "component": "CYS",
+          "atom": "SG",
+          "element": "S"
+        },
+        "C55_SG": {
+          "chain": "I",
+          "residue": 55,
+          "component": "CYS",
+          "atom": "SG",
+          "element": "S"
+        }
+      },
+      "relations": [
+        {
+          "id": "inhibitor_carbonyl_contact",
+          "sites": [
+            "S195_OG",
+            "K15_C"
+          ],
+          "kind": "noncovalent",
+          "distance_angstrom": [
+            2.4,
+            3.2
+          ],
+          "annotation": "inspect"
+        },
+        {
+          "id": "inhibitor_disulfide",
+          "sites": [
+            "C5_SG",
+            "C55_SG"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.8,
+            2.2
+          ],
+          "annotation": "required"
+        }
+      ]
+    }
+  ]
+}
