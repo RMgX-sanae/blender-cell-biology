@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "title": "eIF4E · 竞争占位示意",
+  "views": [
+    {
+      "id": "overview",
+      "title": "整体交接",
+      "basis_columns": [
+        [
+          0.5442711408089739,
+          -0.0982255017609861,
+          -0.8331390496707621
+        ],
+        [
+          0.56424259546094,
+          0.7777869451551642,
+          0.27690749613128807
+        ],
+        [
+          0.6208052985840247,
+          -0.6208052985840247,
+          0.47875
+        ]
+      ],
+      "center_nm": [
+        -1.728944308561883,
+        -2.2143918137738736,
+        -0.37718636695513846
+      ],
+      "span_nm": 9.930839156780658,
+      "actors": {
+        "host": {
+          "representation": "surface"
+        },
+        "ligand_A_MGP_301": {
+          "representation": "spheres",
+          "radius_nm": 0.115
+        },
+        "bp1": {
+          "representation": "surface"
+        },
+        "eif4g": {
+          "representation": "surface"
+        }
+      },
+      "keep_visible": [
+        "host",
+        "ligand_A_MGP_301",
+        "bp1",
+        "eif4g"
+      ],
+      "framing_note": "Every complete retained construct stays inside both windows throughout the handoff."
+    },
+    {
+      "id": "detail",
+      "title": "界面侧视",
+      "basis_columns": [
+        [
+          0.420272406274788,
+          0.019345287003597885,
+          -0.9071917462117631
+        ],
+        [
+          0.6907351904661864,
+          0.6415183735064721,
+          0.33367510111671805
+        ],
+        [
+          0.588435214085324,
+          -0.7668637012692406,
+          0.25625
+        ]
+      ],
+      "center_nm": [
+        -1.7719069848801867,
+        -2.3432153841694943,
+        -0.32837670796890484
+      ],
+      "span_nm": 10.107615724667077,
+      "actors": {
+        "host": {
+          "representation": "surface"
+        },
+        "ligand_A_MGP_301": {
+          "representation": "spheres",
+          "radius_nm": 0.115
+        },
+        "bp1": {
+          "representation": "surface"
+        },
+        "eif4g": {
+          "representation": "surface"
+        }
+      },
+      "keep_visible": [
+        "host",
+        "ligand_A_MGP_301",
+        "bp1",
+        "eif4g"
+      ],
+      "framing_note": "Every complete retained construct stays inside both windows throughout the handoff."
+    }
+  ],
+  "colors": {
+    "dark": {
+      "host": "#7ed5de",
+      "bp1": "#ffd366",
+      "eif4g": "#ff7597",
+      "ligand_A_MGP_301": "#c0ff92"
+    },
+    "light": {
+      "host": "#287c91",
+      "bp1": "#a56808",
+      "eif4g": "#aa2858",
+      "ligand_A_MGP_301": "#38752e"
+    }
+  },
+  "highlights": [],
+  "bond_annotations": [],
+  "background_components": [
+    "host",
+    "host",
+    "host"
+  ],
+  "legend": [
+    [
+      "host",
+      "eIF4E"
+    ],
+    [
+      "bp1",
+      "4E-BP1 片段"
+    ],
+    [
+      "eif4g",
+      "eIF4G 片段"
+    ],
+    [
+      "ligand_A_MGP_301",
+      "帽类似物"
+    ]
+  ],
+  "captions": [
+    [
+      0,
+      0.25,
+      "4E-BP1 片段离开共享界面"
+    ],
+    [
+      0.25,
+      0.5,
+      "eIF4G 片段靠近并结合"
+    ],
+    [
+      0.5,
+      0.75,
+      "eIF4G 片段离开共享界面"
+    ],
+    [
+      0.75,
+      1,
+      "4E-BP1 片段重新结合"
+    ]
+  ],
+  "key_fractions": [
+    0.0,
+    0.25,
+    0.5
+  ]
+}

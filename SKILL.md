@@ -45,6 +45,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 组合渲染滤镜、保护文字、主体强调与景深层次 | [render-recipes.md](references/render-recipes.md)：可编辑有序节点链、双视图各自的深度/法线/对象通道、引擎限制与实际画面检查 |
 | 细胞、细胞器、膜和分子的背景风格对照 | [cellular-environment.md](references/cellular-environment.md)：按尺度选择环境，浅/深底、独立景深层与高反差分隔线 |
 | 将结合/释放动作推广到不同蛋白、肽段与抑制剂 | [protein-interactions.md](references/protein-interactions.md)：明确源构象、保留配体、膜侧约束、逐帧路径检查与独立动画模式 |
+| 两个伙伴竞争共享界面、包绕片段交替结合 | [binding-handoff.md](references/binding-handoff.md)：来源配准、完整刚体绕障、全组件共同占位检查及共用双视图；示意交接不等于置换动力学 |
 | 联网查找正确的位点对应、结合构象与亚基组合 | [online-binding-research.md](references/online-binding-research.md)：主动查结构与原始证据、映射编号、核对 assembly/状态/配体，再选择直接复用或候选建模 |
 | 只有单体结构，探索可能的蛋白结合姿态 | [monomer-binding.md](references/monomer-binding.md)：模板迁移或界面约束生成候选、完整单体与严格穿插检查，再接入已有动画；候选不冒充实验复合物 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |

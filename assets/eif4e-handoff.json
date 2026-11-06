@@ -1,0 +1,833 @@
+{
+  "id": "human-eif4e-binding-handoff",
+  "scope": "Source-guided human eIF4E occupancy teaching model. Keep the 5T46 host and its MGP cap analogue fixed; register the complete modeled 4UED 4E-BP1 fragment onto that host and alternate the two rigid guest poses. The transferred BP1/host/cap combination and all motion are inferred or schematic; no biochemical displacement kinetics or full initiation claim.",
+  "competition_evidence": [
+    {
+      "url": "https://doi.org/10.1016/j.molcel.2016.09.020",
+      "read_scope": "Publisher highlights and summary, plus deposited5T46coordinates; dorsal and lateral eIF4G binding and competition. Do not reuse the older exclusive-lateral-surface model as current human mechanism."
+    },
+    {
+      "url": "https://doi.org/10.1016/j.molcel.2015.01.017",
+      "read_scope": "Primary abstract and deposited4UEDcoordinates; source BP1 inhibitory fragment assembly."
+    }
+  ],
+  "sources": [
+    {
+      "pdb": "5T46",
+      "sha256": "1d667340f2f92a081ec1232ce3bbc8f5f6a23d0f7ad5235d76b9e19ab8106359",
+      "assembly_id": "1",
+      "chains": [
+        {
+          "chain": "A",
+          "description": "Eukaryotic translation initiation factor 4E",
+          "uniprot": "P06730",
+          "source_organism": "Homo sapiens",
+          "sites": [
+            {
+              "residue": 73,
+              "name": "TRP",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ]
+        },
+        {
+          "chain": "B",
+          "description": "Eukaryotic translation initiation factor 4 gamma 1",
+          "uniprot": "Q04637",
+          "source_organism": "Homo sapiens",
+          "sites": [
+            {
+              "residue": 612,
+              "name": "TYR",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ]
+        }
+      ],
+      "ligand_instances": [
+        {
+          "chain": "A",
+          "residue_number": 301,
+          "component": "MGP",
+          "owner_role": "anchor"
+        }
+      ],
+      "selection_note": "Human eIF4E A (modeled31-206) and eIF4G1 B (modeled608-642), retain blank/A positive-occupancy heavy atoms and A301MGP cap analogue from assembly1; exclude the other crystal copy, glycerol and waters. No full mRNA or full-length eIF4G."
+    },
+    {
+      "pdb": "4UED",
+      "sha256": "14422891f2abb508fbeb4ff1c815145bb57315ea95ef7d0bb2a3f61c0240619a",
+      "assembly_id": "1",
+      "chains": [
+        {
+          "chain": "A",
+          "description": "EUKARYOTIC TRANSLATION INITIATION FACTOR 4E",
+          "uniprot": "P06730",
+          "source_organism": "HOMO SAPIENS",
+          "sites": [
+            {
+              "residue": 73,
+              "name": "TRP",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ]
+        },
+        {
+          "chain": "B",
+          "description": "EUKARYOTIC TRANSLATION FACTOR 4E-BINDING PROTEIN 1",
+          "uniprot": "Q13541",
+          "source_organism": "HOMO SAPIENS",
+          "sites": [
+            {
+              "residue": 54,
+              "name": "TYR",
+              "atoms": [
+                "CA"
+              ]
+            }
+          ]
+        }
+      ],
+      "ligand_instances": [],
+      "selection_note": "Human eIF4E A (modeled33-217 with gaps) and 4E-BP1 B (modeled49-83; Met49 is an expression-tag residue, retained). No cap analogue is modeled in this source. Only B is transferred into the common5T46 host frame; source A is used for alignment, not morphed."
+    }
+  ],
+  "reference": "5T46",
+  "host_chain": "A",
+  "alignments": {
+    "4UED": {
+      "residue_pairs": [
+        [
+          36,
+          36
+        ],
+        [
+          37,
+          37
+        ],
+        [
+          38,
+          38
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          40,
+          40
+        ],
+        [
+          41,
+          41
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          43,
+          43
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          45,
+          45
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          47,
+          47
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          49,
+          49
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          51,
+          51
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          53,
+          53
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          55,
+          55
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          57,
+          57
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          59,
+          59
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          61,
+          61
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          63,
+          63
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          65,
+          65
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          67,
+          67
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          69,
+          69
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          71,
+          71
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          73,
+          73
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          75,
+          75
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          77,
+          77
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          79,
+          79
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          81,
+          81
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          83,
+          83
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          85,
+          85
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          87,
+          87
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          89,
+          89
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          91,
+          91
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          93,
+          93
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          95,
+          95
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          97,
+          97
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          99,
+          99
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          101,
+          101
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          103,
+          103
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          105,
+          105
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          107,
+          107
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          109,
+          109
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          111,
+          111
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          113,
+          113
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          115,
+          115
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          117,
+          117
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          119,
+          119
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          121,
+          121
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          123,
+          123
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          125,
+          125
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          127,
+          127
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          129,
+          129
+        ],
+        [
+          130,
+          130
+        ],
+        [
+          131,
+          131
+        ],
+        [
+          132,
+          132
+        ],
+        [
+          133,
+          133
+        ],
+        [
+          134,
+          134
+        ],
+        [
+          135,
+          135
+        ],
+        [
+          136,
+          136
+        ],
+        [
+          137,
+          137
+        ],
+        [
+          138,
+          138
+        ],
+        [
+          139,
+          139
+        ],
+        [
+          140,
+          140
+        ],
+        [
+          141,
+          141
+        ],
+        [
+          142,
+          142
+        ],
+        [
+          143,
+          143
+        ],
+        [
+          144,
+          144
+        ],
+        [
+          145,
+          145
+        ],
+        [
+          146,
+          146
+        ],
+        [
+          147,
+          147
+        ],
+        [
+          148,
+          148
+        ],
+        [
+          149,
+          149
+        ],
+        [
+          150,
+          150
+        ],
+        [
+          151,
+          151
+        ],
+        [
+          152,
+          152
+        ],
+        [
+          153,
+          153
+        ],
+        [
+          154,
+          154
+        ],
+        [
+          155,
+          155
+        ],
+        [
+          156,
+          156
+        ],
+        [
+          157,
+          157
+        ],
+        [
+          158,
+          158
+        ],
+        [
+          159,
+          159
+        ],
+        [
+          160,
+          160
+        ],
+        [
+          161,
+          161
+        ],
+        [
+          162,
+          162
+        ],
+        [
+          163,
+          163
+        ],
+        [
+          164,
+          164
+        ],
+        [
+          165,
+          165
+        ],
+        [
+          166,
+          166
+        ],
+        [
+          167,
+          167
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          169,
+          169
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          171,
+          171
+        ],
+        [
+          172,
+          172
+        ],
+        [
+          173,
+          173
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          175,
+          175
+        ],
+        [
+          176,
+          176
+        ],
+        [
+          177,
+          177
+        ],
+        [
+          178,
+          178
+        ],
+        [
+          179,
+          179
+        ],
+        [
+          180,
+          180
+        ],
+        [
+          181,
+          181
+        ],
+        [
+          182,
+          182
+        ],
+        [
+          183,
+          183
+        ],
+        [
+          184,
+          184
+        ],
+        [
+          185,
+          185
+        ],
+        [
+          186,
+          186
+        ],
+        [
+          187,
+          187
+        ],
+        [
+          188,
+          188
+        ],
+        [
+          189,
+          189
+        ],
+        [
+          190,
+          190
+        ],
+        [
+          191,
+          191
+        ],
+        [
+          192,
+          192
+        ],
+        [
+          193,
+          193
+        ],
+        [
+          194,
+          194
+        ],
+        [
+          195,
+          195
+        ],
+        [
+          196,
+          196
+        ],
+        [
+          197,
+          197
+        ],
+        [
+          198,
+          198
+        ],
+        [
+          199,
+          199
+        ],
+        [
+          200,
+          200
+        ],
+        [
+          201,
+          201
+        ],
+        [
+          202,
+          202
+        ],
+        [
+          203,
+          203
+        ],
+        [
+          204,
+          204
+        ]
+      ],
+      "expected_substitutions": [],
+      "min_CA_coverage": 0.9,
+      "max_CA_rmsd_angstrom": 1.2
+    }
+  },
+  "guests": [
+    {
+      "id": "bp1",
+      "source": "4UED",
+      "chain": "B",
+      "label": "4E-BP1 fragment",
+      "pose_evidence": "inferred rigid registration; whole retained fragment",
+      "departure_direction": [
+        -0.6115970470114805,
+        -0.6811210098037676,
+        0.40252108279037113
+      ]
+    },
+    {
+      "id": "eif4g",
+      "source": "5T46",
+      "chain": "B",
+      "label": "eIF4G fragment",
+      "pose_evidence": "source-bound pose; illustrative rigid motion",
+      "departure_direction": [
+        -0.5881099773932069,
+        -0.8052038677015612,
+        -0.07598280021826352
+      ]
+    }
+  ],
+  "guard_nm": 0.24,
+  "minimum_travel_nm": 3.0,
+  "park_clearance_nm": 0.8,
+  "captions": {
+    "loop": [
+      "4E-BP1 片段离开共享界面",
+      "eIF4G 片段靠近并结合",
+      "eIF4G 片段离开共享界面",
+      "4E-BP1 片段重新结合"
+    ],
+    "teaching": [
+      "4E-BP1 占据共享界面",
+      "4E-BP1 片段离开",
+      "eIF4G 片段靠近并结合",
+      "eIF4G 占据共享界面",
+      "eIF4G 片段离开",
+      "4E-BP1 片段重新结合"
+    ]
+  }
+}
