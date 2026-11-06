@@ -6,8 +6,6 @@ closed boxes; exterior space is forbidden. Placements are schematic, not a
 measured distribution or equilibrium simulation.
 """
 import numpy as np
-from scipy.ndimage import distance_transform_edt
-from scipy.spatial.transform import Rotation
 
 
 def grid(mask, spacing_xyz, origin_xyz):
@@ -39,6 +37,8 @@ def sample(mask, spacing_xyz, origin_xyz, points, count, *, seed=23,
     forbidden voxel box. This can reject feasible placements; it never claims
     exact continuous clearance. Pair exclusion uses complete enclosing balls.
     """
+    from scipy.ndimage import distance_transform_edt
+    from scipy.spatial.transform import Rotation
     mask,spacing,origin=grid(mask,spacing_xyz,origin_xyz);local_center,radius=enclosing_sphere(points)
     if type(count)!=int or count<1 or type(max_attempts)!=int or max_attempts<1:
         raise ValueError('Count and attempt limit must be positive integers')
