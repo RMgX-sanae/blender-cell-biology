@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "moving_unit": "1-ABC",
+  "fixed_units": ["1-DEF", "2-ABC", "6-ABC"],
+  "hinges": [
+    {"pivot_residue": 840, "maximum_degrees": 12},
+    {"pivot_residue": 1130, "maximum_degrees": 17},
+    {"pivot_residue": 1280, "maximum_degrees": 18}
+  ],
+  "guard_nm": 0.4,
+  "source_contact_tolerance_nm": 0.01,
+  "travel_nm": 20,
+  "park_clearance_nm": 1,
+  "evidence": [
+    {"url": "https://www.rcsb.org/structure/3IYV", "use": "Bovine modeled whole triskelia and source assembly; retained CA coordinates, not atomic sterics."},
+    {"url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7100586/", "use": "Results and Figure 5: fitted leg segments and angular variability in porcine cages motivate approximate hinge locations and bounds; they do not establish this bovine pathway."}
+  ],
+  "scope": "Illustrative admission and release of one complete modeled bovine triskelion at a three-neighbor source-lattice patch. Coarse articulated CA model with inferred paths; not full coat growth, atomistic dynamics, membrane remodeling or endocytosis.",
+  "limits": "Prefix rotations approximate distributed leg flexibility. Source long CA steps and missing native regions remain. Only identical source contact pairs may retain up to 0.01 nm additional overlap. Light-chain modeled fragments remain with the proximal body. No adapters, membrane, Hsc70, ATP or regulatory trigger is supplied by this geometry example."
+}

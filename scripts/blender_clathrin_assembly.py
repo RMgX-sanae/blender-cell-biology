@@ -16,7 +16,8 @@ import detail_scene as ds
 
 def load_assets(folder):
     path=folder/'assembly.json';m=json.loads(path.read_text())
-    if m['units']!='nm' or not m['grouping_check']['passed']:raise ValueError('Require a qualified nm assembly')
+    if m['units']!='nm' or not m['grouping_check']['passed'] or not m['grouping_check'].get('trace_check',{}).get('passed'):
+        raise ValueError('Reprepare this assembly with verified whole-chain traces; legacy 1XI4 units are not qualified')
     expected={'source-selection.json','prototypes/manifest.json'}|{'prototypes/chain_'+c+'.npz' for u in m['instances'] for c in u['chains']}
     if set(m['data_sha256'])!=expected:raise ValueError('Incomplete prepared file inventory')
     for name,sha in m['data_sha256'].items():
@@ -66,7 +67,8 @@ def build(args):
     scene['assembly_scope']=m['state'];scene['source_limits']=m['source_config']['limits']
     scene['assembly_compositor']=args.compositor
     scene['assembly_style_source']=str(profile_path.resolve())
-    args.output.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(args.output))
+    if getattr(args,'save',True):
+        args.output.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(args.output))
 
 
 def audit():

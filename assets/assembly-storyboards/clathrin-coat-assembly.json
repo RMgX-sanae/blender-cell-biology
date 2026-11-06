@@ -12,10 +12,10 @@
       "access_level": "entry/metadata inspected; coordinates not imported for this storyboard"
     },
     {
-      "entry_url": "https://www.rcsb.org/structure/1XI4",
-      "pdb_id": "1XI4",
-      "use_and_limits": "D6 coat C-alpha model. Deposited assembly1 contains36 modeled triskelia; heavy chains1-1630 and light-chain segments95-164. Unresolved regions are not complete proteins. Bovine source, distinct from the porcine-clathrin AP2 membrane reconstitution.",
-      "access_level": "Static source cage and intact modeled units independently rebuilt with prepare_clathrin_assembly.py and blender_clathrin_assembly.py.216 chains,18shared source meshes; no completed coat-growth animation."
+      "entry_url": "https://www.rcsb.org/structure/3IYV",
+      "pdb_id": "3IYV",
+      "use_and_limits": "Bovine D6 coat organized as whole modeled triskelia: heavy chains1-1630 and light-chain segments95-164, with coarse CA junctions retained. Replaces the invalid same-author-chain whole-unit grouping of 1XI4; coordinate replay alone did not qualify those old units.",
+      "access_level": "Raw ASU/assembly1 and chain continuity checked; static216-chain cage and a four-unit admission/release geometry example implemented. Partial patch motion is inferred, not full physiological coat growth."
     },
     {
       "entry_url": "https://www.rcsb.org/structure/6YAI",
@@ -81,5 +81,5 @@
     "keyframe preview and final media if requested",
     "actual software/geometry/visual checks reported separately"
   ],
-  "runtime_status": "Static source model entry documented in references/clathrin-assembly.md. This growth storyboard is not a build_polymer_scene.py input; no finished animation claimed."
+  "runtime_status": "Static3IYV assembly and an articulated one-unit/three-neighbor admission-release example are documented in references/clathrin-assembly.md. This full coat/membrane storyboard still requires project implementation and is not a build_polymer_scene.py input."
 }

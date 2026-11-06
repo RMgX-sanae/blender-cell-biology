@@ -37,6 +37,20 @@ def compare_reference(table,reference,units):
 
 
 def check_groups(table,groups):
+    # Source-chain names alone did not identify intact triskelia in 1XI4.
+    # 3IYV reassigns the fitted segments to whole modeled heavy chains. Its
+    # low-resolution CA trace still contains long steps; retain and report them.
+    trace={}
+    for group in groups:
+        for c in group['heavy']+group['light']:
+            chain=table[c];steps=np.linalg.norm(np.diff(xyz(chain),axis=0),axis=1)
+            if any(b[3]!=a[3]+1 for a,b in zip(chain,chain[1:])) or any(r[2]!='CA' for r in chain):
+                raise ValueError('Require the reviewed consecutive CA identity sequence')
+            if not np.isfinite(steps).all() or np.any(steps<=0) or np.any(steps>10):
+                raise ValueError('Source chain has a spatial discontinuity; do not treat fitted sections as one triskelion')
+            trace[c]={'maximum_CA_step_angstrom':float(steps.max()),
+                      'long_steps':[{'residues':[chain[i][3],chain[i+1][3]],'distance_angstrom':float(steps[i])}
+                                    for i in np.flatnonzero(steps>4.5)]}
     heavy=[c for g in groups for c in g['heavy']]
     centers=np.array([xyz([r for r in table[c] if r[3]>=1590]).mean(0) for c in heavy])*.1
     distances=np.linalg.norm(centers[:,None]-centers[None,:],axis=-1)
@@ -50,7 +64,9 @@ def check_groups(table,groups):
             closest=min(scores,key=scores.get)
             if closest not in group['heavy']:raise ValueError('Modeled light chain belongs to another source hub')
             links[c]={'nearest_heavy':closest,'mean_CA_distance_nm':scores[closest]}
-    return {'passed':True,'light_heavy_links':links,'limits':'Source-specific geometric consistency; not an affinity or universal grouping predictor.'}
+    return {'passed':True,'light_heavy_links':links,'trace_check':{'passed':True,'chains':trace,
+            'maximum_permitted_step_angstrom':10.,'limits':'A source-specific coarse-trace gate against disconnected sections, not a normal peptide-bond or atomic-geometry certificate.'},
+            'limits':'Source-specific trace and grouping consistency; not an affinity or universal grouping predictor.'}
 
 
 def main():

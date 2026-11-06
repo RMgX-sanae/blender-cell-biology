@@ -18,7 +18,7 @@ Formin/cofilin 的完整上下游需要 [actin-full-cycle.md](actin-full-cycle.m
 | [Septin 装配](../assets/assembly-storyboards/septin-assembly.json) | [12ZN](https://www.rcsb.org/structure/12ZN) 是线虫候选；如做酵母，可从[四聚体研究](https://www.nature.com/articles/s42003-023-05734-w)追溯。该文明确区分实验四聚体与含预测接口的八聚体；不能把晶体中的非生理接口当正常丝 |
 | [FtsZ 踏车](../assets/assembly-storyboards/ftsz-treadmilling.json) | [3VO8](https://www.rcsb.org/structure/3VO8) 为 S. aureus GDP 结构；[构象切换研究](https://doi.org/10.1128/mBio.00254-17)。5MN4 是截短突变构建体；结构不提供完整 Z 环或膜锚定体系 |
 | [ESCRT-III 膜重塑](../assets/assembly-storyboards/escrt-iii-remodeling.json) | [6TZ9](https://www.rcsb.org/structure/6TZ9)、[6TZ4](https://www.rcsb.org/structure/6TZ4)；[原研究](https://doi.org/10.1038/s41594-020-0404-x)。CHMP1B/IST1 膜管不能替代所有内体膜颈拓扑与 Vps4 阶段 |
-| [Clathrin 被覆](../assets/assembly-storyboards/clathrin-coat-assembly.json) | 6WCJ 是局部顶点；[1XI4 源被覆](clathrin-assembly.md)已有完整已建模单体及静态 cage 的可执行入口。生长、适配蛋白衔接和颈切断仍需实现，现有刚体路径搜索未通过 |
+| [Clathrin 被覆](../assets/assembly-storyboards/clathrin-coat-assembly.json) | 6WCJ 是局部顶点；[3IYV 源被覆](clathrin-assembly.md)已有静态 cage 和完整已建模单体在三邻居片段中接纳/释放的构象示意。旧 1XI4 单体分组已撤回；完整被覆生长、适配蛋白衔接和颈切断仍需实现 |
 | [COPII 被覆](../assets/assembly-storyboards/copii-coat-assembly.json) | [6ZGA](https://www.rcsb.org/structure/6ZGA)、[8BSH](https://www.rcsb.org/structure/8BSH) 是内层候选；[膜上结构研究](https://doi.org/10.1038/s41467-021-22110-6)。另找 Sec13/31 外层，不能把内层复制成笼 |
 
 ## 共用建模能力

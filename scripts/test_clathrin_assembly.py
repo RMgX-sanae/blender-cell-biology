@@ -10,8 +10,11 @@ from prepare_clathrin_assembly import rigid,compare_reference,check_groups
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--sources',type=Path,required=True)
-    p.add_argument('--assets',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-    m=json.loads((a.assets/'assembly.json').read_text());table=atom_table(a.sources/'1XI4.cif');ref=atom_table(a.sources/'1XI4-assembly1.cif')
+    p.add_argument('--assets',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--obsolete-source',type=Path,help='Optional cached 1XI4 for the real discontinuous-chain regression')
+    a=p.parse_args()
+    m=json.loads((a.assets/'assembly.json').read_text());config=m['source_config']
+    table=atom_table(a.sources/(config['source_id']+'.cif'));ref=atom_table(a.sources/(config['source_id']+'-assembly'+config['assembly_id']+'.cif'))
     units=m['instances'];groups=m['source_config']['groups'];checks=[]
     compare_reference(table,ref,copy.deepcopy(units));check_groups(table,groups)
     def reject(name,call):
@@ -34,6 +37,12 @@ def main():
     reject('mixed-terminal-hubs',lambda:check_groups(table,changed))
     changed=copy.deepcopy(groups);changed[0]['light'][0],changed[1]['light'][0]=changed[1]['light'][0],changed[0]['light'][0]
     reject('wrong-light-chain-owner',lambda:check_groups(table,changed))
+    changed=copy.deepcopy(table);changed['A'][837][0][0]+=100
+    reject('disconnected-source-sections',lambda:check_groups(changed,groups))
+    changed=copy.deepcopy(table);changed['A'][837],changed['A'][838]=changed['A'][838],changed['A'][837]
+    reject('nonconsecutive-source-identity',lambda:check_groups(changed,groups))
+    if a.obsolete_source:
+        reject('actual-1XI4-disconnected-author-chains',lambda:check_groups(atom_table(a.obsolete_source),groups))
     a.output.parent.mkdir(parents=True,exist_ok=True)
     a.output.write_text(json.dumps({'passed':True,'negative_cases':len(checks),'checks':checks},indent=2)+'\n')
     print(json.dumps({'passed':True,'negative_cases':len(checks)}))
