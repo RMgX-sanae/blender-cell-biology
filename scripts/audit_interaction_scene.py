@@ -36,6 +36,14 @@ def main():
     if visible-set(actor['id'] for actor in manifest['actors']) or any(not any(actor['id'] in visible and actor['role']==role for actor in manifest['actors']) for role in ['moving','anchor']):
         raise ValueError('Require known visible actors from both partners')
     errors=[];meshes=[];actor_data={};membrane_report=None;membrane_minimum=None
+    if manifest.get('binding_candidate'):
+        candidate=manifest['binding_candidate']
+        if scene.get('binding_pose_kind')!=candidate['pose_kind'] or scene.get('binding_evidence_class')!='inferred':
+            errors.append('Binding hypothesis evidence changed')
+        evidence='Static review of one prepared pose; no motion validation' if snapshot is not None else manifest['animation_evidence']
+        if scene.get('animation_evidence')!=evidence:errors.append('Candidate motion evidence changed')
+        titles=[obj for obj in scene.objects if obj.type=='FONT' and obj.data.body==manifest['display_title'] and not obj.hide_render]
+        if not titles:errors.append('Readable binding-hypothesis label missing')
     if manifest['example'].get('requires_membrane') and not (manifest.get('membrane') and manifest.get('membrane_screen_passed')):
         raise ValueError('Required membrane preparation is missing')
     if manifest.get('membrane'):membrane_report=audit_display(scene,manifest['membrane'])
@@ -53,6 +61,7 @@ def main():
         meshes.append({'id':actor['id'],'intact_source_geometry':bool(intact),'source_chain':actor['chain']})
         if not intact:errors.append('Geometry changed '+actor['id'])
         if obj.get('biological_id')!=actor['id']:errors.append('Identity changed '+actor['id'])
+        if obj.get('source_structure')!=actor.get('source_pdb',manifest['example']['pdb']):errors.append('Source identity changed '+actor['id'])
         if obj.hide_render!=(actor['id'] not in visible):errors.append('Whole-actor visibility changed '+actor['id'])
         if obj.parent!=scene.objects.get(actor['role']):errors.append('Rigid partner ownership changed '+actor['id'])
         if any(m.type=='BOOLEAN' for m in obj.modifiers):errors.append('Cutting modifier on '+actor['id'])

@@ -1,0 +1,201 @@
+{
+  "id": "barnase-barstar-monomer-hypothesis",
+  "scope": "A method-transfer control using known 1BRS interface information. Neither template nor restraint route is an independent blind docking benchmark. Rigid free-state side chains cannot reproduce every template contact; seven CA distance restraints guide patch placement, and all seven original closest-heavy-atom contacts remain separate diagnostics, not achieved interactions.",
+  "anchor": {
+    "pdb": "1A2P",
+    "sha256": "50b78c9c7e95c699e81610db9b140855762bbfb70a7dd821a0acef179d9e54d7",
+    "chain": "A",
+    "label": "Barnase",
+    "selection_note": "Bacillus amyloliquefaciens wildtype free barnase, source chain A modeled residues 3-110. Retain every modeled polymer heavy atom after occupancy/altloc filtering; omit nonpolymers and do not fill missing residues."
+  },
+  "moving": {
+    "pdb": "1A19",
+    "sha256": "e5164bd321002068c19873d8f1c1d48f3fc6e3e554195c3a364a6e2af2998380",
+    "chain": "A",
+    "label": "Barstar C82A",
+    "selection_note": "B. amyloliquefaciens free barstar C82A, source chain A residues 1-89. Keep Cys40 despite Ala40 in template. Retain every modeled polymer heavy atom after occupancy/altloc filtering; omit nonpolymers."
+  },
+  "template": {
+    "pdb": "1BRS",
+    "sha256": "1c98dcc3eac7ccb88657e3ab0f745121d7ddbd2fe11357c65dbaffdd5704f153",
+    "selection_note": "Known barnase-barstar complex, author chains A/D. Barstar has C40A/C82A; missing residues 64-65 are not supplied to the monomer. Template is an orientation reference only.",
+    "anchor": {
+      "chain": "A",
+      "residue_pairs": [[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],[19,19],[20,20],[21,21],[22,22],[23,23],[24,24],[25,25],[26,26],[27,27],[28,28],[29,29],[30,30],[31,31],[32,32],[33,33],[34,34],[35,35],[36,36],[37,37],[38,38],[39,39],[40,40],[41,41],[42,42],[43,43],[44,44],[45,45],[46,46],[47,47],[48,48],[49,49],[50,50],[51,51],[52,52],[53,53],[54,54],[55,55],[56,56],[57,57],[58,58],[59,59],[60,60],[61,61],[62,62],[63,63],[64,64],[65,65],[66,66],[67,67],[68,68],[69,69],[70,70],[71,71],[72,72],[73,73],[74,74],[75,75],[76,76],[77,77],[78,78],[79,79],[80,80],[81,81],[82,82],[83,83],[84,84],[85,85],[86,86],[87,87],[88,88],[89,89],[90,90],[91,91],[92,92],[93,93],[94,94],[95,95],[96,96],[97,97],[98,98],[99,99],[100,100],[101,101],[102,102],[103,103],[104,104],[105,105],[106,106],[107,107],[108,108],[109,109],[110,110]],
+      "min_CA_coverage": 0.95,
+      "max_CA_rmsd_angstrom": 1.0,
+      "expected_substitutions": []
+    },
+    "moving": {
+      "chain": "D",
+      "residue_pairs": [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],[19,19],[20,20],[21,21],[22,22],[23,23],[24,24],[25,25],[26,26],[27,27],[28,28],[29,29],[30,30],[31,31],[32,32],[33,33],[34,34],[35,35],[36,36],[37,37],[38,38],[39,39],[40,40],[41,41],[42,42],[43,43],[44,44],[45,45],[46,46],[47,47],[48,48],[49,49],[50,50],[51,51],[52,52],[53,53],[54,54],[55,55],[56,56],[57,57],[58,58],[59,59],[60,60],[61,61],[62,62],[63,63],[66,66],[67,67],[68,68],[69,69],[70,70],[71,71],[72,72],[73,73],[74,74],[75,75],[76,76],[77,77],[78,78],[79,79],[80,80],[81,81],[82,82],[83,83],[84,84],[85,85],[86,86],[87,87],[88,88],[89,89]],
+      "min_CA_coverage": 0.95,
+      "max_CA_rmsd_angstrom": 1.0,
+      "expected_substitutions": [
+        {
+          "source_residue": 40,
+          "template_residue": 40,
+          "source_name": "CYS",
+          "template_name": "ALA"
+        }
+      ]
+    }
+  },
+  "restraints": [
+    {
+      "anchor": 83,
+      "moving": 39,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.787707,
+        1.187707
+      ],
+      "reference_CA_distance_nm": 0.9877066264837957,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 83,
+      "moving": 29,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.839984,
+        1.239984
+      ],
+      "reference_CA_distance_nm": 1.0399841248788368,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 60,
+      "moving": 34,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.440348,
+        0.840348
+      ],
+      "reference_CA_distance_nm": 0.6403481553030351,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 59,
+      "moving": 35,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.369301,
+        0.769301
+      ],
+      "reference_CA_distance_nm": 0.5693006674859954,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 27,
+      "moving": 42,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.583293,
+        0.983293
+      ],
+      "reference_CA_distance_nm": 0.7832934954408851,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 59,
+      "moving": 76,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.997449,
+        1.397449
+      ],
+      "reference_CA_distance_nm": 1.1974494603113734,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 102,
+      "moving": 31,
+      "anchor_atom": "CA",
+      "moving_atom": "CA",
+      "range_nm": [
+        0.283161,
+        0.683161
+      ],
+      "reference_CA_distance_nm": 0.4831605737226496,
+      "evidence": "Constructed control: CA distance from 1BRS author A/D plus/minus 0.2 nm as a chosen rigid-placement allowance, not measured uncertainty. This constrains interface placement, not side-chain bond recovery. https://www.rcsb.org/structure/1BRS"
+    }
+  ],
+  "search": {
+    "seed": 17,
+    "atom_guard_nm": 0.24,
+    "max_template_displacement_nm": 0.6,
+    "cluster_rms_nm": 0.08
+  },
+  "reference_contacts": [
+    {
+      "anchor": 83,
+      "moving": 39,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 83,
+      "moving": 29,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 60,
+      "moving": 34,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 59,
+      "moving": 35,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 27,
+      "moving": 42,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 59,
+      "moving": 76,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    },
+    {
+      "anchor": 102,
+      "moving": 31,
+      "range_nm": [
+        0.24,
+        0.55
+      ],
+      "evidence": "1BRS author A/D closest modeled heavy-atom centers <0.33 nm for this residue pair. 0.24-0.55 nm is an illustrative transferred bound, not experimental uncertainty; constructed control only. https://www.rcsb.org/structure/1BRS"
+    }
+  ]
+}

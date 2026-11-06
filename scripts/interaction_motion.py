@@ -1,7 +1,9 @@
-"""Source-pose-anchored approach, orientation, binding and release in nm.
+"""Endpoint-anchored approach, orientation, binding and release in nm.
 
-The endpoint is supplied by a selected experimental complex. This does not
-predict docking poses, affinities, reaction rates or a molecular trajectory.
+The caller supplies an experimental complex or a separately qualified binding
+hypothesis. Predicted endpoints require strict screening without source-contact
+exemptions (see prepare_binding_candidates.py). This module does not predict
+docking poses, affinities, reaction rates or a molecular trajectory.
 """
 import numpy as np
 from scipy.spatial import cKDTree

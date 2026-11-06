@@ -81,7 +81,7 @@ def main():
             sn.instance_spheres(obj,mat,radius=.11,subdivisions=2)
         obj.parent=rigs[actor['role']];obj['biological_id']=actor['id']
         obj.hide_render=actor['id'] not in visible
-        obj['source_structure']=m['example']['pdb'];obj['source_asset']=str((a.asset_dir/actor['file']).resolve())
+        obj['source_structure']=actor.get('source_pdb',m['example']['pdb']);obj['source_asset']=str((a.asset_dir/actor['file']).resolve())
         objects.append(obj)
         extent=d['atoms'] if obj.modifiers else d['vertices']
         padding=.14 if obj.modifiers else 0
@@ -152,7 +152,7 @@ def main():
         data.materials.append(ink if color is None else sn.material(body,profile,color,'paint'))
         return obj
     moving_label=a.moving_label or m['example']['moving_label']
-    text(m['example']['anchor_label']+' / '+moving_label,0,width*.24,width*.035)
+    text(m.get('display_title',m['example']['anchor_label']+' / '+moving_label),0,width*.24,width*.035)
     text(m['example']['anchor_label'],-width*.22,-width*.235,width*.028)
     text(moving_label,width*.22,-width*.235,width*.028)
     for role,x,color in [('anchor',-.40,profile['palette'][0]),('moving',.04,profile['palette'][1])]:
@@ -184,7 +184,10 @@ def main():
     scene['interaction_manifest_sha256']=integrity['manifest_sha256']
     scene['interaction_visible_actors']=json.dumps(sorted(visible))
     if a.snapshot_frame is not None:scene['interaction_snapshot_frame']=a.snapshot_frame
-    scene['animation_evidence']='Static review of one prepared pose; no motion validation' if a.snapshot_frame is not None else 'Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics'
+    scene['animation_evidence']='Static review of one prepared pose; no motion validation' if a.snapshot_frame is not None else m.get('animation_evidence','Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics')
+    if m.get('binding_candidate'):
+        scene['binding_pose_kind']=m['binding_candidate']['pose_kind']
+        scene['binding_evidence_class']=m['binding_candidate']['evidence_class']
     scene['animation_mode']=m['mode'];scene['source_limits']=m['example']['limits']
     scene.frame_set(1);bpy.context.view_layer.update()
     a.output.mkdir(parents=True)
