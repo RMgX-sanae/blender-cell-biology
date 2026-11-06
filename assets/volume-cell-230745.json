@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "cell_id": "230745",
+  "expected_cell_stage": "M0",
+  "expected_structure": "TOMM20",
+  "source_dataset": "https://open.quiltdata.com/b/allencell/packages/aics/hipsc_single_cell_image_dataset",
+  "source_readme": "https://allencell.s3.amazonaws.com/aics/hipsc_single_cell_image_dataset/README.md",
+  "provider_terms": "https://www.allencell.org/terms-of-use.html",
+  "image": {
+    "filename": "cell-230745-segmentation.ome.tif",
+    "url": "https://allencell.s3.amazonaws.com/aics/hipsc_single_cell_image_dataset/crop_seg/083c63036ddafbc5a90a78a2ad3e450e06498fb8ddefcbb05838b0baf358bf0f_segmentation.ome.tif",
+    "sha256": "94122117d3619162413241a614da694f9d78604c85743bfc72d72c7355c5b2ae",
+    "maximum_bytes": 437427
+  },
+  "metadata": {
+    "filename": "metadata-first128KiB.csv",
+    "url": "https://allencell.s3.amazonaws.com/aics/hipsc_single_cell_image_dataset/metadata.csv",
+    "range": "bytes=0-131071",
+    "sha256": "caebdf443bb514375da4c8fc1163c9752d7a30cb54d73d4371e8f0139d2ae006",
+    "maximum_bytes": 131072
+  },
+  "probe_vertices_xyz_um": [[0.35, 0, 0], [-0.35, 0, 0], [0, 0.18, 0], [0, -0.18, 0], [0, 0, 0.22], [0, 0, -0.22]],
+  "probe_evidence": "Synthetic extent probe for numerical containment, not an observed organelle, biological shape or measured abundance.",
+  "count": 64,
+  "seed": 230745,
+  "boundary_gap_um": 0.05,
+  "pair_gap_um": 0.1
+}
