@@ -9,12 +9,15 @@ from mathutils import Vector
 from detail_scene import Parts, material, path
 
 
-def add_main_protons(root):
+def add_main_protons(root,appearance=None,palette=None):
     root=Path(root)
     scene=bpy.context.scene
     group=bpy.data.collections['Flow']
     info=json.loads((root/'manifest.json').read_text())
-    mat=material('H+ motion in both views','F27B36',.36,0)
+    if appearance is not None:
+        from vatpase_appearance import shade
+        mat=shade(appearance,palette,'proton','proton_marker','H+ motion in both views')
+    else:mat=material('H+ motion in both views','F27B36',.36,0)
     shader=mat.node_tree.nodes.get('Principled BSDF')
     shader.inputs['Emission Color'].default_value=mat.diffuse_color
     shader.inputs['Emission Strength'].default_value=.28
@@ -40,7 +43,7 @@ def add_main_protons(root):
     for name,points,color,span in [
         ('Whole-pump cytoplasmic entry',incoming,'6CD5D0',(.2,1)),
         ('Whole-pump luminal exit',outgoing,'E9A56D',(0,.78))]:
-        guide=material(name+' color',color,.6,0)
+        guide=shade(appearance,palette,'in' if 'entry' in name else 'out','flow_guide',name+' color') if appearance is not None else material(name+' color',color,.6,0)
         path(name,[bezier(points,u) for u in np.linspace(*span,80)],.045,guide,group)
         u=.52 if 'entry' in name else .61
         p=Vector(bezier(points,u));v=Vector(bezier(points,u+.015)-bezier(points,u-.015)).normalized()

@@ -1,0 +1,258 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "background": "091A24",
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": 0,
+  "name": "Reference-lit V-ATPase with synchronized intact dual views",
+  "render_recipe": "neutral",
+  "camera": {
+    "scale_multiplier": 1,
+    "center_offset_nm": [
+      0,
+      0
+    ]
+  },
+  "palette": {
+    "A": "57B8BA",
+    "B": "7DAAC5",
+    "rotor": "EDBD63",
+    "ring": "DDB66A",
+    "ring_tracer": "BD7D9B",
+    "a": "C690B8",
+    "stalk": "D0DAD4",
+    "lipid": "476E80",
+    "tail": "355667",
+    "h": "F6C578",
+    "atp": "C5A1D6",
+    "in": "74E3DB",
+    "out": "F5C493",
+    "background": "587B86",
+    "proton": "FF8657",
+    "ink": "EBF1F1"
+  },
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.44,
+      "specular": 0.3,
+      "bump": 0.006,
+      "texture_scale": 10,
+      "bump_strength": 0.16,
+      "subsurface_weight": 0.055,
+      "subsurface_radius": [
+        0.09,
+        0.06,
+        0.035
+      ],
+      "subsurface_scale": 1
+    },
+    "membrane_heads": {
+      "roughness": 0.48,
+      "specular": 0.28,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "membrane_tails": {
+      "roughness": 0.65,
+      "specular": 0.18,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "chemical_token": {
+      "roughness": 0.35,
+      "specular": 0.28,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "proton_marker": {
+      "roughness": 0.35,
+      "specular": 0.28,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "flow_guide": {
+      "roughness": 0.6,
+      "specular": 0.2,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "environment": {
+      "roughness": 0.8,
+      "specular": 0.15,
+      "bump": 0.002,
+      "subsurface_weight": 0.02
+    }
+  },
+  "lighting": [
+    {
+      "name": "Soft warm key",
+      "position": [
+        -25,
+        -35,
+        38
+      ],
+      "power": 10500,
+      "color": "FFE8CD",
+      "size": 24
+    },
+    {
+      "name": "Cool frontal fill",
+      "position": [
+        25,
+        -30,
+        14
+      ],
+      "power": 6500,
+      "color": "C9E6F1",
+      "size": 22
+    },
+    {
+      "name": "Cool volume rim",
+      "position": [
+        -2,
+        18,
+        24
+      ],
+      "power": 10500,
+      "color": "B9DDEC",
+      "size": 18
+    },
+    {
+      "name": "Membrane underside",
+      "position": [
+        -16,
+        -25,
+        -12
+      ],
+      "power": 5000,
+      "color": "D8E4EB",
+      "size": 18
+    }
+  ],
+  "environment": {
+    "compartment": "cytosol",
+    "context_note": "Qualified source-shaped eukaryotic cytosolic proxies used only behind the native-size whole-pump panel. Positions and abundance are authored, not a measured rat vesicle neighborhood; no physical background is placed behind the enlarged isolated ring.",
+    "context_sources": [
+      "https://www.rcsb.org/structure/6VQ6",
+      "https://www.rcsb.org/structure/9SPI",
+      "https://www.rcsb.org/structure/8F8R"
+    ],
+    "palette": {
+      "ribosome": "517B8A",
+      "actin": "536E83",
+      "ubiquitin": "5D818B"
+    },
+    "compositor": {
+      "blur_pixels_1280": [
+        14,
+        8,
+        24
+      ],
+      "opacity": [
+        0.5,
+        0.3,
+        0.22
+      ]
+    },
+    "objects": [
+      {
+        "asset": "ribosome",
+        "depth": "far",
+        "position_nm": [
+          -35,
+          55,
+          22
+        ],
+        "rotation_degrees": [
+          30,
+          40,
+          20
+        ]
+      },
+      {
+        "asset": "actin",
+        "depth": "middle",
+        "position_nm": [
+          -26,
+          36,
+          17
+        ],
+        "rotation_degrees": [
+          25,
+          65,
+          -10
+        ],
+        "repeat_indices": [
+          -1,
+          0,
+          1
+        ]
+      },
+      {
+        "asset": "ubiquitin",
+        "depth": "middle",
+        "position_nm": [
+          -6,
+          36,
+          18
+        ],
+        "rotation_degrees": [
+          40,
+          20,
+          50
+        ]
+      },
+      {
+        "asset": "ubiquitin",
+        "depth": "middle",
+        "position_nm": [
+          -20,
+          36,
+          9
+        ],
+        "rotation_degrees": [
+          100,
+          25,
+          15
+        ]
+      },
+      {
+        "asset": "actin",
+        "depth": "near",
+        "position_nm": [
+          -33,
+          -45,
+          13
+        ],
+        "rotation_degrees": [
+          25,
+          65,
+          -10
+        ],
+        "repeat_indices": [
+          -2,
+          -1,
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "implementation_assumptions": [
+    "Keep the qualified source envelopes, fixed 1.6x c-ring inset and every authored motion; the reference supplies lighting, color and depth hierarchy, not new structural evidence.",
+    "The original frontal dual-view layout supports only orthographic scale/pan; alternate camera angles need explicitly reauthored labels and guides.",
+    "Background shapes remain at native nm scale, wholly above the schematic membrane and within the left panel. Three defocus layers are editorial, not a measured optical point-spread function.",
+    "Source nucleotide chemistry remains unchanged: ATP/ADP/Pi and protons are graphic tokens, not atomistic reaction models."
+  ]
+}

@@ -17,19 +17,31 @@ from mathutils import Vector
 SKILL=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(SKILL/'scripts'))
 from detail_scene import Parts, collection, material, mesh, path, studio
+import vatpase_appearance as appearance_tools
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--asset-dir',type=Path,required=True)
-parser.add_argument('--crowder-dir',type=Path,required=True)
+parser.add_argument('--crowder-dir',type=Path,help='Source ubiquitin for the legacy appearance')
+parser.add_argument('--style-profile',type=Path)
+parser.add_argument('--environment-dir',type=Path,help='Native-nm source context declared by the appearance profile')
 parser.add_argument('--font-zh',type=Path,required=True)
 parser.add_argument('--font-latin',type=Path,required=True)
 parser.add_argument('--output',type=Path,required=True)
-parser.add_argument('--compositor',choices=['clean','reference','monochrome'],default='reference')
+parser.add_argument('--compositor',choices=['clean','reference','monochrome'])
 parser.add_argument('--width',type=int,default=1600)
 parser.add_argument('--samples',type=int,default=64)
 parser.add_argument('--engine',choices=['eevee','cycles'],default='eevee')
 parser.add_argument('--preview',action='store_true')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
+appearance=appearance_tools.read_profile(args.style_profile) if args.style_profile else None
+if appearance is None:
+    if not args.crowder_dir:parser.error('Legacy appearance requires --crowder-dir')
+    if args.environment_dir:parser.error('--environment-dir requires --style-profile')
+else:
+    if args.compositor:parser.error('Use render_recipe in the appearance profile; --compositor selects legacy branches')
+    if args.crowder_dir:parser.error('Use --environment-dir for profile context; --crowder-dir is legacy only')
+    if bool(args.environment_dir)!=bool(appearance.get('environment')):parser.error('Provide --environment-dir exactly when the profile declares source context')
+args.compositor=args.compositor or 'reference'
 ROOT=args.output.resolve();ASSET=args.asset_dir.resolve()
 if ROOT.exists():parser.error('Choose a fresh project output directory.')
 if ROOT.is_relative_to(SKILL):parser.error('Project output must be outside the skill directory.')
@@ -41,7 +53,11 @@ groups={n:collection(n) for n in ['Pump','Membrane','C ring detail','Flow','Labe
 palette={'A':'53B6AF','B':'78A9BC','rotor':'F1C168','ring':'D1A35D','ring_tracer':'B87962','a':'B97799',
          'stalk':'B3C9CD','lipid':'345362','tail':'466169','h':'F9B557','atp':'BCA7DA',
          'in':'6CD5D0','out':'E9A56D','background':'102932'}
-mats={k:material(k,c,.5,0) for k,c in palette.items()}
+if appearance is not None:palette.update({'proton':'F27B36','ink':'ECF2F0',**appearance.get('palette',{})})
+roles={k:'protein' for k in palette}
+roles.update(lipid='membrane_heads',tail='membrane_tails',h='chemical_token',atp='chemical_token',
+             **{'in':'flow_guide','out':'flow_guide','background':'flow_guide','proton':'proton_marker'})
+mats={k:appearance_tools.shade(appearance,palette,k,roles[k],k) if appearance is not None else material(k,c,.5,0) for k,c in palette.items()}
 def emission(name,color,strength=1):
     m=material(name,color,.5,0);p=m.node_tree.nodes.get('Principled BSDF')
     p.inputs['Emission Color'].default_value=m.diffuse_color
@@ -49,6 +65,8 @@ def emission(name,color,strength=1):
     return m
 ink=emission('Readable large labels','DBE9E9',.8)
 mats['h']=emission('Proton markers','FFC66B',.4)
+if appearance is not None:mats['h']=appearance_tools.shade(appearance,palette,'h','chemical_token')
+guide_material=appearance_tools.shade(appearance,palette,'stalk','flow_guide') if appearance is not None else mats['stalk']
 font=bpy.data.fonts.load(str(args.font_zh.resolve()));font.pack()
 latin=bpy.data.fonts.load(str(args.font_latin.resolve()));latin.pack()
 
@@ -118,10 +136,11 @@ lip.object('Whole lipid molecules with omitted foreground units',[mats['lipid'],
 
 # A few source-derived background macromolecules provide depth, without implying
 # a measured cytosolic composition or concentration.
-bg=np.load(args.crowder_dir/'chain_A.npz')
-for i,pos in enumerate([(-25,14,13),(-1,15,20),(-3,15,4)]):
-    o=mesh('Background ubiquitin '+str(i),bg['vertices'].tolist(),bg['faces'].tolist(),[mats['background']],groups['Environment'])
-    o.location=pos;o.rotation_euler=tuple(rng.uniform(0,math.tau,3))
+if appearance is None:
+    bg=np.load(args.crowder_dir/'chain_A.npz')
+    for i,pos in enumerate([(-25,14,13),(-1,15,20),(-3,15,4)]):
+        o=mesh('Background ubiquitin '+str(i),bg['vertices'].tolist(),bg['faces'].tolist(),[mats['background']],groups['Environment'])
+        o.location=pos;o.rotation_euler=tuple(rng.uniform(0,math.tau,3))
 
 # Right-hand view: the ten full c-ring chains, viewed from the cytoplasmic side.
 # Subunit a is omitted wholesale in this inset, while separately drawn curves
@@ -139,11 +158,11 @@ for name,pts,mat in [('in',incoming,mats['in']),('out',outgoing,mats['out'])]:
     u=.63;v=Vector(bezier(pts,u)-bezier(pts,u-.02)).normalized();p=Vector(bezier(pts,u))
     wing=v.cross(Vector((0,-1,0))).normalized()
     curve(name+' flow arrow',[p-v*.7+wing*.33,p,p-v*.7-wing*.33],.09,mat)
-curve('Ring direction arc',[center+np.array([radius*math.cos(t),.65,radius*math.sin(t)]) for t in np.linspace(math.radians(160),math.radians(100),55)],.045,mats['stalk'])
+curve('Ring direction arc',[center+np.array([radius*math.cos(t),.65,radius*math.sin(t)]) for t in np.linspace(math.radians(160),math.radians(100),55)],.045,guide_material)
 p=Vector(center+np.array([radius*math.cos(math.radians(100)),.65,radius*math.sin(math.radians(100))]))
 v=Vector((math.sin(math.radians(100)),0,-math.cos(math.radians(100))))
 wing=v.cross(Vector((0,-1,0))).normalized()
-curve('Clockwise arrow',[p-v*.65+wing*.3,p,p-v*.65-wing*.3],.075,mats['stalk'])
+curve('Clockwise arrow',[p-v*.65+wing*.3,p,p-v*.65-wing*.3],.075,guide_material)
 protons=[]
 for i,c in enumerate(info['carriers']):
     o=ball('H transport token '+c['chain'],.25 if i else .34,mats['h'])
@@ -187,7 +206,13 @@ profile['lighting']=[
     {'name':'Cool rim','position':[1,10,18],'power':16000,'color':'B3D7EF','size':12},
     {'name':'Membrane underside','position':[-13,-18,-12],'power':9000,'color':'D7E5E8','size':14}]
 settings=SimpleNamespace(engine=args.engine,width=args.width,fps=24,frames=384,samples=args.samples,compositor=args.compositor)
-cam=studio(profile,settings,{'position':(0,-100,8.5),'target':(0,0,8.5),'scale':58,'type':'ORTHO'})
+camera={'position':(0,-100,8.5),'target':(0,0,8.5),'scale':58,'type':'ORTHO'}
+if appearance is not None:
+    profile=appearance_tools.studio_profile(profile,appearance)
+    profile['background']=(appearance.get('environment') or {}).get('compositor',{}).get('background',profile['background'])
+    controls=appearance.get('camera',{});pan=controls.get('center_offset_nm',[0,0])
+    camera.update(position=(pan[0],-100,8.5+pan[1]),target=(pan[0],0,8.5+pan[1]),scale=58*controls.get('scale_multiplier',1))
+cam=studio(profile,settings,camera)
 scene=bpy.context.scene;scene.render.resolution_y=round(args.width*9/16)
 if args.engine=='eevee':scene.eevee.taa_render_samples=args.samples
 scene.render.image_settings.color_mode='RGB';scene.render.film_transparent=True
@@ -245,14 +270,16 @@ scene['inset']='Whole c-ring chains only, seen from V1/cytosolic side. Complete 
 scene['display_policy']='Large essential labels only. Sources and modeling limits are in the delivery document.'
 scene['provenance_manifest']=str(ASSET/'manifest.json')
 from vatpase_motion import add_main_protons
-add_main_protons(ASSET)
+add_main_protons(ASSET,appearance=appearance,palette=palette)
+appearance_record=appearance_tools.finish(scene,args,appearance,palette,profile) if appearance is not None else None
 scene.render.filepath=str(ROOT/'preview.png')
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'scene.blend'))
-manifest={'source':'6VQ6','asset_dir':str(ASSET),'crowder_dir':str(args.crowder_dir.resolve()),'compositor':args.compositor,'frames':384,'fps':24,'seconds':16,'width':args.width,'height':scene.render.resolution_y,
+manifest={'source':'6VQ6','asset_dir':str(ASSET),'crowder_dir':str(args.crowder_dir.resolve()) if args.crowder_dir else None,'compositor':scene.get('selected_compositor',args.compositor),'frames':384,'fps':24,'seconds':16,'width':args.width,'height':scene.render.resolution_y,
           'engine':scene.render.engine,'samples':args.samples,'mode':'continuous-loop','font_zh':font.name,'font_latin':latin.name,'font_files':[str(args.font_zh.resolve()),str(args.font_latin.resolve())],
-          'labels':[o.data.body for o in groups['Labels'].objects if o.type=='FONT'],
+          'labels':[row['body'] for row in appearance_record['fonts']] if appearance_record is not None else [o.data.body for o in groups['Labels'].objects if o.type=='FONT'],
           'atomistic_trajectory':False,'left_proton_motion':True,'inset':scene['inset'],'display_policy':scene['display_policy'],
           'stoichiometry':{'ATP_per_revolution':3,'H_carriers':10},'blender':bpy.app.version_string}
+if appearance_record is not None:manifest['appearance']=appearance_record
 (ROOT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
 if args.preview:
     for f in [53,145,278]:

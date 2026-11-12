@@ -15,6 +15,10 @@ parser.add_argument('--output',type=Path,required=True)
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 OUT=args.output.resolve();OUT.mkdir(parents=True,exist_ok=True)
 scene=bpy.context.scene
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from audit_vatpase_appearance import audit as audit_appearance,text_bounds
+appearance=audit_appearance(scene)
+if appearance is not None:(OUT/'appearance.json').write_text(json.dumps(appearance,indent=2)+'\n')
 info=json.loads((args.asset_dir/'manifest.json').read_text())
 errors=[];asset_checks=[]
 objects=[o for o in bpy.data.objects if o.get('source')=='6VQ6']
@@ -38,9 +42,10 @@ phase_error=0.
 if scene.get('left_proton_motion'):assert len(left)==30
 for f in range(1,386):
     scene.frame_set(f)
-    for o in main+labels:
+    evaluated_labels=text_bounds(scene) if appearance is not None else {}
+    for o in (objects if appearance is not None else main)+labels:
         if o.hide_render:errors.append([f,o.name,'hidden primary/label'])
-        p=np.array([tuple(world_to_camera_view(scene,scene.camera,o.matrix_world@Vector(v))) for v in o.bound_box])
+        p=np.array(evaluated_labels[o.name] if o.name in evaluated_labels else [tuple(world_to_camera_view(scene,scene.camera,o.matrix_world@Vector(v))) for v in o.bound_box])
         if not np.all(np.isfinite(p)):errors.append([f,o.name,'nonfinite'])
         if np.any(p[:,:2]<0) or np.any(p[:,:2]>1):errors.append([f,o.name,'outside frame'])
         if f in [1,128,256,384]:frame_bounds.append({'frame':f,'object':o.name,'min':p[:,:2].min(0).tolist(),'max':p[:,:2].max(0).tolist()})
