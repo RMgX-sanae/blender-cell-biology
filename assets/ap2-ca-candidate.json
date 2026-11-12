@@ -1,0 +1,271 @@
+{
+  "version": 1,
+  "source_config": "ap2-ca-conformation.json",
+  "rationale": "Source-guided authored CA candidate for the retained AP2 core. Fitting partitions, virtual-terminal interpolation, elastic weights and a clearance detour are modeling choices, not measured domain kinetics or a physical force field. Requalify them for a different protein.",
+  "reference_frame": "6YAF coordinates, nm; 6YAE is rigidly aligned on the reviewed sigma-chain correspondence.",
+  "robust_fit": {
+    "iterations": 5,
+    "retained_quantile": 0.8,
+    "distance_floor_nm": 0.4
+  },
+  "partitions": [
+    {
+      "id": "alpha_mid",
+      "select": [
+        {
+          "chain": "A",
+          "label_ranges": [
+            [
+              343,
+              460
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "alpha_n",
+      "select": [
+        {
+          "chain": "A",
+          "label_ranges": [
+            [
+              9,
+              342
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "beta_mid",
+      "select": [
+        {
+          "chain": "B",
+          "label_ranges": [
+            [
+              99,
+              346
+            ],
+            [
+              553,
+              582
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "beta_n",
+      "select": [
+        {
+          "chain": "B",
+          "label_ranges": [
+            [
+              13,
+              98
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "beta_tip",
+      "select": [
+        {
+          "chain": "B",
+          "label_ranges": [
+            [
+              4,
+              12
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "bowl_c",
+      "select": [
+        {
+          "chain": "A",
+          "label_ranges": [
+            [
+              461,
+              608
+            ]
+          ]
+        },
+        {
+          "chain": "B",
+          "label_ranges": [
+            [
+              347,
+              552
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "mu_c",
+      "select": [
+        {
+          "chain": "M",
+          "label_ranges": [
+            [
+              159,
+              435
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.0,
+      "detour_nm": [
+        1.882654552275689,
+        4.6246940435576755,
+        0.26041666666666685
+      ]
+    },
+    {
+      "id": "mu_n",
+      "select": [
+        {
+          "chain": "M",
+          "label_ranges": [
+            [
+              1,
+              141
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5
+    },
+    {
+      "id": "sigma",
+      "select": [
+        {
+          "chain": "S",
+          "label_ranges": [
+            [
+              1,
+              142
+            ]
+          ]
+        }
+      ],
+      "phase_rate": 1.5,
+      "fixed_reference": true
+    }
+  ],
+  "inferred_targets": [
+    {
+      "select": [
+        {
+          "chain": "M",
+          "label_ranges": [
+            [
+              136,
+              141
+            ]
+          ]
+        }
+      ],
+      "anchor": [
+        "M",
+        "135"
+      ],
+      "partition": "mu_n",
+      "reason": "These six source residues have no observed target CA. Preserve their source-relative shape about observed M135 using the fitted mu_n rotation; inference is explicit."
+    }
+  ],
+  "terminals": [
+    {
+      "chain": "B",
+      "label_range": [
+        15,
+        4
+      ],
+      "phase": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "chain": "M",
+      "label_range": [
+        177,
+        159
+      ],
+      "phase": [
+        0,
+        1
+      ]
+    }
+  ],
+  "solver": {
+    "step_bound_nm": 0.04,
+    "local_spring_weights": [
+      10000.0,
+      1000.0,
+      100.0
+    ],
+    "fold_radius_nm": 1.0,
+    "fold_length_change_nm": 0.15,
+    "fold_weight": 15.0,
+    "volume_weight": 10000.0,
+    "contact_weight": 100000.0,
+    "boundary_weight": 10000.0,
+    "contact_buffer_nm": 0.002,
+    "ftol": 1e-10,
+    "gtol": 1e-05,
+    "max_iterations": 350,
+    "max_line_search": 40
+  },
+  "stages": [
+    {
+      "kind": "guided",
+      "steps": 400,
+      "weight": 1.0
+    },
+    {
+      "kind": "settle",
+      "steps": 300,
+      "weight": 1.0,
+      "minimum_steps": 0,
+      "rms_stop_nm": 0.005,
+      "stagnation_after": 32,
+      "step_stop_nm": 1e-07
+    },
+    {
+      "kind": "settle",
+      "steps": 200,
+      "weight": 50.0,
+      "minimum_steps": 22,
+      "rms_stop_nm": 0.001,
+      "stagnation_after": 22,
+      "step_stop_nm": 1e-07
+    },
+    {
+      "kind": "settle",
+      "steps": 200,
+      "weight": 200.0,
+      "minimum_steps": 22,
+      "rms_stop_nm": 0.001,
+      "stagnation_after": 22,
+      "step_stop_nm": 1e-07
+    }
+  ],
+  "maximum_final_correction_nm": 0.0001,
+  "references": [
+    "https://www.rcsb.org/structure/6YAE",
+    "https://www.rcsb.org/structure/6YAF",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC7375805/"
+  ]
+}
