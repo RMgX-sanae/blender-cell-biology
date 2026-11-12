@@ -34,11 +34,11 @@ def geometry_signature(objects):
     return digest.hexdigest()
 
 
-def surface(name, color, opacity=1, bump=.008):
-    mat = ds.material(name, color, .65, bump)
+def surface(name, color, opacity=1, bump=.008, *, settings=None, emission=.18):
+    mat = ds.material(name, color, .65, bump, settings=settings)
     shader = mat.node_tree.nodes.get('Principled BSDF')
     shader.inputs['Emission Color'].default_value = (*ds.linear(color), 1)
-    shader.inputs['Emission Strength'].default_value = .18
+    shader.inputs['Emission Strength'].default_value = emission
     if opacity < 1:
         tree = mat.node_tree
         transparent = tree.nodes.new('ShaderNodeBsdfTransparent')
@@ -50,12 +50,13 @@ def surface(name, color, opacity=1, bump=.008):
     return mat
 
 
-def spatial_background(scene, scale, groups, asset_dir):
+def spatial_background(scene, scale, groups, asset_dir, profile=None):
+    profile=profile or {}
     asset_dir=Path(asset_dir)
     manifest=json.loads((asset_dir/'manifest.json').read_text())
     if manifest['kind']=='reference-guided-er-network':
         if scale!='organelle':raise ValueError('The traced ER environment is for the organelle scene.')
-        return reference_network(scene,groups,asset_dir,manifest)
+        return reference_network(scene,groups,asset_dir,manifest,profile)
     if manifest['kind']!='allen-visual-guide-environment':
         raise ValueError('Run prepare_allen_environment.py first.')
     if scale!='cell':raise ValueError('Use prepare_reference_er_network.py for the fine organelle environment.')
@@ -87,7 +88,7 @@ def spatial_background(scene, scale, groups, asset_dir):
                 ('golgi',(.96,.14,.65),.60,(.46,-.41),-.20,2)]:
             names=[prefix+'-'+suffix for suffix in ['cell','dna','structure']]
             transform=fit(names,angles,fraction,xy,behind)
-            membrane=surface('Source cell membrane '+prefix,'88A5A0',.2)
+            membrane=environment_surface('Source cell membrane '+prefix,'cell','88A5A0',profile,.2)
             # A Fresnel-weighted shell reveals the paired source nucleus/marker.
             tree=membrane.node_tree;fresnel=tree.nodes.new('ShaderNodeFresnel')
             fresnel.inputs['IOR'].default_value=1.38
@@ -95,15 +96,24 @@ def spatial_background(scene, scale, groups, asset_dir):
             opacity.inputs[1].default_value=.65;opacity.inputs[2].default_value=.10
             tree.links.new(fresnel.outputs[0],opacity.inputs[0])
             tree.links.new(opacity.outputs[0],next(n for n in tree.nodes if n.bl_idname=='ShaderNodeMixShader').inputs[0])
-            mats=[membrane,surface('Source nuclear material '+prefix,'83859A',.7),
-                  surface('Source intracellular marker '+prefix,'829E96',.65)]
+            mats=[membrane,environment_surface('Source nuclear material '+prefix,'dna','83859A',profile,.7),
+                  environment_surface('Source intracellular marker '+prefix,'structure','829E96',profile,.65)]
             for name,mat in zip(names,mats):place(name,groups[layer],transform,mat)
         contents='Three distinct interphase cell display meshes from Allen Cell, retaining each membrane, DNA and organelle-marker shape and their shared source coordinates.'
     return contents,{'source_manifest':manifest,'placements':records,
                      'layout':'Source shapes retained under rigid transforms and uniform scale; camera placement is authored, not a measured neighborhood around this foreground model.'}
 
 
-def reference_network(scene,groups,asset_dir,manifest):
+def environment_surface(name,identity,color,profile,opacity=1):
+    settings=profile.get('surface_roles',{}).get('environment')
+    mat=surface(name,profile.get('environment_palette',{}).get(identity,color),opacity,
+                settings=settings,emission=0 if settings is not None else .18)
+    mat['surface_role']='environment'
+    return mat
+
+
+def reference_network(scene,groups,asset_dir,manifest,profile=None):
+    profile=profile or {}
     path=asset_dir/'network.npz'
     if hashlib.sha256(path.read_bytes()).hexdigest()!=manifest['geometry_sha256']:
         raise ValueError('Prepared ER network does not match its manifest.')
@@ -118,8 +128,9 @@ def reference_network(scene,groups,asset_dir,manifest):
     obj=bpy.data.objects.new('ER network with authored depth',curve);groups[1].objects.link(obj)
     transform=camera.matrix_world @ Matrix.Translation((.03*width,.01*width,-camera.location.length-width*.43)) @ Matrix.Scale(width*1.35,4) @ Euler((.25,-.15,-.10)).to_matrix().to_4x4()
     obj.matrix_world=transform;obj['evidence']=manifest['evidence']
-    mat=surface('Reference-guided ER membrane','829784')
-    mat.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=.02
+    mat=environment_surface('Reference-guided ER membrane','er','829784',profile)
+    if 'environment' not in profile.get('surface_roles',{}):
+        mat.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=.02
     curve.materials.append(mat)
     light_data=bpy.data.lights.new('ER volume side light','AREA');light_data.energy=480;light_data.shape='DISK';light_data.size=width*.8
     light=bpy.data.objects.new('ER volume side light',light_data);groups[1].objects.link(light)
@@ -161,7 +172,15 @@ def membrane_background(source, groups):
     return 'Existing 3SN6 complexes and cytosolic 1UBQ/9SPI shapes; six schematic glycan scaffolds on the extracellular leaflet, not measured composition.'
 
 
-def layer_compositor(scene, groups, style, width, scale):
+def layer_compositor(scene, groups, style, width, scale, profile=None):
+    settings=(profile or {}).get('environment_compositor',{}).get(style,{})
+    unknown=set(settings)-{'background','blur_pixels_1280','opacity'}
+    if unknown:raise ValueError('Unknown environment compositor settings: '+str(unknown))
+    for key in ('blur_pixels_1280','opacity'):
+        if key not in settings:continue
+        values=np.asarray(settings[key],float)
+        if values.shape!=(3,) or not np.isfinite(values).all() or np.any(values<0) or (key=='opacity' and np.any(values>1)):
+            raise ValueError('Expected three finite nonnegative environmental '+key+' values; opacity must be at most one')
     base = scene.view_layers[0]
     for child in base.layer_collection.children:
         if child.collection in groups:
@@ -176,7 +195,7 @@ def layer_compositor(scene, groups, style, width, scale):
     tree = bpy.data.node_groups.new('COMP_scale_environment_'+style, 'CompositorNodeTree')
     tree.interface.new_socket(name='Image',in_out='OUTPUT',socket_type='NodeSocketColor')
     color = sn.node(tree,'CompositorNodeRGB','Scale environment base')
-    color.outputs[0].default_value = (*ds.linear('DCE5E4' if style=='light' else '102632'),1)
+    color.outputs[0].default_value = (*ds.linear(settings.get('background','DCE5E4' if style=='light' else '102632')),1)
     image = color.outputs[0]
     def subject_over(background):
         render=sn.node(tree,'CompositorNodeRLayers','Sharp subject');render.layer=base.name
@@ -191,6 +210,9 @@ def layer_compositor(scene, groups, style, width, scale):
             pixels=[22,13,30][layers.index(layer)]
             strength*=.78
             if layer==layers[2]:image=subject_over(image)
+        index=layers.index(layer)
+        if 'blur_pixels_1280' in settings:pixels=settings['blur_pixels_1280'][index]
+        if 'opacity' in settings:strength=settings['opacity'][index]
         render = sn.node(tree,'CompositorNodeRLayers');render.layer=layer.name
         blur = sn.node(tree,'CompositorNodeBlur',layer.name+' defocus')
         blur.inputs['Size'].default_value = (pixels*width/1280, pixels*width/1280)
@@ -296,6 +318,7 @@ def main():
     source=Path(bpy.data.filepath)
     if not source.is_file():p.error('Open a saved source scene before applying this adapter.')
     scene=bpy.context.scene;scene.frame_set(args.frame);bpy.context.view_layer.update()
+    profile=json.loads(scene.get('style_profile','{}'))
     originals=list(scene.objects);before=geometry_signature(originals)
     scene.render.resolution_x=args.width
     scene.render.resolution_y=round(args.width*(9/16 if args.scale=='molecule' else 5/8))
@@ -308,8 +331,8 @@ def main():
     else:
         groups=[ds.collection('Scale environment '+name) for name in ['far','middle','near']]
         if args.scale=='membrane':contents=membrane_background(source,groups)
-        else:contents,context_record=spatial_background(scene,args.scale,groups,args.context_assets)
-        layer_compositor(scene,groups,args.style,args.width,args.scale)
+        else:contents,context_record=spatial_background(scene,args.scale,groups,args.context_assets,profile)
+        layer_compositor(scene,groups,args.style,args.width,args.scale,profile)
     scene.render.engine='CYCLES' if args.engine=='cycles' else 'BLENDER_EEVEE'
     if args.engine=='cycles':
         scene.cycles.samples=args.samples;scene.cycles.use_denoising=True
@@ -330,6 +353,7 @@ def main():
             'engine':scene.render.engine,'samples':args.samples,'blender':bpy.app.version_string,
             'defocus':'Editable artistic depth-plane blur, not a calibrated microscope PSF.',
             'scope':'Scale-dependent illustration; counts and placement are authored, not measured.',
+            'appearance_profile':{k:profile[k] for k in ('surface_roles','environment_palette','environment_compositor') if k in profile},
             'generator_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
     scene['scale_environment']=json.dumps(record)
     scene.render.filepath=str((args.output/'preview.png').resolve())

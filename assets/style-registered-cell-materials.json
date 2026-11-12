@@ -1,0 +1,92 @@
+{
+  "world": "A7BDD0",
+  "roughness": 0.47,
+  "view_transform": "AgX",
+  "exposure": 0.0,
+  "lighting": [
+    {
+      "name": "Warm broad key",
+      "position": [
+        -12,
+        -18,
+        26
+      ],
+      "power": 7800,
+      "color": "FFE8D4",
+      "size": 17
+    },
+    {
+      "name": "Front soft fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 2400,
+      "color": "C4DFF3",
+      "size": 17
+    },
+    {
+      "name": "Cool separating rim",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 7500,
+      "color": "CCE6EF",
+      "size": 13
+    }
+  ],
+  "compositor": {
+    "preset": "clean",
+    "contrast": 0
+  },
+  "name": "Registered cell — restrained source-surface shading",
+  "reference": "Allen source-cell display surfaces and reviewed high-contrast registered-cell studies; see registered-cell-display.md",
+  "observations": [
+    "Intact translucent outer boundary",
+    "Distinct DNA region and warm organelle marker",
+    "Shading communicates coarse source topology without invented microscopic texture"
+  ],
+  "implementation_assumptions": [
+    "Source display units are not calibrated here. Bump disabled to avoid implying resolved ultrastructure.",
+    "Transparency expresses spatial context, not measured concentration.",
+    "--style selects dark/light identity colors unless registered_palette or background is explicitly overridden.",
+    "Denoise the opaque beauty composite to reduce transparent-shell sampling grain; typography bypasses this operation. This is display processing, not recovery of microscopic detail."
+  ],
+  "camera": {},
+  "surface_roles": {
+    "cell_boundary": {
+      "roughness": 0.5,
+      "specular": 0.23,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "chromatin": {
+      "roughness": 0.62,
+      "specular": 0.2,
+      "bump": 0,
+      "subsurface_weight": 0.025,
+      "subsurface_radius": [
+        0.05,
+        0.04,
+        0.035
+      ],
+      "subsurface_scale": 0.3
+    },
+    "organelle_marker": {
+      "roughness": 0.4,
+      "specular": 0.3,
+      "bump": 0,
+      "subsurface_weight": 0.035,
+      "subsurface_radius": [
+        0.04,
+        0.03,
+        0.02
+      ],
+      "subsurface_scale": 0.3
+    }
+  },
+  "composited_beauty_denoise": true
+}

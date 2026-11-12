@@ -1,0 +1,222 @@
+{
+  "name": "Cell and organelle role materials — soft sculpted surfaces",
+  "reference": "Existing project organelle reference and reviewed source-based cell/ER studies; see material-and-lighting.md",
+  "observations": [
+    "Cool enclosing membranes and warm inner folds",
+    "Soft broad illumination with readable concavities",
+    "Foreground contours remain sharp against quieter environmental layers"
+  ],
+  "implementation_assumptions": [
+    "Art-directed shader lengths use the builders local display units, not measured membrane optics.",
+    "Existing shapes are retained; this profile adds no resolved biological detail.",
+    "Whole-cell mitochondria remain uniformly scaled instances, so their Object-coordinate texture scales with each instance."
+  ],
+  "organelle_palette": {
+    "outer": "357F8B",
+    "outer_light": "6BA5AD",
+    "inner": "CC8560",
+    "lipid": "C99A64",
+    "rim": "D5C7A5",
+    "seam": "463C35",
+    "protein": "DFC08C",
+    "gold": "BC985C",
+    "protein_dark": "247F89",
+    "rust": "BA633B",
+    "dna": "67C3D5",
+    "matrix_protein": "9DB2A7"
+  },
+  "background": "0E222C",
+  "world": "A7BDD0",
+  "roughness": 0.47,
+  "view_transform": "AgX",
+  "exposure": 0.15,
+  "camera": {},
+  "lighting": [
+    {
+      "name": "Warm broad key",
+      "position": [
+        -12,
+        -18,
+        26
+      ],
+      "power": 7800,
+      "color": "FFE8D4",
+      "size": 17
+    },
+    {
+      "name": "Front soft fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 2400,
+      "color": "C4DFF3",
+      "size": 17
+    },
+    {
+      "name": "Cool separating rim",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 7500,
+      "color": "CCE6EF",
+      "size": 13
+    },
+    {
+      "name": "Open interior soft fill",
+      "position": [
+        0,
+        -16,
+        -10
+      ],
+      "power": 3500,
+      "color": "D5E7F3",
+      "size": 18
+    }
+  ],
+  "compositor": {
+    "preset": "clean",
+    "contrast": 0
+  },
+  "cell_palette": {
+    "cell": "50979B",
+    "envelope": "8884AF",
+    "chromatin": "C2AECF",
+    "nucleolus": "A878A6",
+    "golgi": "C9A565",
+    "ribosome": "D2B572",
+    "lysosome": "B75E3F",
+    "peroxisome": "7C9A49",
+    "microtubule": "76BBD0",
+    "actin": "A1C5AF"
+  },
+  "surface_roles": {
+    "membrane_surface": {
+      "roughness": 0.46,
+      "specular": 0.28,
+      "bump": 0.003,
+      "texture_scale": 4,
+      "texture_detail": 2,
+      "bump_strength": 0.12,
+      "subsurface_weight": 0.035,
+      "subsurface_radius": [
+        0.05,
+        0.035,
+        0.02
+      ],
+      "subsurface_scale": 0.3
+    },
+    "membrane_heads": {
+      "roughness": 0.4,
+      "specular": 0.27,
+      "bump": 0,
+      "subsurface_weight": 0.035,
+      "subsurface_radius": [
+        0.03,
+        0.02,
+        0.01
+      ],
+      "subsurface_scale": 0.3
+    },
+    "membrane_tails": {
+      "roughness": 0.67,
+      "specular": 0.18,
+      "bump": 0,
+      "subsurface_weight": 0.01,
+      "subsurface_scale": 0.2
+    },
+    "protein": {
+      "roughness": 0.5,
+      "specular": 0.27,
+      "bump": 0.001,
+      "texture_scale": 9,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.045,
+      "subsurface_radius": [
+        0.04,
+        0.03,
+        0.02
+      ],
+      "subsurface_scale": 0.25
+    },
+    "nucleic_acid": {
+      "roughness": 0.38,
+      "specular": 0.3,
+      "bump": 0,
+      "subsurface_weight": 0.015,
+      "subsurface_scale": 0.2
+    },
+    "cofactor": {
+      "roughness": 0.42,
+      "specular": 0.25,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "cell_boundary": {
+      "roughness": 0.55,
+      "specular": 0.25,
+      "bump": 0.002,
+      "texture_scale": 3,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.04,
+      "subsurface_radius": [
+        0.12,
+        0.08,
+        0.05
+      ],
+      "subsurface_scale": 0.3
+    },
+    "chromatin": {
+      "roughness": 0.6,
+      "specular": 0.22,
+      "bump": 0.001,
+      "texture_scale": 6,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.025,
+      "subsurface_scale": 0.25
+    },
+    "environment": {
+      "roughness": 0.8,
+      "specular": 0.16,
+      "bump": 0,
+      "subsurface_weight": 0
+    }
+  },
+  "environment_palette": {
+    "er": "5D7976",
+    "cell": "58777C",
+    "dna": "666E8B",
+    "structure": "617F77"
+  },
+  "environment_compositor": {
+    "dark": {
+      "background": "0A1F29",
+      "blur_pixels_1280": [
+        22,
+        15,
+        30
+      ],
+      "opacity": [
+        0.2,
+        0.22,
+        0.1
+      ]
+    },
+    "light": {
+      "background": "E4EBE7",
+      "blur_pixels_1280": [
+        22,
+        15,
+        30
+      ],
+      "opacity": [
+        0.2,
+        0.23,
+        0.12
+      ]
+    }
+  }
+}

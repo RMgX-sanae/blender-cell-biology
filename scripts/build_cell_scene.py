@@ -69,7 +69,16 @@ def main():
               'ribosome': 'D9CBB0', 'lysosome': 'BD8D73', 'peroxisome': 'A4B58C',
               'microtubule': '95B1BB', 'centrosome': 'B6A488', 'actin': '9DB7AA'}
     colors.update(profile.get('cell_palette', {}))
-    mats = {k: material(k, v, .51, .004) for k, v in colors.items()}
+    roles = {'cell': 'cell_boundary', 'cell_inner': 'cell_boundary',
+             'envelope': 'membrane_surface', 'golgi': 'membrane_surface',
+             'lysosome': 'membrane_surface', 'peroxisome': 'membrane_surface',
+             'chromatin': 'chromatin', 'nucleolus': 'chromatin'}
+    mats = {}
+    for name, color in colors.items():
+        role = roles.get(name, 'protein')
+        mats[name] = material(name, color, .51, .004,
+                              settings=profile.get('surface_roles', {}).get(role))
+        mats[name]['surface_role'] = role
     cell = collection('01 Cell membrane — deliberate quarter cutaway')
     outer = ellipsoid('Plasma membrane outer face', (0, 0, 0), (7.25, 5.25, 3.5), mats['cell'], cell, cut=True)
     shell = outer.modifiers.new('Visible cut edge; membrane thickness exaggerated', 'SOLIDIFY')

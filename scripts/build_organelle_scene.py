@@ -27,8 +27,17 @@ def build_mitochondrion(profile):
               'rust': 'B46D55', 'dna': '8BC0C7', 'matrix_protein': 'A3B4A0',
               'carbon': '4B5457', 'oxygen': 'C65C4C', 'bond': 'A0ABA9'}
     colors.update(profile.get('organelle_palette', {}))
-    mats = {name: material(name, color, profile['roughness'], .005)
-            for name, color in colors.items()}
+    roles = {'outer': 'membrane_surface', 'outer_light': 'membrane_surface',
+             'inner': 'membrane_surface', 'lipid': 'membrane_heads',
+             'rim': 'membrane_heads', 'seam': 'membrane_tails',
+             'dna': 'nucleic_acid', 'carbon': 'cofactor',
+             'oxygen': 'cofactor', 'bond': 'cofactor'}
+    mats = {}
+    for name, color in colors.items():
+        role = roles.get(name, 'protein')
+        mats[name] = material(name, color, profile['roughness'], .005,
+                              settings=profile.get('surface_roles', {}).get(role))
+        mats[name]['surface_role'] = role
     geo.membranes(groups['membrane'], mats)
     geo.membrane_detail(groups['detail'], mats)
     dimers = geo.proteins(groups['complexes'], groups['prototypes'], mats)

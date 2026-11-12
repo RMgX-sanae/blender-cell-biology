@@ -107,7 +107,10 @@ def filter_image(scene, t, image, data_outputs, filters, panel=False):
     for settings in filters:
         f = dict(settings)
         kind = f['type']
-        if kind == 'exposure':
+        if kind == 'denoise':
+            n = node(t, 'CompositorNodeDenoise', 'Denoise composited beauty; protected typography bypasses this node')
+            t.links.new(image, n.inputs['Image']); image = n.outputs['Image']
+        elif kind == 'exposure':
             n = node(t, 'CompositorNodeExposure', 'Artistic exposure in stops')
             n.inputs['Exposure'].default_value = f['stops']
             t.links.new(image, n.inputs['Image']); image = n.outputs[0]
@@ -199,7 +202,7 @@ def build_stack(scene, recipe, name=None, source=None):
         raise RuntimeError('This stack uses Blender 5.x compositor sockets; check the installed API before adapting')
     filters = recipe.get('filters', [])
     kinds = {f['type'] for f in filters}
-    supported = {'exposure', 'color_balance', 'saturation', 'contrast', 'bloom', 'outline',
+    supported = {'denoise', 'exposure', 'color_balance', 'saturation', 'contrast', 'bloom', 'outline',
                  'depth_fog', 'ambient_occlusion', 'vignette', 'grain', 'duotone', 'subject_focus'}
     if kinds - supported:
         raise ValueError('Unknown filters: ' + ', '.join(sorted(kinds - supported)))

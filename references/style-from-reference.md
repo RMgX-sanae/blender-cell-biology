@@ -27,6 +27,8 @@
 
 保存 `reference URL/path + 允许使用的范围 + 观察 + 假设 + 参数版本`。精细制作优先复制 [style-molecular-reference.json](../assets/style-molecular-reference.json)、[style-studio.json](../assets/style-studio.json) 或 [style-organelle.json](../assets/style-organelle.json)：
 
+需要把表面和环境层次迁移到细胞/细胞器时，使用[分景别材质入口](material-and-lighting.md#细胞与细胞器的迁移)选择 `style-organelle-materials.json` 或 `style-registered-cell-materials.json`。它们实际连接材质、灯光、相机和三维环境合成；分子配置中的纹理频率和散射长度不能直接套用。来源表面的粗糙轮廓不等于可自由替换的艺术形体，换表示仍需保留来源身份和信息损失说明。
+
 ```bash
 "$BLENDER" -b --factory-startup --python-exit-code 1 \
   --python "$SKILL/scripts/build_molecular_scene.py" -- --scene membrane \

@@ -19,7 +19,7 @@
 
 这些值是艺术表现参数。当前配方按 `1 Blender unit = 1 nm` 调整；换成细胞/细胞器尺度时重新选择纹理频率、凹凸距离和散射长度。凹凸只接法线，不接网格位移；不能改变源坐标、轮廓或结构比例。空间填充、平滑表面和核酸原子显示各有信息损失，按解释任务选择，而不是给所有对象套同一种几何和塑料材质。
 
-两个现有生成入口已经消费这些参数：
+分子场景与来源状态对照入口消费这些参数：
 
 来源状态对照默认采用这个配置；分子场景入口保留原默认外观，使用下方 `--style-profile` 显式选择，以免同时改变旧项目的几何表示。可随时指定项目自己的配方。
 
@@ -41,7 +41,47 @@
   --width 1800 --samples 32 --output "$PROJECT/state-review" --render
 ```
 
-不是所有生成器都读取 `surface_roles`。新项目先确认所用入口是否实际连接设置，再在保存的 `.blend` 中检查节点和最终渲染；只修改 JSON 不算实施。`build_molecular_scene.py` 按已定义的蛋白、核酸、膜部件与背景角色路由；来源对照入口按 mmCIF 聚合物类型路由。背景实例的完整结构保留原尺寸，位置、数量和景深只是展示安排，不能称为实测细胞组成。
+`build_molecular_scene.py` 按已定义的蛋白、核酸、膜部件与背景角色路由；来源对照入口按 mmCIF 聚合物类型路由。背景实例的完整结构保留原尺寸，位置、数量和景深只是展示安排，不能称为实测细胞组成。
+
+## 细胞与细胞器的迁移
+
+以下入口也读取 `surface_roles`，但使用针对各自景别调节的配置，不能直接把分子场景中的 nm 长度照搬到细胞场景：
+
+| 入口 | 显式选择的配置 | 角色与表示边界 |
+|---|---|---|
+| `build_organelle_scene.py` | `assets/style-organelle-materials.json` | 连续膜面用 `membrane_surface`，膜边缘/头基与核心用 `membrane_heads/tails`；蛋白示意、核酸和原子标记分别路由。形体仍是已有的线粒体教学模型，不新增原子结构证据 |
+| `build_cell_scene.py` | 同上 | `cell_boundary`、`membrane_surface`、`chromatin`、`protein`，以及复用的线粒体角色；核仁采用粗粒度核内材质，不据此推断成分或光学性质 |
+| `build_registered_cell_scene.py` | `assets/style-registered-cell-materials.json` | `cell_boundary`、`chromatin`、`organelle_marker`；保留同源网格与共同变换，粗分辨率标记表面默认关闭 bump，不伪造超微结构 |
+
+旧配置和未传角色设置的调用保持旧材质数值。新配置通过 `--style-profile` 显式选择。角色可以局部覆盖，未配置的角色沿用入口默认；材质的 `surface_role` 记录实际路由。凹凸使用 Object 局部坐标，随原对象/集合实例的缩放改变显示细节大小；散射半径、Scale 和 Bump Distance 是艺术参数，需要在实际尺度、实例大小和灯光下检查，不自动换算为实测组织光学。
+
+同源细胞入口保留 `--style dark|light` 的身份配色，配置可用 `registered_palette` 覆盖 `cell/dna/structure`、用 `background` 覆盖底色，并设置 `lighting/world/exposure/camera`。显式角色材质关闭旧入口的固定自发光，避免发光掩盖体积。相机目前限正交；换视角时按实际源顶点重新取景，显式 `camera.scale` 太小会报错，不静默裁掉来源形体。`--display` 的共同源旋转与相机视角是不同控制；接近相机上轴的角度可能产生明显画面旋转，先查看小样。
+
+浅底透明边界可能在背景合成后暴露采样颗粒，即使 Cycles 已启用渲染降噪也要查看最终像素。新同源细胞配置用 `composited_beauty_denoise: true` 在背景合成后、文字叠加前再做一次可编辑降噪；它适用于此类粗分辨率显示表面，不能作为补回显微细节的方法。旧配置默认关闭；精细原子或纹理特写需重新检查细节损失。
+
+`apply_scale_environment.py` 从已保存场景读取同一配置，将 `environment` 角色与 `environment_palette` 接入来源细胞/参考 ER 背景。`environment_palette` 可覆盖 `cell/dna/structure/er`。可选 `environment_compositor.dark/light` 接受 `background`、三个远/中/近层的 `blur_pixels_1280` 和 `opacity`；模糊随输出宽度缩放，主体仍走清晰层。无这些字段时保留旧合成设置。此控制针对三维环境层，不改变独立显微背板的来源配置，也不重写分子入口的背景模型。
+
+```bash
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_organelle_scene.py" -- \
+  --style-profile "$SKILL/assets/style-organelle-materials.json" \
+  --frames 1 --width 1600 --samples 64 --output "$PROJECT/organelle"
+# 按 cellular-environment.md 准备参考 ER 曲线，再接入场景中的环境配置。
+"$BLENDER" -b "$PROJECT/organelle/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/apply_scale_environment.py" -- \
+  --scale organelle --style dark --context-assets "$PROJECT/er-network" \
+  --width 1600 --samples 64 --output "$PROJECT/organelle-context" --render
+
+"$BLENDER" -b "$PROJECT/organelle-context/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_surface_materials.py" -- \
+  --profile "$SKILL/assets/style-organelle-materials.json" \
+  --require-roles membrane_surface protein nucleic_acid environment \
+  --output "$PROJECT/organelle-context/material-check.json"
+```
+
+该检查器核对配置与保存节点的权重、纹理、局部坐标连接、无几何位移，以及主着色器是否连接到活动输出；`--require-roles` 用于防止预期角色完全没有接入。它不能证明源结构保真、颜色/灯光正确或画面美观，仍须使用相应几何检查器并实际看图。`test_surface_materials.py` 可在 Blender 内运行，覆盖透明混合的有效路径以及断连、未使用着色器、参数漂移、位移和非法背景合成参数。
+
+不是所有生成器都已接入角色配置；未列出的入口需单独核对。此次扩展不升级原有形体的证据等级：细胞总览和线粒体仍含夸大的教学结构；同源标记表面仍受来源成像/显示分辨率限制。
 
 ## 逐项目调节并检查
 
