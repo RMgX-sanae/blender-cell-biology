@@ -22,7 +22,7 @@
 
 - 每份来源用 `pdb`、`sha256`、`assembly_id` 绑定；`chains` 指定作者链、精确 description、可选 UniProt/源物种、关键残基/原子、标签和颜色。表达宿主不当作蛋白来源物种。保留 label/entity、sequence-difference 记录和源物种类别。
 - `ligand_instances` 精确指定非聚合物身份。复用 helper 的 `owner_role` 只作静态分组；所有配体与该状态的全部链接受同一次刚体变换，不表示已经证明某种生理归属或金属配位。
-- 当前仅接受原始 mmCIF 中恒等操作的 assembly。多操作装配须先走专用装配准备；不要删掉操作表来强行通过。
+- 原格式接受原始 mmCIF 中恒等操作的 assembly。重复链或多操作装配采用 [显式装配实例](source-assembly-instances.md)，保留作者/label 链名、实例与源操作，并核对独立装配参考；不要删掉操作表来强行通过。
 - `alignment` 明确 CA 对应及允许的覆盖/RMSD。旧格式继续支持同一作者编号体系；当前终止配置用 eRF1 N 端 6–135。不同链或编号用下述逐状态映射，不能靠链名或相同数字猜测同源关系。其他对象一起移动；不是逐蛋白居中，没有逐结构域拉伸，也不自动实现柔性运动。
 - 共同 `origin_angstrom`、`basis_columns` 只定义显示坐标系。每栏同一尺度，排版仅平移；`build_source_state_comparison.py` 复用既有表面、材质、灯光、字体与合成入口。
 

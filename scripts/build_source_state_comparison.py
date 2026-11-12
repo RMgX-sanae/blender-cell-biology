@@ -87,6 +87,8 @@ def main():
             obj.parent = rig
             obj['source_state'], obj['source_file'] = state['pdb'], actor['file']
             obj['source_author_chain'] = actor['chain']
+            for key in ('instance_id', 'label_chain', 'operator'):
+                if key in actor: obj['source_'+key] = actor[key]
             # No smoothing modifier, deformation, section or per-protein recentering.
             label_mat = material(state['pdb']+' label '+actor['label'], actor['color'], .7, 0)
             shader = label_mat.node_tree.nodes.get('Principled BSDF')
@@ -100,6 +102,8 @@ def main():
                 models.objects.link(obj); obj.parent = rig
                 obj.location = point; obj.scale = (.13, .13, .13)
                 obj['source_ligand_state'], obj['ligand_index'], obj['atom_index'] = state['pdb'], j, k
+                for key in ('instance_id', 'label_chain', 'operator', 'owner_instance'):
+                    if key in ligand: obj['source_'+key] = ligand[key]
         text(state['title'], x, body_half_height+2.0, .9)
         text(state['state_label'], x, body_half_height+.95, .65)
         text(state['pdb'], x, -body_half_height-2.4, .75)

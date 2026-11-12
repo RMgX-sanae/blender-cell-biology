@@ -1,8 +1,8 @@
 """Prepare reviewed, separate experimental states; never morph or merge them.
 
 Uses the existing source, polymer, ligand, surface and rigid-fit helpers.
-Supports identity-operation assemblies and explicitly reviewed CA maps.
-Multiple-operation assemblies still require separate preparation.
+Supports legacy identity selections and explicit, independently checked
+assembly instances, with reviewed CA maps between retained polymer instances.
 """
 import argparse
 import json
@@ -14,6 +14,11 @@ import numpy as np
 from prepare_binding_candidates import checked_source, fit_template, residue_id, valid_residue_id, sha, transform
 from prepare_interaction import select_ligands
 from prepare_molecular_asset import atom_table, surface, xyz
+from source_assembly import reviewed_members
+
+
+def selection_key(spec):
+    return spec.get('instance_id', spec['chain'])
 
 
 def rows(block, category):
@@ -28,7 +33,7 @@ def alignment_maps(config):
     if 'maps' in fit:
         if any(key in fit for key in ('chain', 'author_residues', 'minimum_CA_coverage', 'maximum_rmsd_angstrom')):
             raise ValueError('Choose explicit per-state maps or the same-numbered alignment, not both')
-        reference_chain = fit['reference_chain']; mappings = fit['maps']
+        reference_chain = fit.get('reference_instance_id', fit['reference_chain']); mappings = fit['maps']
         if set(mappings) != set(states) or any(not m.get('note') for m in mappings.values()):
             raise ValueError('Supply one reviewed mapping and its rationale for every state')
     else:
@@ -37,13 +42,17 @@ def alignment_maps(config):
                    'expected_substitutions': [], 'min_CA_coverage': fit['minimum_CA_coverage'],
                    'max_CA_rmsd_angstrom': fit['maximum_rmsd_angstrom']}
         mappings = {code: dict(mapping) for code in states}
-    if reference_chain not in {c['chain'] for c in states[config['reference']]['chains']}:
+    if reference_chain not in {selection_key(c) for c in states[config['reference']]['chains']}:
         raise ValueError('Reference fitting chain must be retained')
+    reference_spec = next(c for c in states[config['reference']]['chains'] if selection_key(c) == reference_chain)
+    if reference_spec['chain'] != fit.get('reference_chain',fit.get('chain')):
+        raise ValueError('Reference fitting author chain differs from the selected instance')
     for code, mapping in mappings.items():
-        if mapping['chain'] not in {c['chain'] for c in states[code]['chains']}:
+        selected = [c for c in states[code]['chains'] if selection_key(c) == selection_key(mapping)]
+        if len(selected) != 1 or selected[0]['chain'] != mapping['chain']:
             raise ValueError('State fitting chain must be retained: '+code)
     reference = mappings[config['reference']]
-    if reference['chain'] != reference_chain or any(a != b for a, b in reference['residue_pairs']):
+    if selection_key(reference) != reference_chain or any(a != b for a, b in reference['residue_pairs']):
         raise ValueError('The reference state must retain its own chain and residue identities')
     return reference_chain, mappings
 
@@ -71,7 +80,15 @@ def qualify(sources, state):
     included = set()
     if assembly is None or not generators:
         raise ValueError('Missing reviewed assembly')
-    for gen in generators:
+    explicit = 'assembly_reference' in state or any('instance_id' in c or 'operator' in c or 'label_chain' in c for c in state['chains'])
+    members = {}
+    if explicit:
+        _, selected_members, proof = reviewed_members(path, state)
+        members = {m['instance_id']: m for m in selected_members if m['kind'] == 'polymer'}
+        table = {key: m['rows'] for key,m in members.items()}
+        assembly = {**assembly, 'instance_check': proof}
+        ligand_rows = {'assembly_members': [m for m in selected_members if m['kind'] == 'companion']}
+    for gen in ([] if explicit else generators):
         # A restricted, explicit boundary: do not silently ignore symmetry.
         op = operators.get(gen['oper_expression'])
         if op is None:
@@ -81,19 +98,24 @@ def qualify(sources, state):
         if not np.allclose(matrix, np.eye(3), atol=1e-8, rtol=0) or not np.allclose(shift, 0, atol=1e-8, rtol=0):
             raise ValueError('Prepare non-identity/multiple-operation assemblies separately')
         included.update(gen['asym_id_list'].split(','))
-    table = atom_table(path, include_insertion_codes=True)
+    if not explicit: table = atom_table(path, include_insertion_codes=True)
     selected, info = {}, []
     for spec in state['chains']:
-        chain = spec['chain']
-        if chain in selected or chain not in table:
+        chain = spec['chain']; key = selection_key(spec)
+        if key in selected or key not in table:
             raise ValueError('Missing or duplicate selected polymer chain: '+chain)
-        matches = [r for r in polymers if chain in r['pdbx_strand_id'].split(',')]
+        if explicit:
+            labels = [spec['label_chain']]
+            entity_id = next(r['entity_id'] for r in rows(block, '_struct_asym.') if r['id'] == labels[0])
+            matches = [r for r in polymers if r['entity_id'] == entity_id]
+        else:
+            matches = [r for r in polymers if chain in r['pdbx_strand_id'].split(',')]
+            labels = sorted({r.subchain for c in model if c.name == chain for r in c
+                             if r.entity_type == gemmi.EntityType.Polymer})
         if len(matches) != 1:
             raise ValueError('Ambiguous author-chain entity: '+chain)
         entity = entities[matches[0]['entity_id']]
-        labels = sorted({r.subchain for c in model if c.name == chain for r in c
-                         if r.entity_type == gemmi.EntityType.Polymer})
-        if not set(labels) <= included:
+        if not explicit and not set(labels) <= included:
             raise ValueError('Selected polymer is outside the reviewed assembly')
         if entity['pdbx_description'] != spec['description']:
             raise ValueError('Source chain identity differs from the reviewed description: '+chain)
@@ -104,33 +126,35 @@ def qualify(sources, state):
         source_organisms = [r for r in organisms if r['entity_id'] == entity['id']]
         if spec.get('source_organism') and spec['source_organism'] not in {r['organism'] for r in source_organisms}:
             raise ValueError('Source organism differs from the reviewed protein: '+chain)
-        selected[chain] = table[chain]
+        selected[key] = table[key]
         actual = {}
-        for row in table[chain]:
-            key = (residue_id(row), row[2])
-            if key in actual:
-                raise ValueError('Ambiguous retained polymer atom identity: '+str(key))
-            actual[key] = row
+        for row in table[key]:
+            atom_key = (residue_id(row), row[2])
+            if atom_key in actual:
+                raise ValueError('Ambiguous retained polymer atom identity: '+str(atom_key))
+            actual[atom_key] = row
         for site in spec.get('sites', []):
             if not valid_residue_id(site['residue']):
                 raise ValueError('Reviewed sites require integer author numbers or explicit insertion codes')
-            site_rows = [r for r in table[chain] if residue_id(r) == site['residue']]
+            site_rows = [r for r in table[key] if residue_id(r) == site['residue']]
             if not site_rows or {r[4] for r in site_rows} != {site['name']}:
                 raise ValueError('Reviewed site residue differs or is not retained: '+chain+str(site))
             if not set(site.get('atoms', [])) <= {r[2] for r in site_rows}:
                 raise ValueError('Reviewed site atom is not retained: '+chain+str(site))
-        info.append({**spec, 'entity_id': entity['id'], 'label_chains': labels,
+        operation = {'source_operation_angstrom': members[key]['source_operation_angstrom']} if explicit else {}
+        info.append({**spec, **operation, 'entity_id': entity['id'], 'label_chains': labels,
                      'polymer_type': matches[0]['type'],
                      'uniprot_accessions': accessions,
                      'source_organisms': source_organisms,
                      'deposited_mutation_field': entity.get('pdbx_mutation'),
                      'sequence_differences': [r for r in diffs if r.get('pdbx_pdb_strand_id') == chain]})
-    ligand_spec = {'ligand_instances': state['ligand_instances'],
-                   'ligand_selection_note': state['selection_note']}
-    ligand_rows = select_ligands(model, ligand_spec)
-    for _, residue, _ in ligand_rows['anchor'] + ligand_rows['moving']:
-        if residue.subchain not in included:
-            raise ValueError('Selected ligand is outside the reviewed assembly')
+    if not explicit:
+        ligand_spec = {'ligand_instances': state['ligand_instances'],
+                       'ligand_selection_note': state['selection_note']}
+        ligand_rows = select_ligands(model, ligand_spec)
+        for _, residue, _ in ligand_rows['anchor'] + ligand_rows['moving']:
+            if residue.subchain not in included:
+                raise ValueError('Selected ligand is outside the reviewed assembly')
     return path, provenance, selected, info, ligand_rows, assembly
 
 
@@ -158,12 +182,12 @@ def prepare(sources, config_path, output):
         code = state['pdb']
         path, provenance, selected, info, ligands, assembly = qualified[code]
         mapping = mappings[code]
-        matrix, fit_report = fit_template(selected[mapping['chain']], reference, mapping)
+        matrix, fit_report = fit_template(selected[selection_key(mapping)], reference, mapping)
         def local(points):
             return (transform(points, matrix) - origin) @ basis * .1
         actors = []
         for i, spec in enumerate(info):
-            chain = spec['chain']; source_rows = selected[chain]
+            source_rows = selected[selection_key(spec)]
             atoms = local(xyz(source_rows))
             vertices, faces = surface(atoms * 10, .75, 1.15, .55)
             name = f'{code}_polymer_{i}.npz'
@@ -173,7 +197,13 @@ def prepare(sources, config_path, output):
                 insertion_codes=np.array([r[5] for r in source_rows]), residue_names=np.array([r[4] for r in source_rows]))
             actors.append({**spec, 'file': name, 'atoms': len(atoms), 'kind': 'polymer'})
         companions = []
-        for chain, residue, atoms in ligands['anchor'] + ligands['moving']:
+        for member in ligands.get('assembly_members', []):
+            source_rows = member['rows']
+            identity = {k:v for k,v in member.items() if k not in ('source_rows','rows','kind')}
+            companions.append({**identity, 'residue': str(member['residue_number'])+member.get('insertion_code',''),
+                'atom_names': [r[2] for r in source_rows], 'elements': [r[1] for r in source_rows],
+                'positions_nm': local(xyz(source_rows)).tolist()})
+        for chain, residue, atoms in ligands.get('anchor', []) + ligands.get('moving', []):
             companions.append({'chain': chain, 'residue': str(residue.seqid), 'component': residue.name,
                 'atom_names': [a.name for a in atoms], 'elements': [a.element.name for a in atoms],
                 'positions_nm': local(np.array([list(a.pos) for a in atoms])).tolist()})

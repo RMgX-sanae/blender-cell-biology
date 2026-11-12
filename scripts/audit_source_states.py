@@ -33,12 +33,21 @@ def assets(directory):
         require(len(state['actors']) == len(reviewed['chains']), 'Polymer chain inventory mismatch')
         for actor, spec in zip(state['actors'], reviewed['chains']):
             require(all(actor.get(key) == value for key, value in spec.items()), 'Prepared polymer declaration differs from reviewed config')
-        expected = [(s['chain'], str(s['residue_number'])+s.get('insertion_code','').strip(), s['component'])
+        if any('instance_id' in spec for spec in reviewed['chains']):
+            proof=state['assembly'].get('instance_check',{})
+            ids={s['instance_id'] for s in reviewed['chains']+reviewed['ligand_instances']}
+            require(proof.get('passed') and proof.get('reference_sha256')==reviewed['assembly_reference']['sha256']
+                    and proof.get('matched_instances')==len(ids) and set(proof.get('instance_map',{}))==ids,
+                    'Missing or inconsistent independent assembly evidence')
+        expected = [(s.get('instance_id'), s['chain'], str(s['residue_number'])+s.get('insertion_code','').strip(), s['component'])
                     for s in reviewed['ligand_instances']]
-        actual = [(s['chain'], s['residue'], s['component']) for s in state['ligands']]
+        actual = [(s.get('instance_id'), s['chain'], s['residue'], s['component']) for s in state['ligands']]
         require(len(expected) == len(set(expected)) and len(actual) == len(set(actual))
                 and set(actual) == set(expected), 'Companion inventory/identity mismatch')
         for ligand in state['ligands']:
+            if 'instance_id' in ligand:
+                spec = next(s for s in reviewed['ligand_instances'] if s['instance_id'] == ligand['instance_id'])
+                require(all(ligand.get(k) == v for k,v in spec.items()), 'Prepared companion instance differs from reviewed config')
             names = ligand['atom_names']; positions = np.asarray(ligand['positions_nm'], dtype=float)
             require(bool(names) and len(names) == len(set(names)) and len(ligand['elements']) == len(names)
                     and positions.shape == (len(names),3) and np.isfinite(positions).all(), 'Invalid companion atom inventory')
@@ -52,8 +61,9 @@ def assets(directory):
 
 def check_sources(directory, sources, config_path):
     import gemmi
-    from prepare_source_states import alignment_maps
+    from prepare_source_states import alignment_maps, selection_key
     from prepare_binding_candidates import valid_residue_id
+    from source_assembly import reviewed_members
     m = assets(directory); config = json.loads(config_path.read_text())
     require(m['config'] == config and m['config_sha256'] == digest(config_path), 'Reviewed config mismatch')
     require([s['pdb'] for s in m['states']] == [s['pdb'] for s in config['states']], 'State inventory mismatch')
@@ -70,6 +80,14 @@ def check_sources(directory, sources, config_path):
         polymer_table = block.get_mmcif_category('_entity_poly.')
         polymer_types = {chain: kind for chains, kind in zip(polymer_table['pdbx_strand_id'], polymer_table['type'])
                          for chain in chains.split(',')}
+        entity_types = dict(zip(polymer_table['entity_id'],polymer_table['type']))
+        asym = block.get_mmcif_category('_struct_asym.')
+        label_entities = dict(zip(asym['id'],asym['entity_id']))
+        members = {}
+        if 'instance_check' in state['assembly']:
+            _, selected, proof = reviewed_members(path, reviewed)
+            members = {member['instance_id']: member for member in selected}
+            require(proof == state['assembly']['instance_check'], 'Independent assembly check differs')
         matrix = np.array(state['alignment_matrix_angstrom'])
         require(np.allclose(matrix[3], [0, 0, 0, 1]) and
                 np.allclose(matrix[:3,:3].T@matrix[:3,:3], np.eye(3), rtol=0, atol=1e-7) and
@@ -80,19 +98,26 @@ def check_sources(directory, sources, config_path):
         state_count, fit_positions = 0, {}
         for actor in state['actors']:
             if 'polymer_type' in actor:
-                require(actor['polymer_type'] == polymer_types[actor['chain']], 'Raw polymer type mismatch')
+                kind = entity_types[label_entities[actor['label_chain']]] if 'instance_id' in actor else polymer_types[actor['chain']]
+                require(actor['polymer_type'] == kind, 'Raw polymer type mismatch')
             raw = []
+            operation = np.eye(4)
+            if 'instance_id' in actor:
+                operation = np.array(members[actor['instance_id']]['source_operation_angstrom'])
+                require(np.array_equal(operation, actor['source_operation_angstrom']), 'Source assembly operation differs')
             for chain in model:
                 if chain.name != actor['chain']: continue
                 for res in chain:
                     if res.entity_type != gemmi.EntityType.Polymer: continue
+                    if 'instance_id' in actor and res.subchain != actor['label_chain']: continue
                     for atom in res:
                         if atom.element.is_hydrogen or atom.occ <= 0 or atom.altloc not in ('\x00', 'A'): continue
-                        raw.append((list(atom.pos), atom.name, res.seqid.num, res.seqid.icode.strip(), res.name, atom.element.name))
-                        if actor['chain'] == mappings[state['pdb']]['chain'] and atom.name == 'CA':
+                        point = np.array(list(atom.pos))@operation[:3,:3].T+operation[:3,3]
+                        raw.append((point, atom.name, res.seqid.num, res.seqid.icode.strip(), res.name, atom.element.name))
+                        if selection_key(actor) == selection_key(mappings[state['pdb']]) and atom.name == 'CA':
                             identity = str(res.seqid) if res.seqid.icode.strip() else res.seqid.num
                             require(identity not in fit_positions and atom.element.name == 'C', 'Ambiguous raw C-alpha identity')
-                            fit_positions[identity] = (list(atom.pos), res.name)
+                            fit_positions[identity] = (point, res.name)
             d = np.load(directory/actor['file'], allow_pickle=False)
             require(len(raw) == actor['atoms'] == len(d['atoms']), 'Atom count mismatch')
             for key, col in [('atom_names',1), ('residue_numbers',2), ('insertion_codes',3), ('residue_names',4), ('elements',5)]:
@@ -109,11 +134,18 @@ def check_sources(directory, sources, config_path):
         for ligand in state['ligands']:
             key = (ligand['chain'], ligand['residue'], ligand['component'])
             matched = [r for c in model if c.name == key[0] for r in c
-                       if str(r.seqid) == key[1] and r.name == key[2] and r.entity_type == gemmi.EntityType.NonPolymer]
+                       if str(r.seqid) == key[1] and r.name == key[2]
+                       and r.entity_type in (gemmi.EntityType.NonPolymer, gemmi.EntityType.Water)
+                       and ('instance_id' not in ligand or r.subchain == ligand['label_chain'])]
             require(len(matched) == 1, 'Ambiguous raw companion')
             atoms = [a for a in matched[0] if not a.element.is_hydrogen and a.occ > 0 and a.altloc in ('\x00', 'A')]
             require(ligand['atom_names'] == [a.name for a in atoms] and ligand['elements'] == [a.element.name for a in atoms], 'Companion atom identity mismatch')
-            require(np.allclose(ligand['positions_nm'], local([list(a.pos) for a in atoms]), rtol=0, atol=1e-8), 'Companion coordinate mismatch')
+            points = np.array([list(a.pos) for a in atoms])
+            if 'instance_id' in ligand:
+                operation = np.array(members[ligand['instance_id']]['source_operation_angstrom'])
+                require(np.array_equal(operation, ligand['source_operation_angstrom']), 'Companion assembly operation differs')
+                points = points@operation[:3,:3].T+operation[:3,3]
+            require(np.allclose(ligand['positions_nm'], local(points), rtol=0, atol=1e-8), 'Companion coordinate mismatch')
         counts.append({'state': state['pdb'], 'polymer_atoms': state_count, 'ligand_atoms': sum(len(l['atom_names']) for l in state['ligands'])})
     reference = source_ca[config['reference']]; rmsds = {}
     for code, mapping in mappings.items():
@@ -159,6 +191,8 @@ def check_scene(directory):
             require(len(objs) == 1, 'Missing/duplicate saved polymer')
             obj = objs[0]; d = np.load(directory/actor['file'], allow_pickle=False)
             require(obj['source_author_chain'] == actor['chain'], 'Saved author-chain identity mismatch')
+            for key in ('instance_id', 'label_chain', 'operator'):
+                if key in actor: require(obj.get('source_'+key) == actor[key], 'Saved assembly instance identity mismatch')
             vertices = np.empty(len(obj.data.vertices)*3, np.float32)
             obj.data.vertices.foreach_get('co', vertices)
             indices = np.empty(len(obj.data.loops), np.int32)
@@ -177,6 +211,8 @@ def check_scene(directory):
                 objs = [o for o in ligand_objects if o['source_ligand_state'] == state['pdb'] and o['ligand_index'] == j and o['atom_index'] == k]
                 require(len(objs) == 1, 'Missing/duplicate saved companion atom')
                 obj = objs[0]
+                for key in ('instance_id', 'label_chain', 'operator', 'owner_instance'):
+                    if key in ligand: require(obj.get('source_'+key) == ligand[key], 'Saved companion instance identity mismatch')
                 require(not obj.hide_render and not obj.hide_viewport and not obj.modifiers and
                         np.allclose(obj.matrix_world.translation, np.array(point)+offset, rtol=0, atol=2e-6) and
                         np.allclose(np.array(obj.matrix_world)[:3,:3], np.eye(3)*.13, rtol=0, atol=1e-6), 'Saved companion transform changed')

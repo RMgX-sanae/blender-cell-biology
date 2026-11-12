@@ -30,6 +30,9 @@ def main():
     p.add_argument('--visible-actors',nargs='+',help='Show selected whole actors; keep omitted geometry in the scene')
     p.add_argument('--moving-label',help='Accurate display name when showing selected moving subunits')
     p.add_argument('--partner-colors',nargs=2,metavar=('ANCHOR','MOVING'),help='Two sRGB #RRGGBB colors, also used by the legend')
+    p.add_argument('--surface-profile',type=Path,help='Use existing surface_roles shaders with cinematic/teaching PBR styles')
+    p.add_argument('--representation',choices=('surface','atoms'),help='Override the existing polymer representation')
+    p.add_argument('--orbit-degrees',type=float,default=0,help='Orbit camera and lights about the partner axis for an intact internal view')
     p.add_argument('--snapshot-frame',type=int,help='Build a static review with framing for one prepared pose')
     p.add_argument('--render',action='store_true')
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
@@ -45,6 +48,8 @@ def main():
         p.error('Select known whole actors, with at least one actor from each partner')
     if m['example'].get('requires_membrane') and not (m.get('membrane') and m.get('membrane_screen_passed')):
         p.error('This example requires qualified membrane preparation')
+    if not np.isfinite(a.orbit_degrees) or m.get('membrane') and a.orbit_degrees:
+        p.error('Use a finite orbit for isolated partners; membrane scenes use their reviewed membrane.view')
     if not m['motion']['collision_screen_passed']:
         p.error('The prepared path has unresolved deep-overlap frames; inspect and refine it first')
     poses=np.load(a.asset_dir/'motion.npz')['matrices'];n=m['frames']
@@ -53,36 +58,52 @@ def main():
         poses=poses[a.snapshot_frame-1:a.snapshot_frame];n=1
     library=json.loads((Path(__file__).resolve().parents[1]/'assets/style-library.json').read_text())
     profile=dict(library['profiles'][a.style])
+    if a.representation:profile['representation']=a.representation
     if a.style=='illustrative':
         profile['palette']=['#78a8e8','#d69a68','#5d87c0']
     if a.style=='fluorescence':
         profile.update(emission_strength=2.4,emission_depth=.85)
     if a.partner_colors:profile['palette']=a.partner_colors+profile['palette'][2:]
+    surface_profile=json.loads(a.surface_profile.read_text()) if a.surface_profile else None
+    if surface_profile is not None and (profile['material']!='pbr' or not surface_profile.get('surface_roles')):
+        p.error('A surface profile requires a PBR style and nonempty surface_roles')
+    def actor_material(actor,color):
+        role='cofactor' if actor['kind']!='polymer' else ('nucleic_acid' if actor.get('polymer_type','').startswith(('polyribonucleotide','polydeoxyribonucleotide')) else 'protein')
+        if surface_profile and role in surface_profile['surface_roles']:
+            mat=ds.material(actor['id'],color,settings=surface_profile['surface_roles'][role]);mat['surface_role']=role
+            return mat
+        return sn.material(actor['id'],profile,color,'pbr' if actor['kind']!='polymer' else None)
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
     molecules=ds.collection('Interaction partners');environment=ds.collection('Environment');labels=ds.collection('Labels')
     rigs={}
     for role in ['anchor','moving']:
         rig=bpy.data.objects.new(role,None);molecules.objects.link(rig);rigs[role]=rig
-    points={'anchor':[],'moving':[]};bounds={'anchor':[],'moving':[]};objects=[]
+    points={'anchor':[],'moving':[]};bounds={'anchor':[],'moving':[]};objects=[];resolved_colors={}
     for actor in m['actors']:
         d=np.load(a.asset_dir/actor['file'])
         if actor['id'] in visible:points[actor['role']].append(d['atoms'])
         color=profile['palette'][0 if actor['role']=='anchor' else 1]
+        if not a.partner_colors:color=actor.get('color',color)
+        if not re.fullmatch(r'#?[0-9a-fA-F]{6}',color):raise ValueError('Actor colors must be sRGB hex values')
         if actor['kind']=='polymer':
-            mat=sn.material(actor['id'],profile,color)
+            mat=actor_material(actor,color)
             if profile['representation']=='atoms':
                 obj=sn.point_object(actor['id'],d['atoms'],molecules)
                 sn.instance_spheres(obj,mat,radius=.13,subdivisions=2)
             else:
                 obj=ds.mesh(actor['id'],d['vertices'],d['faces'],[mat],molecules)
         else:
-            mat=sn.material(actor['id'],profile,'#e9bd65','pbr')
+            color=actor.get('color','#e9bd65');mat=actor_material(actor,color)
             obj=sn.point_object(actor['id'],d['atoms'],molecules)
             sn.instance_spheres(obj,mat,radius=.11,subdivisions=2)
         obj.parent=rigs[actor['role']];obj['biological_id']=actor['id']
         obj.hide_render=actor['id'] not in visible
         obj['source_structure']=actor.get('source_pdb',m['example']['pdb']);obj['source_asset']=str((a.asset_dir/actor['file']).resolve())
+        obj['source_author_chain']=actor['chain']
+        for key in ('instance_id','label_chain','operator','assembly_id','owner_instance'):
+            if key in actor:obj['source_'+key]=actor[key]
         objects.append(obj)
+        resolved_colors[actor['id']]=color
         extent=d['atoms'] if obj.modifiers else d['vertices']
         padding=.14 if obj.modifiers else 0
         lo=extent.min(0)-padding;hi=extent.max(0)+padding
@@ -102,6 +123,10 @@ def main():
     right=mobile.mean(0)-anchor.mean(0);right/=np.linalg.norm(right)
     up=np.eye(3)[np.argmin(abs(right))];up-=right*np.dot(up,right);up/=np.linalg.norm(up)
     front=np.cross(right,up)
+    original_basis=np.column_stack([right,up,front])
+    if a.orbit_degrees:
+        angle=np.radians(a.orbit_degrees)
+        up=np.cos(angle)*up+np.sin(angle)*front;front=np.cross(right,up)
     if m.get('membrane'):
         view=m['membrane']['view'];az,el=np.radians([view['azimuth_degrees'],view['elevation_degrees']])
         front=np.array([np.cos(az)*np.cos(el),np.sin(az)*np.cos(el),np.sin(el)])
@@ -122,6 +147,10 @@ def main():
     a.fps=m['fps'];a.frames=n;a.compositor='clean'
     studio=json.loads((Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json').read_text())
     studio['background']=profile['background'];studio['bump']=0;studio['exposure']=0
+    if a.orbit_degrees:
+        rotation=basis@original_basis.T
+        studio['lighting']=[{**light,'position':(center+rotation@(np.array(light['position'])-center)).tolist()}
+                            for light in studio['lighting']]
     ds.studio(studio,a,{'position':(center+front*width*2).tolist(),'target':center.tolist(),'scale':width,'light_scale':1})
     scene=bpy.context.scene
     # Preserve the source coordinate frame; rotate the camera roll to the selected right/up axes.
@@ -153,13 +182,24 @@ def main():
         return obj
     moving_label=a.moving_label or m['example']['moving_label']
     text(m.get('display_title',m['example']['anchor_label']+' / '+moving_label),0,width*.24,width*.035)
-    text(m['example']['anchor_label'],-width*.22,-width*.235,width*.028)
-    text(moving_label,width*.22,-width*.235,width*.028)
-    for role,x,color in [('anchor',-.40,profile['palette'][0]),('moving',.04,profile['palette'][1])]:
+    instance_legend=not a.partner_colors and any('color' in actor for actor in m['actors'] if actor['kind']=='polymer')
+    if instance_legend:
+        members=[actor for actor in m['actors'] if actor['kind']=='polymer' and actor['id'] in visible]
+        entries=[]
+        for i,actor in enumerate(members):
+            x=(i-(len(members)-1)/2)*.86/len(members)
+            text(actor.get('label',actor['chain']),width*x,-width*.235,width*.022)
+            entries.append((actor['id'],x-.068,resolved_colors[actor['id']],[actor['id']]))
+    else:
+        text(m['example']['anchor_label'],-width*.22,-width*.235,width*.028)
+        text(moving_label,width*.22,-width*.235,width*.028)
+        entries=[(role,x,profile['palette'][i],[actor['id'] for actor in m['actors'] if actor['role']==role and actor['id'] in visible])
+                 for i,(role,x) in enumerate([('anchor',-.40),('moving',.04)])]
+    for name,x,color,identities in entries:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=width*.009,
             location=scene.camera.matrix_world@Vector((width*x,-width*.225,-width*2)))
-        dot=bpy.context.object;dot.name=role+' legend color'
-        dot['legend_for_objects']=json.dumps([actor['id'] for actor in m['actors'] if actor['role']==role and actor['id'] in visible])
+        dot=bpy.context.object;dot.name=name+' legend color'
+        dot['legend_for_objects']=json.dumps(identities)
         dot.data.materials.append(sn.material(dot.name,profile,color,'paint'))
     typography=isolate_labels(scene,profile['background'])
     tree=scene.compositing_node_group
@@ -183,6 +223,9 @@ def main():
     scene['interaction_asset_dir']=str(a.asset_dir.resolve())
     scene['interaction_manifest_sha256']=integrity['manifest_sha256']
     scene['interaction_visible_actors']=json.dumps(sorted(visible))
+    scene['interaction_resolved_colors']=json.dumps(resolved_colors)
+    scene['interaction_orbit_degrees']=a.orbit_degrees
+    if surface_profile:scene['interaction_surface_profile']=json.dumps(surface_profile)
     if a.snapshot_frame is not None:scene['interaction_snapshot_frame']=a.snapshot_frame
     scene['animation_evidence']='Static review of one prepared pose; no motion validation' if a.snapshot_frame is not None else m.get('animation_evidence','Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics')
     if m.get('binding_candidate'):
@@ -198,7 +241,8 @@ def main():
             bpy.ops.render.render(write_still=True)
     (a.output/'manifest.json').write_text(json.dumps({'asset':m,'style':a.style,'engine':a.engine,
         'source_objects':[o.name for o in objects],'visible_actors':sorted(visible),'snapshot_source_frame':a.snapshot_frame,'camera_scale_nm':width,'fps':m['fps'],'frames':n,
-        'partner_colors':profile['palette'][:2],'protected_typography':typography,
+        'partner_colors':profile['palette'][:2],'actor_colors':resolved_colors,'surface_profile':surface_profile,
+        'representation':profile['representation'],'orbit_degrees':a.orbit_degrees,'protected_typography':typography,
         'rendered_keyframes':a.render,'font_en':str(a.font_en),'environment_illustrative':bool(a.crowder_dir),
         'camera_dof':'Art-directed for readability; camera optics are not a microscope simulation'},ensure_ascii=False,indent=2))
 

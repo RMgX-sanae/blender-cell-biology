@@ -20,6 +20,7 @@ from scipy.spatial.transform import Rotation
 from interaction_motion import contacts, plan
 from prepare_molecular_asset import atom_table, surface, xyz
 from prepare_interaction import select_ligands
+from source_assembly import reviewed_members
 
 
 def sha(path):
@@ -78,6 +79,45 @@ def load_companions(sources, spec, role):
     return selected[role]
 
 
+def load_partner(sources, spec, role):
+    """Keep complete polymer instances separate, with one shared partner frame."""
+    if 'chains' in spec:
+        if 'chain' in spec or not spec.get('selection_note'):
+            raise ValueError('Declare reviewed assembly instances instead of an ambiguous single chain')
+        _, members, proof = reviewed_members(checked_source(sources, spec), spec)
+        result = []
+        for member in members:
+            if member.get('owner_role', role) != role: raise ValueError('Companion belongs to another source partner')
+            name = role+'_'+member['instance_id']
+            identity = {k:v for k,v in member.items() if k not in ('source_rows','kind','component')}
+            item = {**identity, 'id': name, 'file': name+'.npz', 'role': role,
+                    'source_pdb': spec['pdb'], 'assembly_id': spec['assembly_id'],
+                    'kind': 'polymer' if member['kind'] == 'polymer' else 'ligand'}
+            if item['kind'] == 'ligand': item['ccd'] = member['component']
+            result.append(item)
+        return result, proof
+    result = [{'id': role+'_monomer', 'role': role, 'kind': 'polymer', 'file': role+'.npz',
+               'chain': spec['chain'], 'source_pdb': spec['pdb'], 'rows': load_chain(sources, spec)}]
+    for chain, residue, atoms in load_companions(sources, spec, role):
+        name = role+'_'+chain+'_'+residue.name+'_'+str(residue.seqid)
+        result.append({'id': name, 'role': role, 'kind': 'ligand', 'file': name+'.npz', 'chain': chain,
+            'source_pdb': spec['pdb'], 'ccd': residue.name, 'residue_number': residue.seqid.num,
+            'insertion_code': residue.seqid.icode.strip(),
+            'rows': [(list(a.pos),a.element.name,a.name,residue.seqid.num,residue.name,residue.seqid.icode.strip()) for a in atoms]})
+    return result, None
+
+
+def rigid_fit_points(first_points, second_points):
+    ca, cb = first_points.mean(0), second_points.mean(0)
+    if min(np.linalg.matrix_rank(first_points-ca), np.linalg.matrix_rank(second_points-cb)) < 2:
+        raise ValueError('Mapped CA sites must define a noncollinear fit')
+    u, _, vt = np.linalg.svd((first_points-ca).T @ (second_points-cb))
+    rotation = vt.T @ np.diag([1, 1, np.linalg.det(vt.T @ u.T)]) @ u.T
+    matrix = np.eye(4); matrix[:3, :3] = rotation; matrix[:3, 3] = cb-rotation@ca
+    rmsd = float(np.sqrt(np.mean(np.sum((transform(first_points, matrix)-second_points)**2, axis=1))))
+    return matrix, rmsd
+
+
 def fit_template(first, second, mapping):
     def ca_sites(rows):
         sites = {}
@@ -108,13 +148,7 @@ def fit_template(first, second, mapping):
         raise ValueError('Sequence substitutions differ from the reviewed mapping')
     first_points = np.array([a[i][0] for i, _ in pairs])
     second_points = np.array([b[j][0] for _, j in pairs])
-    ca, cb = first_points.mean(0), second_points.mean(0)
-    if min(np.linalg.matrix_rank(first_points-ca), np.linalg.matrix_rank(second_points-cb)) < 2:
-        raise ValueError('Mapped CA sites must define a noncollinear fit')
-    u, _, vt = np.linalg.svd((first_points-ca).T @ (second_points-cb))
-    rotation = vt.T @ np.diag([1, 1, np.linalg.det(vt.T @ u.T)]) @ u.T
-    matrix = np.eye(4); matrix[:3, :3] = rotation; matrix[:3, 3] = cb-rotation@ca
-    rmsd = float(np.sqrt(np.mean(np.sum((transform(first_points, matrix)-second_points)**2, axis=1))))
+    matrix, rmsd = rigid_fit_points(first_points, second_points)
     coverage = len(pairs)/len(a)
     if coverage < coverage_gate or rmsd > rmsd_gate:
         raise ValueError('Template mapping fails the declared coverage/RMSD gate')
@@ -122,22 +156,52 @@ def fit_template(first, second, mapping):
                     'CA_rmsd_angstrom': rmsd, 'matrix_angstrom': matrix.tolist()}
 
 
-def restraint_indices(rows, restraints):
+def fit_partner_template(first, second, mappings):
+    source = {m['instance_id']: m['rows'] for m in first if m['kind'] == 'polymer'}
+    target = {m['instance_id']: m['rows'] for m in second if m['kind'] == 'polymer'}
+    if (len(mappings) != len(source) or {m['instance_id'] for m in mappings} != set(source)
+            or len(mappings) != len(target) or {m['template_instance_id'] for m in mappings} != set(target)):
+        raise ValueError('Map every retained partner/template polymer instance exactly once')
+    points, reports = [], []
+    for mapping in mappings:
+        a, b = source[mapping['instance_id']], target[mapping['template_instance_id']]
+        _, report = fit_template(a, b, mapping)
+        sites = [{residue_id(r): r[0] for r in rows if r[2] == 'CA'} for rows in (a,b)]
+        pair = [np.array([sites[k][p[k]] for p in mapping['residue_pairs']]) for k in (0,1)]
+        points.append(pair);reports.append(report)
+    matrix, rmsd = rigid_fit_points(*(np.concatenate([p[k] for p in points]) for k in (0,1)))
+    for mapping, pair, report in zip(mappings,points,reports):
+        error = float(np.sqrt(np.mean(np.sum((transform(pair[0],matrix)-pair[1])**2,axis=1))))
+        if error > mapping['max_CA_rmsd_angstrom']:
+            raise ValueError('One shared partner transform fails a member CA RMSD gate')
+        report.update(instance_id=mapping['instance_id'],template_instance_id=mapping['template_instance_id'],
+                      CA_rmsd_angstrom=error,matrix_angstrom=matrix.tolist())
+    return matrix, {'matrix_angstrom':matrix.tolist(),'CA_rmsd_angstrom':rmsd,'members':reports}
+
+
+def restraint_indices(rows, restraints, instance_ids=None):
     result = []
     if len(restraints) < 3:
         raise ValueError('Supply at least three reviewed residue-pair restraints; these still may not define a unique pose')
     seen = set()
     for item in restraints:
         pair = (item['anchor'], item['moving'])
-        key = (*pair, item.get('anchor_atom'), item.get('moving_atom'))
+        key = (*pair, item.get('anchor_atom'), item.get('moving_atom'),item.get('anchor_instance'),item.get('moving_instance'))
         if key in seen or any(not valid_residue_id(value) for value in pair):
             raise ValueError('Require distinct author residue pairs, with explicit insertion codes when present')
         seen.add(key)
         lo, hi = item['range_nm']
         if not np.isfinite([lo, hi]).all() or not 0 < lo < hi or not item.get('evidence'):
             raise ValueError('Each restraint requires positive distance bounds and its evidence/assumption')
-        indices = [np.flatnonzero([residue_id(r) == item[role] and (not item.get(role+'_atom') or r[2] == item[role+'_atom'])
-                                  for r in rows[role]]) for role in ['anchor', 'moving']]
+        indices = []
+        for role in ['anchor','moving']:
+            ids = instance_ids.get(role) if instance_ids else None
+            member = item.get(role+'_instance')
+            if (ids is not None and (len(ids) != len(rows[role]) or member not in ids)) or (ids is None and member is not None):
+                raise ValueError('Restraint must identify a retained polymer instance in its declared partner')
+            indices.append(np.flatnonzero([residue_id(r) == item[role]
+                and (ids is None or ids[i] == member) and (not item.get(role+'_atom') or r[2] == item[role+'_atom'])
+                for i,r in enumerate(rows[role])]))
         if any(len(idx) == 0 for idx in indices):
             raise ValueError('Restraint selects a missing residue')
         result.append((*indices, lo, hi))
@@ -249,15 +313,24 @@ def main():
     for key in ['atom_guard_nm', 'max_template_displacement_nm', 'cluster_rms_nm']:
         if not isinstance(settings[key], (int, float)) or isinstance(settings[key], bool) or not np.isfinite(settings[key]) or settings[key] <= 0:
             raise ValueError('Require a positive finite search setting: ' + key)
-    rows = {role: load_chain(args.sources, config[role]) for role in ['anchor', 'moving']}
-    companions = {role: load_companions(args.sources, config[role], role) for role in rows}
-    restraints = restraint_indices(rows, config['restraints'])
+    loaded = {role: load_partner(args.sources, config[role], role) for role in ['anchor', 'moving']}
+    partners = {role: value[0] for role,value in loaded.items()}
+    rows = {role: [row for member in members if member['kind'] == 'polymer' for row in member['rows']]
+            for role,members in partners.items()}
+    instance_ids = {role: [m['instance_id'] for m in members if m['kind'] == 'polymer' for _ in m['rows']]
+                    if 'chains' in config[role] else None for role,members in partners.items()}
+    restraints = restraint_indices(rows, config['restraints'], instance_ids)
     points = {}; fits = {}; matrices = {}
     for role in rows:
         if args.method == 'template':
             template = config['template']
-            target = load_chain(args.sources, {**template, 'chain': template[role]['chain']})
-            matrix, fits[role] = fit_template(rows[role], target, template[role])
+            if 'chains' in config[role]:
+                target, proof = load_partner(args.sources, {**template, **template[role]}, role)
+                matrix, fits[role] = fit_partner_template(partners[role], target, template[role]['maps'])
+                fits[role]['template_assembly_check'] = proof
+            else:
+                target = load_chain(args.sources, {**template, 'chain': template[role]['chain']})
+                matrix, fits[role] = fit_template(rows[role], target, template[role])
         else:
             matrix = np.eye(4); matrix[:3, 3] = -xyz(rows[role]).mean(0)
         matrices[role] = matrix
@@ -265,8 +338,8 @@ def main():
     # The template origin is shared; independent monomer coordinates have no shared frame.
     origin = points['anchor'].mean(0) if args.method == 'template' else np.zeros(3)
     points = {role: p-origin for role, p in points.items()}
-    companion_points = {role: [transform(np.array([list(atom.pos) for atom in atoms]), matrices[role])*.1-origin
-                              for _, _, atoms in entries] for role, entries in companions.items()}
+    companion_points = {role: [transform(xyz(m['rows']), matrices[role])*.1-origin
+                              for m in members if m['kind'] == 'ligand'] for role, members in partners.items()}
     # Polymer atoms stay first so residue restraint indices remain unchanged.
     points = {role: np.concatenate([p, *companion_points[role]]) for role, p in points.items()}
     direct = check_pose(points['anchor'], points['moving'], restraints, settings['atom_guard_nm']) if args.method == 'template' else None
@@ -279,6 +352,8 @@ def main():
               'shared_origin_nm': origin.tolist(), 'direct_transfer_screen': direct,
               'attempts': attempts, 'candidates': candidates,
               'limits': 'Candidates describe geometric hypotheses on one specified interface, not demonstrated alternative biological binding modes. Explicit source-bound nonpolymers follow their owner rigidly and enter cross-partner screening. No force field, side-chain relaxation, bulk solvent, affinity, confidence probability or physical trajectory. Restraint-derived examples are not independent blind predictions.'}
+    if any(proof for _,proof in loaded.values()):
+        report['partner_assembly_checks'] = {role: proof for role,(_,proof) in loaded.items() if proof}
     report_path = args.output/'candidates.json'
     report_path.write_text(json.dumps(report, indent=2)+'\n')
     if args.candidate > len(candidates):
@@ -288,7 +363,7 @@ def main():
     endpoint = check_pose(points['anchor'], points['moving'], restraints, settings['atom_guard_nm'])
     if not endpoint['passed']: raise ValueError('Unqualified candidate endpoint')
     if config.get('reference_contacts'):
-        diagnostic = restraint_indices(rows, config['reference_contacts'])
+        diagnostic = restraint_indices(rows, config['reference_contacts'], instance_ids)
         endpoint['reference_contact_diagnostic'] = check_pose(points['anchor'], points['moving'], diagnostic, settings['atom_guard_nm'])
         endpoint['reference_contact_note'] = 'Diagnostic only. Failing distances remain unresolved contacts; candidate acceptance does not assert their formation.'
     poses, motion = plan(points['moving'], points['anchor'], frames=args.frames, mode=args.mode, threshold=settings['atom_guard_nm'])
@@ -300,27 +375,22 @@ def main():
     (args.output/'motion-screen.json').write_text(json.dumps(motion, indent=2)+'\n')
     if not motion['collision_screen_passed']: raise ValueError('Candidate passed endpoint screening but its approach path failed')
     folder = args.output/'interaction'; folder.mkdir(); actors = []
-    for role, source_rows in rows.items():
-        polymer = points[role][:len(source_rows)]
-        vertices, faces = surface(polymer*10, .7, 1.1, .55)
-        file = role+'.npz'
-        insertion = {'insertion_codes': np.array([r[5] for r in source_rows])} if any(r[5] for r in source_rows) else {}
-        np.savez_compressed(folder/file, atoms=polymer, vertices=vertices*.1, faces=faces, **insertion,
-                            atom_names=np.array([r[2] for r in source_rows]), elements=np.array([r[1] for r in source_rows]),
-                            residue_numbers=np.array([r[3] for r in source_rows]), residue_names=np.array([r[4] for r in source_rows]))
-        actors.append({'id': role+'_monomer', 'role': role, 'kind': 'polymer', 'file': file,
-                       'chain': config[role]['chain'], 'source_pdb': config[role]['pdb'], 'atoms': len(source_rows)})
-        offset = len(source_rows)
-        for chain, residue, atoms in companions[role]:
-            name = role+'_'+chain+'_'+residue.name+'_'+str(residue.seqid); file = name+'.npz'
-            np.savez_compressed(folder/file, atoms=points[role][offset:offset+len(atoms)],
-                                elements=np.array([atom.element.name for atom in atoms]),
-                                atom_names=np.array([atom.name for atom in atoms]))
-            actors.append({'id': name, 'role': role, 'kind': 'ligand', 'file': file, 'chain': chain,
-                           'source_pdb': config[role]['pdb'], 'ccd': residue.name, 'residue_number': residue.seqid.num,
-                           'insertion_code': residue.seqid.icode.strip(), 'atom_names': [atom.name for atom in atoms],
-                           'atoms': len(atoms)})
-            offset += len(atoms)
+    for role, members in partners.items():
+        offset = 0
+        for member in members:
+            source_rows = member['rows']; atoms = points[role][offset:offset+len(source_rows)]
+            data = {'atoms':atoms,'elements':np.array([r[1] for r in source_rows]),
+                    'atom_names':np.array([r[2] for r in source_rows])}
+            actor = {k:v for k,v in member.items() if k != 'rows'}
+            if member['kind'] == 'polymer':
+                vertices, faces = surface(atoms*10, .7, 1.1, .55)
+                data.update(vertices=vertices*.1,faces=faces,residue_numbers=np.array([r[3] for r in source_rows]),
+                            residue_names=np.array([r[4] for r in source_rows]))
+                if any(r[5] for r in source_rows): data['insertion_codes'] = np.array([r[5] for r in source_rows])
+            else: actor['atom_names'] = [r[2] for r in source_rows]
+            np.savez_compressed(folder/member['file'], **data)
+            actors.append({**actor,'atoms':len(source_rows)})
+            offset += len(source_rows)
     np.savez_compressed(folder/'motion.npz', matrices=poses)
     manifest = {'input_kind': 'separate_monomers', 'example': {'id': config['id'], 'pdb': config['anchor']['pdb']+'+'+config['moving']['pdb'],
                            'anchor_label': config['anchor']['label'], 'moving_label': config['moving']['label'], 'limits': report['limits']},
@@ -330,6 +400,9 @@ def main():
                 'display_title': 'Binding hypothesis: '+config['anchor']['label']+' / '+config['moving']['label'],
                 'animation_evidence': 'Illustrative rigid motion toward a constrained binding hypothesis; neither a measured complex nor kinetics',
                 'source_config': config, 'data_sha256': {name: sha(folder/name) for name in [*(a['file'] for a in actors), 'motion.npz']}}
+    if report.get('partner_assembly_checks'):
+        manifest['input_kind'] = 'separate_partners'
+        manifest['partner_assembly_checks'] = report['partner_assembly_checks']
     (folder/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
     print(json.dumps({'method': args.method, 'candidates': len(candidates), 'selected': chosen['id'], 'endpoint': endpoint,
                       'path_passed': motion['collision_screen_passed'], 'minimum_path_center_nm': float(minimum.min())}))

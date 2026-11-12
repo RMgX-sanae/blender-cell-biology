@@ -10,6 +10,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from detail_scene import material
 from audit_surface_materials import check_materials
 from apply_scale_environment import layer_compositor
+from audit_interaction_scene import displayed_materials
 
 
 class SurfaceHandoff(unittest.TestCase):
@@ -70,6 +71,28 @@ class SurfaceHandoff(unittest.TestCase):
                          {'blur_pixels_1280':[1,float('inf'),20]},{'blur_pixel_1280':[1,2,3]}]:
             with self.subTest(settings=settings),self.assertRaises(ValueError):
                 layer_compositor(bpy.context.scene,[],'dark',1280,'cell',{'environment_compositor':{'dark':settings}})
+
+    def test_actual_surface_and_atom_material_assignment(self):
+        from detail_scene import mesh
+        from style_nodes import point_object,instance_spheres
+        other=material('Different protein','70C8E0')
+        group=bpy.context.scene.collection
+        surface=mesh('Assignment surface',[(0,0,0),(1,0,0),(0,1,0)],[(0,1,2)],[self.mat],group)
+        atoms=point_object('Assignment atoms',[(0,0,0)],group)
+        try:
+            self.assertEqual(displayed_materials(surface),{self.mat})
+            surface.material_slots[0].link='OBJECT';surface.material_slots[0].material=other
+            self.assertEqual(displayed_materials(surface),{other})
+            tree=instance_spheres(atoms,self.mat)
+            setter=next(n for n in tree.nodes if n.type=='SET_MATERIAL')
+            unused=tree.nodes.new('GeometryNodeSetMaterial');unused.inputs['Material'].default_value=other
+            self.assertEqual(displayed_materials(atoms),{self.mat})
+            setter.inputs['Material'].default_value=other
+            self.assertEqual(displayed_materials(atoms),{other})
+            for link in list(setter.outputs['Geometry'].links):tree.links.remove(link)
+            self.assertNotEqual(displayed_materials(atoms),{self.mat})
+        finally:
+            bpy.data.objects.remove(surface,do_unlink=True);bpy.data.objects.remove(atoms,do_unlink=True)
 
 
 if __name__=='__main__':

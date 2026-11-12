@@ -13,6 +13,29 @@ from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from interaction_assets import verify_assets
 from interaction_membrane import audit_display,plane_clearance
+from detail_scene import linear
+
+
+def displayed_materials(obj):
+    """Read effective surface slots or reachable atom-instance material setters."""
+    if not obj.modifiers:
+        slots=obj.material_slots
+        return {slots[p.material_index].material if p.material_index<len(slots) else None for p in obj.data.polygons}
+    assigned=set()
+    for modifier in obj.modifiers:
+        if modifier.type!='NODES' or not modifier.show_render or modifier.node_group is None:return {None}
+        pending=[n for n in modifier.node_group.nodes if n.type=='GROUP_OUTPUT' and n.is_active_output]
+        reached=set()
+        while pending:
+            node=pending.pop()
+            if node in reached:continue
+            reached.add(node)
+            pending.extend(link.from_node for socket in node.inputs for link in socket.links)
+        for node in reached:
+            if node.type=='SET_MATERIAL':
+                socket=node.inputs['Material']
+                assigned.add(None if socket.is_linked else socket.default_value)
+    return assigned
 
 
 def main():
@@ -36,6 +59,8 @@ def main():
     if visible-set(actor['id'] for actor in manifest['actors']) or any(not any(actor['id'] in visible and actor['role']==role for actor in manifest['actors']) for role in ['moving','anchor']):
         raise ValueError('Require known visible actors from both partners')
     errors=[];meshes=[];actor_data={};membrane_report=None;membrane_minimum=None
+    colors=json.loads(scene.get('interaction_resolved_colors','{}'))
+    if colors and set(colors)!={actor['id'] for actor in manifest['actors']}:errors.append('Resolved actor color inventory differs')
     if manifest.get('binding_candidate'):
         candidate=manifest['binding_candidate']
         if scene.get('binding_pose_kind')!=candidate['pose_kind'] or scene.get('binding_evidence_class')!='inferred':
@@ -62,6 +87,18 @@ def main():
         if not intact:errors.append('Geometry changed '+actor['id'])
         if obj.get('biological_id')!=actor['id']:errors.append('Identity changed '+actor['id'])
         if obj.get('source_structure')!=actor.get('source_pdb',manifest['example']['pdb']):errors.append('Source identity changed '+actor['id'])
+        if 'instance_id' in actor and obj.get('source_author_chain')!=actor['chain']:errors.append('Author chain changed '+actor['id'])
+        if colors:
+            mat=bpy.data.materials.get(actor['id']);expected_color=(*linear(colors[actor['id']]),1.)
+            if displayed_materials(obj)!={mat}:errors.append('Actor material assignment changed '+actor['id'])
+            if mat is None or not np.allclose(mat.diffuse_color,expected_color,rtol=0,atol=1e-6):
+                errors.append('Actor display color changed '+actor['id'])
+            elif mat.use_nodes:
+                shader=mat.node_tree.nodes.get('Principled BSDF')
+                if shader and (shader.inputs['Base Color'].is_linked or not np.allclose(shader.inputs['Base Color'].default_value,expected_color,rtol=0,atol=1e-6)):
+                    errors.append('Actor surface color changed '+actor['id'])
+        for key in ('instance_id','label_chain','operator','assembly_id','owner_instance'):
+            if key in actor and obj.get('source_'+key)!=actor[key]:errors.append('Source instance changed '+actor['id']+' '+key)
         if obj.hide_render!=(actor['id'] not in visible):errors.append('Whole-actor visibility changed '+actor['id'])
         if obj.parent!=scene.objects.get(actor['role']):errors.append('Rigid partner ownership changed '+actor['id'])
         if any(m.type=='BOOLEAN' for m in obj.modifiers):errors.append('Cutting modifier on '+actor['id'])

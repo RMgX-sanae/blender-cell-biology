@@ -43,6 +43,12 @@
 
 `build_molecular_scene.py` 按已定义的蛋白、核酸、膜部件与背景角色路由；来源对照入口按 mmCIF 聚合物类型路由。背景实例的完整结构保留原尺寸，位置、数量和景深只是展示安排，不能称为实测细胞组成。
 
+## 相互作用入口的迁移
+
+相互作用入口 `build_interaction_scene.py` 可用 `--surface-profile assets/style-structure-materials.json` 接入同一组 PBR 角色着色器，适用于 `cinematic` / `teaching`。此参数只读取 `surface_roles`；灯光、相机与合成仍由该入口的风格和取景参数控制。来源 `polymer_type` 决定蛋白/核酸角色，配体用 `cofactor`。`--representation surface|atoms` 选择原有表面或原子实例表示；原子球半径是显示参数，不是实验测量的原子半径。
+
+多链伙伴可为各成员设置 `color` 与简洁 `label`，主体与图例同步分色；显式 `--partner-colors` 则统一按两个伙伴着色。逐图检查标签长度与数量，避免复杂装配的图例拥挤。孤立结构可用 `--orbit-degrees` 绕伙伴轴转动镜头与灯光，重新取景并保留全部源坐标；膜场景沿用其已核定的 `membrane.view`。观察被遮挡的界面时先调整视角，保持完整分子。保存工程检查同时核对身份、颜色、共同变换和取景；实际材质参数仍用 `audit_surface_materials.py` 检查。
+
 ## 细胞与细胞器的迁移
 
 以下入口也读取 `surface_roles`，但使用针对各自景别调节的配置，不能直接把分子场景中的 nm 长度照搬到细胞场景：

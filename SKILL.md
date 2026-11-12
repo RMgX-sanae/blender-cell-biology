@@ -50,6 +50,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 两个伙伴竞争共享界面、包绕片段交替结合 | [binding-handoff.md](references/binding-handoff.md)：来源配准、完整刚体绕障、全组件共同占位检查及共用双视图；示意交接不等于置换动力学 |
 | 联网查找正确的位点对应、结合构象与亚基组合 | [online-binding-research.md](references/online-binding-research.md)：主动查结构与原始证据、映射编号、核对 assembly/状态/配体，再选择直接复用或候选建模 |
 | 只有单体结构，探索可能的蛋白结合姿态 | [monomer-binding.md](references/monomer-binding.md)：模板迁移或界面约束生成候选、完整单体与严格穿插检查，再接入已有动画；候选不冒充实验复合物 |
+| 多链伙伴、重复链拷贝和非恒等装配操作 | [source-assembly-instances.md](references/source-assembly-instances.md)：独立装配对照、作者/label/实例身份、必要伴随组分，以及状态对照与候选整体变换 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
 | GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
 | 泛素的共价连接、链型识别与产物释放 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移，可选连续释放；完整原子、工程突变恢复与双视图，不包含 E1 装载或全通路 |
