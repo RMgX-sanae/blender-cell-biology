@@ -26,6 +26,23 @@ python3 "$SKILL/scripts/prepare_receptor_distribution.py" \
 
 背景目录由 [cellular-environment.md](cellular-environment.md) 的 `prepare_cellular_environment.py` 从 1UBQ、9SPI 和 8F8R 生成。该实例按原始 nm 大小放置完整核糖体、泛素和肌动蛋白形状，再分别虚化远、中、近层；数量和位置是场景构造。`--environment-dir` 可省略以输出纯底；默认制作优先提供有身份的细胞质背景。
 
+### 参考外观与分层背景
+
+在上述生成命令中加入 `--style-profile "$SKILL/assets/style-receptor-materials.json"`，显式选择暖色复合物、克制膜面高光和冷色景深背景。`--style dark|light` 选择对应配色，`--recipe` 仍独立控制合成。不传 profile 时保留原材质数值。这个配方迁移参考图的主次、体积和深度关系，不声称复刻原作者节点或实测光学属性。
+
+profile 的共同字段先加载，`styles.dark` 或 `styles.light` 再按顶层字段覆盖；嵌套对象整组替换。项目可修改：
+
+- `surface_roles`：来源链的 `protein/nucleic_acid`、膜的 `membrane_heads/membrane_tails/membrane_surface`、背景的 `environment`；角色由来源身份决定。粗糙度、凹凸和散射设置沿用 [材质与灯光](material-and-lighting.md) 的字段，nm 场景中的艺术长度需要实际看图。
+- `chain_colors`：按实际选链设置颜色，图例使用同一颜色；未选链的覆盖会报错。`membrane_palette` 只接受 `heads/tails/core`。
+- `lighting/world/view_transform/look/exposure`：控制已有灯光和色彩流程。`environment_palette` 对应已提供的 `ribosome/actin/ubiquitin` 源形状。
+- `environment_compositor.dark/light`：分别设置 `background`、三个 `blur_pixels_1280` 和三个 `opacity`，依次为远、中、近层；背景底色同时用于文字对比选择。虚化与层透明度是展示参数，不是光学 PSF 或浓度。
+
+取景仍由准备配置的 `display.camera_position_nm/camera_target_nm/camera_scale_nm` 控制，标签跟随该布局。非空 profile `camera` 会明确拒绝；不要把其他入口的镜头字段直接传入后假定生效。主体不通过背景虚化，文字最后独立叠加。密集脂质的描边可能增加杂乱，先看小样；该配方以 `neutral` 作为主要画面起点。
+
+重开工程运行同一个 `audit_receptor_distribution_scene.py`，除原有几何与朝向外，还核对实际分配和连接的材质、语义颜色与图例、膜芯与背景源形状、灯光和镜头、打包字体、三层景深顺序及文字保护。背景变换在各自参与渲染的 view layer 中读取，不能使用主视图排除对象的过期变换。`test_receptor_appearance.py --project "$PROJECT/scene-clustered" --output "$PROJECT/negative-check.json"` 在该保存场景中执行破坏检查后恢复内存状态，不保存破坏结果；测试要求显式 profile 和三层环境。
+
+这些检查只验证所选结构与展示配置的实际交接，不证明受体丰度、结合活性或生理动力学。仍需检查最终画面，并用源码包和核定原始坐标重建。
+
 ### 修改配置时保留的约束
 
 - `assets/receptor-distribution.json` 保存物种/工程构建边界、来源、膜朝向、数量、种子、三种强度场、排除区、镜头及图例。先复制到项目再修改。3SN6 是工程改造、混合物种、核苷酸空缺的 Gs 复合物；省略 T4 融合部分、稳定纳米抗体及非聚合物配体不等于天然完整人源复合物或受体失活。此入口保留所选解析蛋白部分，不补缺失环、糖链或脂锚。

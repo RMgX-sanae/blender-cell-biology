@@ -22,6 +22,29 @@ from compositor_stack import build_stack
 def digest(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def appearance_profile(style, override=None):
+    root=Path(__file__).resolve().parents[1]
+    name='style-molecular-reference.json' if style=='dark' else 'style-studio.json'
+    profile=json.loads((root/'assets'/name).read_text());profile['camera']={};profile['bump']=0
+    profile['background']='#071f2b' if style=='dark' else '#edf0e9'
+    if override:
+        settings={k:v for k,v in override.items() if k!='styles'}
+        if set(override.get('styles',{}))-{'dark','light'}:raise ValueError('Receptor appearance styles must be dark or light')
+        settings.update(override.get('styles',{}).get(style,{}))
+        if settings.get('camera'):
+            raise ValueError('Set receptor camera through preparation config.display; appearance preserves that layout and its labels')
+        profile.update(settings)
+    environment_settings=profile.get('environment_compositor',{}).get(style,{})
+    if 'background' in environment_settings:profile['background']=environment_settings['background']
+    return profile,environment_settings
+
+
+def role_material(profile,name,color,role,roughness):
+    mat=ds.material(name,color,roughness,0,settings=profile.get('surface_roles',{}).get(role))
+    mat['surface_role']=role
+    return mat
+
+
 def lipids(data, group, head_material, tail_material):
     obj = sn.point_object('Intact two-tail lipid instances', data['lipid_heads'], group)
     rotations = [Vector(direction).to_track_quat('Z', 'Y').to_euler() for direction in data['lipid_directions']]
@@ -55,16 +78,20 @@ def lipids(data, group, head_material, tail_material):
     return obj
 
 
-def backdrop(asset_dir, basis):
+def backdrop(asset_dir, basis, profile=None):
+    profile=profile or {}
     source = json.loads((asset_dir/'manifest.json').read_text())
     if source['kind'] != 'schematic-cytosolic-environment': raise ValueError('Prepare cellular environment assets first')
     groups = [ds.collection('Cytosol '+name) for name in ('far', 'middle', 'near')]
     records, data, meshes = [], {}, {}
+    if set(profile.get('environment_palette',{}))-{'ribosome','actin','ubiquitin'}:
+        raise ValueError('Environment colors must name the supplied cytosolic structures')
     for name, color in [('ribosome', '#638e8d'), ('actin', '#8b829a'), ('ubiquitin', '#728d9b')]:
         data[name] = dict(np.load(asset_dir/(name+'.npz')))
         mesh = bpy.data.meshes.new('Intact environment '+name)
         mesh.from_pydata(data[name]['vertices'].tolist(), [], data[name]['faces'].tolist()); mesh.update()
-        mesh.materials.append(ds.material('Background '+name, color, .65, 0))
+        color=profile.get('environment_palette',{}).get(name,color)
+        mesh.materials.append(role_material(profile,'Background '+name,color,'environment',.65))
         for polygon in mesh.polygons: polygon.use_smooth = True
         meshes[name] = mesh
     def place(name, layer, center, angles, local=None):
@@ -72,6 +99,7 @@ def backdrop(asset_dir, basis):
         if local is not None: matrix = matrix@local
         obj = bpy.data.objects.new(f'Context {name} {len(records):03d}', meshes[name]); groups[layer].objects.link(obj)
         obj.matrix_world = Matrix(matrix); obj['environment_only'] = True
+        obj['depth_layer'] = layer
         obj['source_structure'] = source['sources'][name]['id']
         records.append({'object': obj.name, 'asset': name, 'matrix_nm': matrix.tolist(), 'depth_layer': layer})
     for center, angles in [([-72, 12, -70], [.5, .7, .6]), ([58, 32, -95], [1.8, .1, -.3]), ([76, -37, -65], [.8, 1.5, .2])]:
@@ -83,7 +111,8 @@ def backdrop(asset_dir, basis):
         side = -1 if index % 2 else 1
         center = np.array([side*rng.uniform(66, 92), rng.uniform(-49, 44), rng.uniform(-70, -32)])
         place('ubiquitin', 2 if index > 18 else 1, center, rng.uniform(0, 6.28, 3))
-    return groups, {'source_manifest': source, 'objects': records,
+    return groups, {'source_manifest': source, 'objects': records,'asset_directory':str(asset_dir.resolve()),
+        'asset_sha256':{name:digest(asset_dir/(name+'.npz')) for name in meshes},
         'layout': 'Source meshes at native nm scale, illustrative cytosolic placements; not measured concentration.',
         'defocus': 'Separate artistic depth-layer blur; not an optical PSF or blur of the subject.'}
 
@@ -94,6 +123,7 @@ def main():
     p.add_argument('--font-zh', type=Path, required=True); p.add_argument('--font-en', type=Path, required=True)
     p.add_argument('--environment-dir', type=Path)
     p.add_argument('--style', choices=['dark', 'light'], default='dark')
+    p.add_argument('--style-profile',type=Path,help='Optional role materials, identity colors, lighting and three-layer environment; camera remains in preparation config.display.')
     p.add_argument('--recipe', default='neutral')
     p.add_argument('--engine', choices=['eevee', 'cycles'], default='eevee')
     p.add_argument('--width', type=int, default=1280); p.add_argument('--samples', type=int, default=32)
@@ -110,13 +140,14 @@ def main():
     for chain, expected in record['chain_hashes'].items():
         if digest(assets/f'chain_{chain}.npz') != expected: p.error('Source chain changed: '+chain)
     data = dict(np.load(a.distribution_dir/'distribution.npz'))
+    source_manifest=json.loads((assets/'manifest.json').read_text())
+    source_roles={item['chain']:'nucleic_acid' if item['nucleic_acid'] else 'protein' for item in source_manifest['chains']}
+    appearance=json.loads(a.style_profile.read_text()) if a.style_profile else None
+    profile,environment_settings=appearance_profile(a.style,appearance)
     bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
     scene = bpy.context.scene
     receptor_group = ds.collection('Source receptor complexes'); membrane_group = ds.collection('Intact membrane lipids')
     labels = ds.collection('Distribution labels')
-    profile_file = 'style-molecular-reference.json' if a.style == 'dark' else 'style-studio.json'
-    profile = json.loads((root/'assets'/profile_file).read_text()); profile['camera'] = {}; profile['bump'] = 0
-    profile['background'] = '#071f2b' if a.style == 'dark' else '#edf0e9'
     a.fps, a.frames, a.frame, a.animate, a.compositor = 24, 1, 1, False, 'clean'
     display = record['config']['display']; span = display['camera_scale_nm']
     camera = ds.studio(profile, a, {'position': display['camera_position_nm'], 'target': display['camera_target_nm'], 'scale': span, 'light_scale': span/29.375})
@@ -126,20 +157,25 @@ def main():
     colors = {c: profile['palette'][key] for c, key in [('R', 'receptor'), ('A', 'alpha'), ('B', 'beta'), ('G', 'gamma')]}
     # Other explicitly qualified assets can supply chain colors in their config.
     colors.update(record['config'].get('chain_colors', {}))
+    if set(profile.get('chain_colors',{}))-set(record['config']['chains']):raise ValueError('Appearance color refers to an unselected receptor chain')
+    colors.update(profile.get('chain_colors',{}))
     objects = []
     for chain in record['config']['chains']:
-        mat = ds.material('Source chain '+chain, colors[chain], .54, 0)
+        mat = role_material(profile,'Source chain '+chain,colors[chain],source_roles[chain],.54)
         template, source = ds.load_chain(assets, chain, mat, receptor_group, name=f'Receptor_000_chain_{chain}')
         for i, (position, rotation) in enumerate(zip(data['positions'], data['rotations'])):
             obj = template if i == 0 else ds.duplicate(template, f'Receptor_{i:03d}_chain_{chain}', receptor_group)
             matrix = np.eye(4); matrix[:3, :3] = rotation; matrix[:3, 3] = position
             obj.matrix_world = Matrix(matrix); obj['instance_id'] = i; obj.pass_index = 1
             objects.append({'object': obj.name, 'chain': chain, 'instance': i, 'matrix': matrix.tolist()})
-    membrane_palette = display.get('membrane_palette', {}).get(a.style, {})
-    lipids(data, membrane_group, ds.material('Lipid heads', membrane_palette.get('heads', profile['palette']['heads']), .65, 0),
-           ds.material('Lipid tails', profile['palette']['tails'], .65, 0))
+    membrane_palette = {'heads':profile['palette']['heads'],'tails':profile['palette']['tails'],'core':profile['palette']['heads']}
+    membrane_palette.update(display.get('membrane_palette', {}).get(a.style, {}))
+    if set(profile.get('membrane_palette',{}))-set(membrane_palette):raise ValueError('Membrane colors must be heads, tails or core')
+    membrane_palette.update(profile.get('membrane_palette',{}))
+    lipids(data, membrane_group, role_material(profile,'Lipid heads',membrane_palette['heads'],'membrane_heads',.65),
+           role_material(profile,'Lipid tails',membrane_palette['tails'],'membrane_tails',.65))
     shell = ds.mesh('Continuum bilayer core', data['shell_vertices'].tolist(), data['shell_faces'].tolist(),
-        [ds.material('Membrane core fill', membrane_palette.get('core', profile['palette']['heads']), .68, 0)], membrane_group)
+        [role_material(profile,'Membrane core fill',membrane_palette['core'],'membrane_surface',.68)], membrane_group)
     shell['evidence'] = 'Schematic continuum core with receptor exclusion; complete lipids and proteins remain intact'
     font_zh = bpy.data.fonts.load(str(a.font_zh)); font_en = bpy.data.fonts.load(str(a.font_en))
     font_zh.pack(); font_en.pack()
@@ -161,7 +197,7 @@ def main():
         dot = sn.point_object(text+' legend', [dot_position], labels)
         sn.instance_spheres(dot, sn.material(text+' identity', {'material': 'paint'}, colors[chain], 'paint'), radius=.0045*span)
     env_groups, env_record = [], None
-    if a.environment_dir: env_groups, env_record = backdrop(a.environment_dir, basis)
+    if a.environment_dir: env_groups, env_record = backdrop(a.environment_dir, basis,profile)
     recipes = json.loads((root/'assets/render-recipes.json').read_text())['recipes']
     recipe = next((r.copy() for r in recipes if r['id'] == a.recipe), None)
     if recipe is None: p.error('Unknown compositor recipe')
@@ -180,11 +216,15 @@ def main():
                 child.exclude = child.collection not in [group, camera.users_collection[0]]
             layers.append(layer)
         tree = scene.compositing_node_group
-        image = environment.composite(tree, layers, profile['background'], a.width)
+        image = environment.composite(tree, layers, profile['background'], a.width,settings=environment_settings)
         base = next(n for n in tree.nodes if n.label == 'Straight background plus premultiplied rendered foreground')
         tree.links.new(image, base.inputs['Background'])
     ds.save_and_render(a, {'kind': 'source-receptor-distribution-scene', 'preparation': record,
         'objects': objects, 'environment': env_record, 'compositor_report': result,
+        'appearance':appearance,'appearance_sha256':digest(a.style_profile) if a.style_profile else None,
+        'resolved_chain_colors':{chain:colors[chain] for chain in record['config']['chains']},
+        'source_surface_roles':{chain:source_roles[chain] for chain in record['config']['chains']},
+        'resolved_membrane_palette':membrane_palette,'environment_compositor':environment_settings,
         'font_zh_sha256': digest(a.font_zh), 'font_en_sha256': digest(a.font_en),
         'display': 'Static arrangement of complete source complexes and intact procedural lipids. No protein slicing or anisotropic scaling.'})
 

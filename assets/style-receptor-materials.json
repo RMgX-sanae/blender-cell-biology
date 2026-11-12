@@ -1,0 +1,43 @@
+{
+  "name": "Readable intact receptors on a restrained membrane",
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "usage": "Warm foreground and cool source-shaped depth adapted to the receptor view; reference image is not redistributed.",
+  "implementation_assumptions": [
+    "Intact source meshes, native scale, membrane orientation and receptor placements remain unchanged.",
+    "Surface color, roughness, fine bump and soft light are artistic choices, not measured biochemical properties.",
+    "The dark view adapts the warm/cool reference hierarchy; the light view is a teaching variant.",
+    "Background geometry has source identity; its positions and three-layer defocus are illustrative."
+  ],
+  "view_transform": "AgX",
+  "exposure": 0,
+  "world": "839BAA",
+  "lighting": [
+    {"name": "Soft upper key", "position": [-12, -18, 26], "power": 6500, "color": "FFE8C8", "size": 14},
+    {"name": "Cool frontal fill", "position": [18, -18, 4], "power": 1800, "color": "B4D9EE", "size": 16},
+    {"name": "Depth separation", "position": [0, 12, 18], "power": 6500, "color": "B8DEEF", "size": 10},
+    {"name": "Readable underside", "position": [0, -16, -12], "power": 3500, "color": "D3E2EC", "size": 16}
+  ],
+  "surface_roles": {
+    "protein": {"roughness": 0.44, "specular": 0.3, "bump": 0.004, "texture_scale": 10, "bump_strength": 0.16, "subsurface_weight": 0.045, "subsurface_radius": [0.08, 0.05, 0.025], "subsurface_scale": 1},
+    "membrane_heads": {"roughness": 0.58, "specular": 0.15, "bump": 0, "subsurface_weight": 0.015, "subsurface_radius": [0.04, 0.03, 0.02], "subsurface_scale": 1},
+    "membrane_tails": {"roughness": 0.72, "specular": 0.12, "bump": 0, "subsurface_weight": 0},
+    "membrane_surface": {"roughness": 0.85, "specular": 0.12, "bump": 0, "subsurface_weight": 0},
+    "environment": {"roughness": 0.78, "specular": 0.14, "bump": 0.002, "texture_scale": 10, "bump_strength": 0.1, "subsurface_weight": 0.015, "subsurface_radius": [0.04, 0.03, 0.02], "subsurface_scale": 1}
+  },
+  "environment_compositor": {
+    "dark": {"background": "081821", "blur_pixels_1280": [18, 9, 28], "opacity": [0.22, 0.14, 0.10]},
+    "light": {"background": "F0F2EE", "blur_pixels_1280": [12, 7, 18], "opacity": [0.16, 0.12, 0.08]}
+  },
+  "styles": {
+    "dark": {
+      "chain_colors": {"R": "F0D9B4", "A": "E6B656", "B": "67AEB8", "G": "CE78AC"},
+      "membrane_palette": {"heads": "36545F", "tails": "2C4953", "core": "233D49"},
+      "environment_palette": {"ribosome": "294F5A", "actin": "44506A", "ubiquitin": "4F6C76"}
+    },
+    "light": {
+      "chain_colors": {"R": "815821", "A": "AE6A25", "B": "246B79", "G": "7C3E70"},
+      "membrane_palette": {"heads": "B1C1BD", "tails": "99ACAD", "core": "AABAB7"},
+      "environment_palette": {"ribosome": "607D82", "actin": "74778E", "ubiquitin": "687E89"}
+    }
+  }
+}

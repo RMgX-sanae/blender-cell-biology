@@ -45,6 +45,8 @@
 
 通用反应双视图 `build_molecular_sequence_scene.py` 可通过 `--style-profile` 使用显式组件角色、灯光、语义配色和背景三层合成；配置及保存检查见 [分子序列外观](molecular-sequence-display.md#按参考选择外观)。[PTP1B 外观配置](../assets/style-sequence-ptp1b.json) 是一个具体起点；新反应重新对应组件，取景和结构表示继续由其 display 文件控制。
 
+曲面受体入口 `build_receptor_distribution_scene.py` 可通过 `--style-profile assets/style-receptor-materials.json` 使用同一角色着色器、按链配色、灯光与远中近层虚化。深浅两套配色共享完整源几何与分布；镜头继续由准备配置 `display` 控制。字段、保存工程检查及边界见 [受体外观](receptors-and-distributions.md#参考外观与分层背景)。
+
 ## 大型复合体的角色与构图
 
 `build_complex_scene.py` 的 9SPI/7PFO 结构视图也可读取 `surface_roles`。材质角色由来源链的蛋白/核酸身份决定，不能由色板键名猜测：例如复制体中使用 `heads` 颜色的 AND-1 仍是蛋白，核糖体的青色 rRNA 仍用核酸材质。未提供角色配置时保留原材质数值；不把这些表面颜色或散射参数称为实验测量。

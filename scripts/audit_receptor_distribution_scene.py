@@ -13,13 +13,12 @@ import bpy
 import numpy as np
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector, Euler
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from receptor_appearance_audit import check_appearance
 
 
-def main():
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--project', type=Path, required=True)
-    a = p.parse_args(sys.argv[sys.argv.index('--')+1:])
-    manifest = json.loads((a.project/'manifest.json').read_text()); prepared = manifest['preparation']
+def audit(project):
+    manifest = json.loads((project/'manifest.json').read_text()); prepared = manifest['preparation']
     source_dir = Path(prepared['asset_dir']); config = prepared['config']
     distribution_dir = Path(manifest['build_parameters']['distribution_dir'])
     data = np.load(distribution_dir/'distribution.npz')
@@ -80,9 +79,18 @@ def main():
         'subject_bounds_normalized': [bounds.min(0).tolist(), bounds.max(0).tolist()] if len(bounds) else None,
         'minimum_intercomplex_atom_distance_nm': prepared['minimum_intercomplex_atom_distance_nm'],
         'scope': 'Saved source meshes, topology, rigid placements, leaflet direction, packed fonts and framing. Distance value is from preparation; final visual review is separate.'}
+    report['appearance']=check_appearance(scene,manifest)
+    return report
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--project', type=Path, required=True)
+    a = p.parse_args(sys.argv[sys.argv.index('--')+1:])
+    report=audit(a.project)
     (a.project/'scene-audit.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps(report))
-    if issues: raise RuntimeError('Saved distribution scene audit failed')
+    if not report['passed']: raise RuntimeError('Saved distribution scene audit failed')
 
 
 if __name__ == '__main__': main()
