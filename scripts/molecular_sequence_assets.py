@@ -33,7 +33,8 @@ def load_assets(folder,display):
     if len(physical_ids)!=len(set(physical_ids)):raise ValueError('Atom identities must be unique across components')
     if set(views[0]['actors'])!=set(ids):raise ValueError('The overview must retain every prepared component')
     if any(set(view['actors'])-set(ids) for view in views):raise ValueError('Display refers to an absent component')
-    if 'captions' in source and [r[:2] for r in display['captions']]!=[r[:2] for r in source['captions']]:
+    captions=source.get('captions',source.get('config',{}).get('captions'))
+    if captions is not None and [r[:2] for r in display['captions']]!=[r[:2] for r in captions]:
         raise ValueError('Display caption intervals differ from prepared mechanism events')
     if len(display['background_components'])!=3:raise ValueError('This background layout requires three source shape entries')
     required={'motion.npz',*('background_'+name+'.npz' for name in display['background_components'])}

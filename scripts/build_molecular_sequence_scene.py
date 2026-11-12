@@ -11,11 +11,11 @@ from mathutils import Matrix
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 import style_nodes as sn
-from event_timing import frame_window
 from build_ubiquitin_transfer_scene import keyed_points,envelope,annotation_line,background,paired_composite,digest
 from build_phosphotransfer_scene import visibility,animated_mesh
 from compositor_stack import build_stack
 from molecular_sequence_assets import load_assets
+from sequence_presentation import presentation,source_positions,coordinates_at,caption_windows
 
 SKILL=Path(ds.__file__).resolve().parents[1]
 
@@ -28,10 +28,18 @@ def main():
     parser.add_argument('--engine',choices=['eevee','cycles'],default='eevee');parser.add_argument('--width',type=int,default=1280)
     parser.add_argument('--samples',type=int,default=24);parser.add_argument('--render',action='store_true')
     parser.add_argument('--style-profile',type=Path,help='Project role materials, semantic colors, lighting and depth-background settings')
+    parser.add_argument('--timing-profile',type=Path,help='Source-bound teaching holds or continuous presentation schedule')
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.output.exists():parser.error('Use a fresh scene directory')
     assets=args.asset_dir.resolve();display=json.loads(args.display.read_text())
-    source,data,input_checks=load_assets(assets,display);count=source['frames']
+    source,data,input_checks=load_assets(assets,display);source_count=source['frames']
+    timing=json.loads(args.timing_profile.read_text()) if args.timing_profile else None
+    schedule=presentation(source,timing,digest(assets/'manifest.json'));count=schedule['frames']
+    sample_frames=np.array(schedule['sample_frames']);samples=np.array(schedule['source_samples'])
+    data={key:points[samples] for key,points in data.items() if key in source['atom_ids']}
+    render_frames=np.arange(1,count+2);source_time=source_positions(schedule,render_frames)/source_count
+    render_key_positions=np.interp(render_frames,sample_frames,np.arange(len(sample_frames)))
+    captions=caption_windows(display['captions'],schedule,source_count)
     appearance=json.loads(args.style_profile.read_text()) if args.style_profile else None
     if appearance is not None:
         components={key for view in display['views'] for key in view['actors']}
@@ -55,7 +63,7 @@ def main():
     profile.update(camera={},bump=0,background='#071f2b' if args.style=='dark' else '#edf0e9')
     if appearance is not None:
         profile.update({key:appearance[key] for key in ('lighting','world','view_transform','look','exposure','background') if key in appearance})
-    args.fps,args.frames,args.compositor=source['fps'],count,'clean'
+    args.fps,args.frames,args.compositor=schedule['fps'],count,'clean'
     camera=ds.studio(profile,args,{'position':[0,0,40],'target':[0,0,0],'scale':22,'light_scale':1.2})
     camera.matrix_world=Matrix.Translation((0,0,40));camera.data.dof.use_dof=False
     scene.render.resolution_y=2*round(args.width*9/32)
@@ -69,10 +77,11 @@ def main():
         parent=bpy.data.objects.new(name+' source frame',None);framing.objects.link(parent);parent.matrix_world=Matrix(matrix)
         parents[name]=parent;transforms[name]=matrix.tolist()
         def annotation_visibility(obj,coordinates,radius,interval=None):
+            if timing is not None:coordinates=coordinates_at(coordinates,render_key_positions)
             projected=coordinates@matrix[:3,:3].T+matrix[:3,3]
             visible=(abs(projected[:,:,0]-offset[0]).max(1)+radius*scale<4.3)&(abs(projected[:,:,1]).max(1)+radius*scale<3.45)
             if interval is not None:
-                time=np.arange(count+1)/count;visible&=(time>=interval[0])&(time<interval[1])
+                visible&=(source_time>=interval[0])&(source_time<interval[1])
             for i,show in enumerate(visible):obj.hide_render=not bool(show);obj.keyframe_insert('hide_render',frame=i+1)
             return visible.tolist()
         for key,settings in view['actors'].items():
@@ -83,12 +92,12 @@ def main():
             if role:material['surface_role']=role
             representation=settings['representation']
             if representation=='surface':
-                obj=keyed_points(key+' '+name,data[key],group);envelope(obj,material)
+                obj=keyed_points(key+' '+name,data[key],group,frames=sample_frames);envelope(obj,material)
             elif representation in ['sticks','spheres']:
                 edges=settings.get('bonds',[])
                 if representation=='sticks' and 'bond_file' in settings:edges=np.load(assets/settings['bond_file'])['bonds']
                 edges=np.asarray(edges,dtype=np.int32).reshape(-1,2)
-                obj=animated_mesh(key+' '+name,data[key],edges,group,material,settings.get('radius_nm',.065),1,count+1)
+                obj=animated_mesh(key+' '+name,data[key],edges,group,material,settings.get('radius_nm',.065),1,count+1,frames=sample_frames)
                 if 'bond_radius_nm' in settings:
                     for modifier in obj.modifiers:
                         if modifier.type=='NODES':
@@ -104,7 +113,7 @@ def main():
         for highlight in display.get('highlights',[]):
             if name not in highlight['views']:continue
             key=highlight['component'];indices=highlight['indices']
-            coordinates=data[key][:,indices];obj=keyed_points(highlight['id']+' '+name,coordinates,overlays)
+            coordinates=data[key][:,indices];obj=keyed_points(highlight['id']+' '+name,coordinates,overlays,frames=sample_frames)
             obj.parent=parent;obj['display_annotation']=True
             color=highlight.get('color',colors[highlight.get('color_key',key)]);sn.instance_spheres(obj,sn.material(obj.name,{'material':'paint'},color,'paint'),radius=highlight['radius_nm'],
                 subdivisions=(appearance or {}).get('atom_subdivisions',2))
@@ -113,7 +122,7 @@ def main():
         for bond in display.get('bond_annotations',[]):
             if name not in bond['views']:continue
             points=np.stack([data[key][:,index] for key,index in bond['atoms']],axis=1)
-            obj=keyed_points(bond['id']+' '+name,points,overlays,[(0,1)]);obj.parent=parent;obj['display_annotation']=True
+            obj=keyed_points(bond['id']+' '+name,points,overlays,[(0,1)],frames=sample_frames);obj.parent=parent;obj['display_annotation']=True
             ink=sn.material(obj.name+' ink',{'material':'paint'},'#fff1b1' if args.style=='dark' else '#422554','paint')
             radius=bond.get('radius_nm',.024);annotation_line(obj,ink,radius)
             visible=annotation_visibility(obj,points,radius,bond['interval'])
@@ -132,7 +141,7 @@ def main():
         dot=sn.point_object(title+' color',[[x-1.4,-4.12,12]],overlays)
         sn.instance_spheres(dot,sn.material(title,{'material':'paint'},colors[key],'paint'),radius=.09,
                             subdivisions=(appearance or {}).get('atom_subdivisions',2))
-    for begin,end,body in display['captions']:visibility(text(body,0,-5.4,.64),*frame_window(begin,end,count))
+    for begin,end,body in captions:visibility(text(body,0,-5.4,.64),begin,end)
     ds.path('Panel separator',[(0,-3.5,12),(0,3.55,12)],.016,sn.material('Divider',{'material':'paint'},'#bad6d9' if args.style=='dark' else '#365a64','paint'),overlays)
     bg,bg_record=background(assets,8.6/display['views'][0]['span_nm'],tuple(display['background_components']),profile=appearance)
     if args.style=='dark' and not (appearance or {}).get('environment_palette'):
@@ -169,12 +178,17 @@ def main():
     if appearance is not None:
         (args.output/'style-profile.json').write_bytes(args.style_profile.read_bytes())
         scene['sequence_style_profile_sha256']=digest(args.style_profile)
-    record={'kind':'molecular-sequence-scene','frames':count,'fps':source['fps'],'preparation':source,'asset_directory':str(assets),'display':display,
+    if timing is not None:
+        (args.output/'timing-profile.json').write_bytes(args.timing_profile.read_bytes())
+        scene['sequence_timing_profile_sha256']=digest(args.timing_profile)
+    record={'kind':'molecular-sequence-scene','frames':count,'fps':schedule['fps'],'preparation':source,'asset_directory':str(assets),'display':display,
             'source_sha256':scene['sequence_source_sha256'],'display_sha256':scene['sequence_display_sha256'],'input_checks':input_checks,
             'actors':actors,'markers':markers,'transforms':transforms,'style':args.style,'recipe':args.recipe,'engine':args.engine,
             'fonts':{'zh':str(args.font_zh),'en':str(args.font_en)},'compositor':compositor,'environment':bg_record,
             'appearance':appearance,'appearance_sha256':digest(args.style_profile) if appearance is not None else None,
             'resolved_colors':colors,'environment_compositor':environment_settings,
+            'timing_profile':timing,'timing_profile_sha256':digest(args.timing_profile) if timing is not None else None,
+            'presentation':schedule,'caption_windows':captions,
             'scope':source['scope'],'limits':'Geometry/chemistry belong to the preparation; window framing and enlarged foreground markers are display choices.'}
     (args.output/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
     scene.frame_set(round(count*.25));bpy.ops.wm.save_as_mainfile(filepath=str(args.output/'scene.blend'))

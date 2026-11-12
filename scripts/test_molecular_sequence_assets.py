@@ -76,6 +76,13 @@ class PreparedSequence(unittest.TestCase):
         self.source['reaction_ledger']={'passed':True}
         with self.assertRaisesRegex(ValueError,'reaction-ledger.json'):self.load()
 
+    def test_prepared_config_caption_boundaries_are_not_ignored(self):
+        self.source['config']={'captions':[[0,.5,'source before'],[.5,1,'source after']]}
+        self.display['captions']=[[0,.5,'translated before'],[.5,1,'translated after']]
+        self.load()
+        self.display['captions'][0][1]=.6;self.display['captions'][1][0]=.6
+        with self.assertRaisesRegex(ValueError,'caption intervals differ'):self.load()
+
     def test_product_aliases_preserve_initial_coordinate_identity(self):
         ledger={'version':1,'scope':'technical fixture','bond_scope':'technical fixture',
                 'reactant_atoms':[['body:C','C'],['body:O','O']],

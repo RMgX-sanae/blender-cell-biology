@@ -29,8 +29,8 @@ def visibility(obj,start,end):
         obj.keyframe_insert('hide_render',frame=frame);obj.keyframe_insert('hide_viewport',frame=frame)
 
 
-def animated_mesh(name,points,edges,group,material,radius,start,end):
-    obj=keyed_points(name,points,group,edges,frames=start+np.arange(len(points)))
+def animated_mesh(name,points,edges,group,material,radius,start,end,*,frames=None):
+    obj=keyed_points(name,points,group,edges,frames=start+np.arange(len(points)) if frames is None else frames)
     tree,source,target=sn.geometry_tree(obj,'GN_atoms_and_covalent_bonds')
     join=sn.node(tree,'GeometryNodeJoinGeometry')
     if radius:
