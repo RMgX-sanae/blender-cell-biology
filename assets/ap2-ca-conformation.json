@@ -1,0 +1,535 @@
+{
+  "version": 1,
+  "interpolation": "linear_ca",
+  "scope": "Finite authored motion of the 1717 observed CAs of the selected 6YAE AP2 core chains toward their mapped 6YAF positions. Recombinant mixed-species source constructs; not full activation, cargo capture or atomic dynamics.",
+  "sources": {
+    "first": {
+      "entry": "6YAE",
+      "cif": {
+        "file": "6YAE.cif",
+        "sha256": "2b73c0f4a364d0612758edaa553a9852bd3b8053312ff6946e85d93aeaad3241"
+      },
+      "sifts": {
+        "file": "6yae.xml.gz",
+        "sha256": "e360d765492297d73d1f0563eaa6949d3d03f2a23a1bdb64f3a6a6a290263afa"
+      }
+    },
+    "second": {
+      "entry": "6YAF",
+      "cif": {
+        "file": "6YAF.cif",
+        "sha256": "4cdfad6dfe3bd22c28aa117c70e97142319b7a75b94c129d892ceb52a63ea6cb"
+      },
+      "sifts": {
+        "file": "6yaf.xml.gz",
+        "sha256": "0ca3dd12b6b1d5a241526439047289ab9407da0bbe663cbace8f6a1fa7e22a6a"
+      }
+    }
+  },
+  "path_sha256": "9f082cd9158c20736426b8ca84da3b4fd6ff71e9c37e7c293b518d1b870bfe49",
+  "chains": [
+    {
+      "first": "A",
+      "second": "A",
+      "uniprot": "P18484"
+    },
+    {
+      "first": "B",
+      "second": "B",
+      "uniprot": "P63010"
+    },
+    {
+      "first": "M",
+      "second": "M",
+      "uniprot": "P84092"
+    },
+    {
+      "first": "S",
+      "second": "S",
+      "uniprot": "P62743"
+    }
+  ],
+  "insertions": [
+    {
+      "first": [
+        "A",
+        "272"
+      ],
+      "second": [
+        "A",
+        "272"
+      ],
+      "name": "GLU",
+      "reason": "The same reviewed alpha-chain insertion occurs in both constructs; surrounding SIFTS positions are P18484:271 and272."
+    }
+  ],
+  "alignment_chains": [
+    "S"
+  ],
+  "unmatched": {
+    "first": {
+      "residues": [
+        {
+          "author": [
+            "M",
+            "136"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "137"
+          ],
+          "name": "GLY"
+        },
+        {
+          "author": [
+            "M",
+            "138"
+          ],
+          "name": "ILE"
+        },
+        {
+          "author": [
+            "M",
+            "139"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "M",
+            "140"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "141"
+          ],
+          "name": "GLN"
+        }
+      ],
+      "reason": "M136-141 retain first-state identity and follow an authored inferred open pose; these are not observed target coordinates."
+    },
+    "second": {
+      "residues": [
+        {
+          "author": [
+            "A",
+            "609"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "A",
+            "610"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "A",
+            "611"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "A",
+            "612"
+          ],
+          "name": "ILE"
+        },
+        {
+          "author": [
+            "A",
+            "613"
+          ],
+          "name": "LEU"
+        },
+        {
+          "author": [
+            "A",
+            "614"
+          ],
+          "name": "ALA"
+        },
+        {
+          "author": [
+            "A",
+            "615"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "A",
+            "616"
+          ],
+          "name": "LEU"
+        },
+        {
+          "author": [
+            "A",
+            "617"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "A",
+            "618"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "A",
+            "619"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "A",
+            "620"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "A",
+            "621"
+          ],
+          "name": "GLY"
+        },
+        {
+          "author": [
+            "M",
+            "142"
+          ],
+          "name": "HIS"
+        },
+        {
+          "author": [
+            "M",
+            "143"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "144"
+          ],
+          "name": "THR"
+        },
+        {
+          "author": [
+            "M",
+            "145"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "M",
+            "146"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "147"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "148"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "149"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "150"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "151"
+          ],
+          "name": "ILE"
+        },
+        {
+          "author": [
+            "M",
+            "152"
+          ],
+          "name": "THR"
+        },
+        {
+          "author": [
+            "M",
+            "153"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "154"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "155"
+          ],
+          "name": "VAL"
+        },
+        {
+          "author": [
+            "M",
+            "156"
+          ],
+          "name": "THR"
+        },
+        {
+          "author": [
+            "M",
+            "157"
+          ],
+          "name": "GLY"
+        },
+        {
+          "author": [
+            "M",
+            "158"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "223"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "236"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "237"
+          ],
+          "name": "MET"
+        },
+        {
+          "author": [
+            "M",
+            "238"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "239"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "240"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "M",
+            "241"
+          ],
+          "name": "LEU"
+        },
+        {
+          "author": [
+            "M",
+            "242"
+          ],
+          "name": "ILE"
+        },
+        {
+          "author": [
+            "M",
+            "243"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "244"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "245"
+          ],
+          "name": "GLU"
+        },
+        {
+          "author": [
+            "M",
+            "246"
+          ],
+          "name": "ASP"
+        },
+        {
+          "author": [
+            "M",
+            "247"
+          ],
+          "name": "LEU"
+        },
+        {
+          "author": [
+            "M",
+            "248"
+          ],
+          "name": "GLY"
+        },
+        {
+          "author": [
+            "M",
+            "249"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "M",
+            "250"
+          ],
+          "name": "GLN"
+        },
+        {
+          "author": [
+            "M",
+            "267"
+          ],
+          "name": "LYS"
+        },
+        {
+          "author": [
+            "M",
+            "268"
+          ],
+          "name": "PHE"
+        },
+        {
+          "author": [
+            "M",
+            "269"
+          ],
+          "name": "ASP"
+        },
+        {
+          "author": [
+            "M",
+            "270"
+          ],
+          "name": "SER"
+        },
+        {
+          "author": [
+            "M",
+            "271"
+          ],
+          "name": "GLU"
+        }
+      ],
+      "reason": "These 51 observed target CAs have no retained first-state match. They are explicitly omitted from this fixed-inventory motion, including construct/modeled-region differences; the original source remains unchanged."
+    }
+  },
+  "omitted_chains": {
+    "first": {
+      "chains": [],
+      "reason": ""
+    },
+    "second": {
+      "chains": [
+        "P"
+      ],
+      "reason": "The six-residue bound cargo peptide in 6YAF is outside this core-only fixed-inventory conformation view. No claim of cargo binding or a complete open-state complex."
+    }
+  },
+  "geometry": {
+    "nonlocal_guard_nm": 0.32,
+    "source_contact_allowance_nm": 0.005,
+    "adjacent_distance_nm": [
+      0.35,
+      0.41
+    ],
+    "maximum_step_nm": 0.08,
+    "halfspace": {
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "offset_nm": 7.97
+    },
+    "unmodeled_gaps": [
+      {
+        "authors": [
+          [
+            "M",
+            "141"
+          ],
+          [
+            "M",
+            "159"
+          ]
+        ],
+        "maximum_nm": 6.84,
+        "reason": "The intervening 17 residues are unmodeled in the retained first-state basis; 18 steps at 0.38 nm give an illustrative upper span, not a modeled linker."
+      }
+    ]
+  },
+  "presentation": {
+    "mode": "continuous",
+    "frames": 240,
+    "fps": 24
+  },
+  "references": [
+    "https://www.rcsb.org/structure/6YAE",
+    "https://www.rcsb.org/structure/6YAF",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC7375805/"
+  ]
+}

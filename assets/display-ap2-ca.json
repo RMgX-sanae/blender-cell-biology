@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "title": "AP2 核心构象",
+  "subtitle": "金色：μ2 亚基",
+  "density": {
+    "volume_voxel_nm": 0.08,
+    "volume_radius_nm": 0.45
+  },
+  "view_direction": [
+    0.6830127018922194,
+    0.6830127018922193,
+    0.25881904510252074
+  ],
+  "fstop": 16,
+  "membrane": {
+    "midplane_z_nm": 6.318999898433685,
+    "half_thickness_nm": 1.868999969959259,
+    "span_xy_nm": [
+      26,
+      18
+    ],
+    "seed": 20261107,
+    "candidates_per_leaflet": 1800,
+    "spacing_nm": 0.66,
+    "head_CA_clearance_nm": 0.85,
+    "tail_CA_clearance_nm": 0.55,
+    "source_note": "Membrane orientation follows the qualified 6YAF frame / EMD-10748 context. Lipid locations, finite patch and all display dimensions are schematic; no PIP2 chemistry, cargo or full coat."
+  }
+}

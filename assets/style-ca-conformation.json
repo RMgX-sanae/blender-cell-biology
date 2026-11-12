@@ -1,0 +1,114 @@
+{
+  "name": "Source-bound CA view: warm mobile domain and cool membrane",
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "implementation_assumptions": [
+    "Warm moving subunit and restrained cool environment borrow a selected color/light hierarchy, not the atom-spacefill geometry of the reference.",
+    "A source-derived CA envelope preserves modeled point motion but does not show all-atom surface detail.",
+    "Membrane lipids are independently packed illustrative complete molecules; they are not measured PIP2 positions or chemical models.",
+    "Texture, scattering and camera depth are artistic choices at nm scene scale, not measured optical constants."
+  ],
+  "background": "#071720",
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": -0.15,
+  "lighting": [
+    {
+      "name": "Soft front key",
+      "position": [
+        12,
+        16,
+        26
+      ],
+      "power": 9000,
+      "color": "FFE7B8",
+      "size": 14
+    },
+    {
+      "name": "Restrained cool fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 2600,
+      "color": "B4D9EE",
+      "size": 16
+    },
+    {
+      "name": "Cool depth separation",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 8000,
+      "color": "B8DEEF",
+      "size": 10
+    },
+    {
+      "name": "Readable underside fill",
+      "position": [
+        0,
+        -16,
+        -12
+      ],
+      "power": 4000,
+      "color": "D3E2EC",
+      "size": 16
+    }
+  ],
+  "component_roles": {
+    "A": "protein",
+    "B": "protein",
+    "M": "protein",
+    "S": "protein",
+    "heads": "membrane",
+    "tails": "membrane"
+  },
+  "semantic_colors": {
+    "A": "#4C9BA4",
+    "B": "#739FC6",
+    "M": "#F2BC50",
+    "S": "#C0789D",
+    "heads": "#3D6470",
+    "tails": "#294C58"
+  },
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.46,
+      "specular": 0.32,
+      "bump": 0.003,
+      "texture_scale": 10,
+      "bump_strength": 0.12,
+      "subsurface_weight": 0.045,
+      "subsurface_radius": [
+        0.08,
+        0.05,
+        0.025
+      ],
+      "subsurface_scale": 1
+    },
+    "membrane": {
+      "roughness": 0.72,
+      "specular": 0.18,
+      "bump": 0,
+      "subsurface_weight": 0.015,
+      "subsurface_radius": [
+        0.04,
+        0.03,
+        0.02
+      ],
+      "subsurface_scale": 1
+    }
+  }
+}

@@ -69,6 +69,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 肌动蛋白上游到下游：Arp2/3 与 formin 两条完整路线 | [actin-full-cycle.md](references/actin-full-cycle.md)：两套各 25 阶段的机制计划、状态闭环、资产选择、配体对照及已渲染的本地完整视频案例；其他情境需按项目制作 |
 | formin、cofilin、中间丝、septin、FtsZ、ESCRT-III、clathrin、COPII 装配 | [assembly-storyboards.md](references/assembly-storyboards.md)：可复制的分镜与资产选择模板，按项目实现 |
 | clathrin 源被覆与单体接纳/释放 | [clathrin-assembly.md](references/clathrin-assembly.md)：核对链的空间连续性、恢复源装配，并以有依据的局部转动生成完整已建模单体运动；限三邻居晶格片段，不是完整内吞 |
+| 已有 Cα 构象路径进入可编辑场景 | [ca-conformation.md](references/ca-conformation.md)：从原始端态重新核对身份与连接，检查全部线性路径段并应用角色材质；消费受审查的路径，不自动预测构象或完成 AP2 激活 |
 | 将机制变成 Blender 动画 | [blender-workflow.md](references/blender-workflow.md) |
 | V 型 ATPase 的整体与 c 环双视图连续循环 | [vatpase-loop.md](references/vatpase-loop.md)：公开结构准备、可移植生成器、同步检查及渲染命令 |
 | PDB/mmCIF、EM/分割网格进入 Blender | [data-import.md](references/data-import.md) |

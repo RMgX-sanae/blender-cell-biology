@@ -29,6 +29,7 @@
 | 位点间的接触或共价连接 | `audit_site_links.py`，见 [位点连接检查](site-link-checks.md) | 复用来源资格检查和 CCD 缓存；在 RF1 肽酰 tRNA 类似物与 trypsin–BPTI 上检查元素、距离和连接注释。范围及关系类型由研究确定，不从近距离自动推断反应 |
 | 从不对称单元恢复源装配 | `prepare_clathrin_assembly.py` 的 `rigid`、`compare_reference`，见 [clathrin](clathrin-assembly.md) | 复用刚体与逐身份/坐标对应检查；源单体分组及实际装配操作另行资格确认。静态重建不证明生长轨迹 |
 | 柔性长链单体在局部晶格中的接纳 | `articulated_ca_motion.py` → `prepare_clathrin_growth.py` → 保存场景独立检查，见 [局部构象](clathrin-assembly.md) | 复用完整单体、源对接触、分段刚性和稠密采样；新目标重新查柔性段、伴随链和自由度。当前实例是粗粒度 3IYV 片段，不是通用蛋白变形预测器 |
+| 有观察端态的固定身份 Cα 路径 | `prepare_ca_conformation.py` → `build_ca_conformation_scene.py` → `audit_ca_conformation_scene.py`，见 [构象路径交接](ca-conformation.md) | 复用 SIFTS 对应、label sequence 连接、线性段距离检查与角色材质；新对象另行准备路径与限制。旋转路径不能用直线弦代检；不把 Cα 检查当成原子动力学 |
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
 | 单体起步的结合候选 | `prepare_binding_candidates.py` → 共用结合场景，见 [单体候选](monomer-binding.md) | 明确 CA 映射或界面约束；候选端态及路径不允许来源接触豁免。保留未满足的侧链诊断，几何筛查不是结合预测准确率 |
 | 准备数据与工程的对应关系 | `interaction_assets.py` 的 `verify_assets`，由局部结合构建器/检查器调用 | 核对全部实体和运动文件，再将 manifest 指纹绑定到新工程；改过坐标后必须重新准备和检查路径。接口采用局部结合 manifest，其他机制应适配其实际文件清单 |
