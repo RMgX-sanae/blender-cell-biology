@@ -15,6 +15,7 @@ from event_timing import frame_window
 from build_ubiquitin_transfer_scene import keyed_points,envelope,annotation_line,background,paired_composite,digest
 from build_phosphotransfer_scene import visibility,animated_mesh
 from compositor_stack import build_stack
+from molecular_sequence_assets import load_assets
 
 SKILL=Path(ds.__file__).resolve().parents[1]
 
@@ -28,20 +29,8 @@ def main():
     parser.add_argument('--samples',type=int,default=24);parser.add_argument('--render',action='store_true')
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.output.exists():parser.error('Use a fresh scene directory')
-    assets=args.asset_dir.resolve();source=json.loads((assets/'manifest.json').read_text());display=json.loads(args.display.read_text())
-    if not source['passed'] or not source['checks']['passed']:parser.error('Qualify the mechanism before rendering')
-    if display['version']!=1 or len(display['views'])!=2:parser.error('Supply a version-1 two-view display specification')
-    if source.get('units') is None and not display.get('unit_note'):parser.error('Qualify the units of legacy prepared coordinates in the display specification')
-    if source.get('units',display.get('units'))!='nm':parser.error('Prepared display coordinates must be in nm')
-    if 'captions' in source and [row[:2] for row in display['captions']]!=[row[:2] for row in source['captions']]:
-        parser.error('Display caption intervals differ from prepared mechanism events')
-    for name,expected in source['data_sha256'].items():
-        if digest(assets/name)!=expected:parser.error('Prepared data changed: '+name)
-    data=dict(np.load(assets/'motion.npz'));count=source['frames']
-    for key,identities in source['atom_ids'].items():
-        if data[key].shape!=(count+1,len(identities),3) or not np.isfinite(data[key]).all():parser.error('Invalid prepared coordinate sequence: '+key)
-    if len({identity for values in source['atom_ids'].values() for identity in values})!=sum(map(len,source['atom_ids'].values())):parser.error('Atom identities must be unique across components')
-    if set(display['views'][0]['actors'])!=set(source['atom_ids']):parser.error('The overview must retain every prepared component')
+    assets=args.asset_dir.resolve();display=json.loads(args.display.read_text())
+    source,data,input_checks=load_assets(assets,display);count=source['frames']
     if not args.font_zh.is_file() or not args.font_en.is_file():parser.error('Supply Songti and Times New Roman font files')
     recipes=json.loads((SKILL/'assets/render-recipes.json').read_text())['recipes']
     recipe=next((r.copy() for r in recipes if r['id']==args.recipe),None)
@@ -150,7 +139,7 @@ def main():
     scene['sequence_source_sha256']=digest(assets/'manifest.json');scene['sequence_display_sha256']=digest(args.display)
     (args.output/'display.json').write_bytes(args.display.read_bytes())
     record={'kind':'molecular-sequence-scene','frames':count,'fps':source['fps'],'preparation':source,'asset_directory':str(assets),'display':display,
-            'source_sha256':scene['sequence_source_sha256'],'display_sha256':scene['sequence_display_sha256'],
+            'source_sha256':scene['sequence_source_sha256'],'display_sha256':scene['sequence_display_sha256'],'input_checks':input_checks,
             'actors':actors,'markers':markers,'transforms':transforms,'style':args.style,'recipe':args.recipe,'engine':args.engine,
             'fonts':{'zh':str(args.font_zh),'en':str(args.font_en)},'compositor':compositor,'environment':bg_record,
             'scope':source['scope'],'limits':'Geometry/chemistry belong to the preparation; window framing and enlarged foreground markers are display choices.'}

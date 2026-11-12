@@ -11,6 +11,7 @@ from mathutils import Matrix
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 import style_nodes as sn
+from coordinate_animation import keyed_points
 
 
 COLORS={'peptide':'#de829c','nucleotide_core':'#75c6de','phosphoryl':'#f0c45e',
@@ -29,17 +30,7 @@ def visibility(obj,start,end):
 
 
 def animated_mesh(name,points,edges,group,material,radius,start,end):
-    mesh=bpy.data.meshes.new(name);mesh.from_pydata(points[0].tolist(),edges.tolist(),[]);mesh.update()
-    obj=bpy.data.objects.new(name,mesh);group.objects.link(obj)
-    for index,coordinates in enumerate(points):
-        key=obj.shape_key_add(name=f't_{index:04d}')
-        key.data.foreach_set('co',coordinates.astype(np.float32).ravel())
-        key.interpolation='KEY_LINEAR'
-    keys=mesh.shape_keys;keys.use_relative=False
-    # Absolute key times accumulate small float32 offsets in Blender. Key each
-    # sampled time explicitly so the two views reproduce the prepared frames.
-    for index,key in enumerate(keys.key_blocks):
-        keys.eval_time=key.frame;keys.keyframe_insert('eval_time',frame=start+index)
+    obj=keyed_points(name,points,group,edges,frames=start+np.arange(len(points)))
     tree,source,target=sn.geometry_tree(obj,'GN_atoms_and_covalent_bonds')
     join=sn.node(tree,'GeometryNodeJoinGeometry')
     if radius:

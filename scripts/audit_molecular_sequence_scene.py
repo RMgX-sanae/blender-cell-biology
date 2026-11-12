@@ -6,29 +6,23 @@ import bpy,numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from audit_phosphotransfer_scene import vertices
 from build_ubiquitin_transfer_scene import digest
-from reaction_ledger import validate,validate_sequence
+from coordinate_animation import verify_point_animation
+from molecular_sequence_assets import load_assets
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.output.exists():parser.error('Use a fresh audit output')
-    root=Path(bpy.data.filepath).parent;record=json.loads((root/'manifest.json').read_text());source=record['preparation']
-    scene=bpy.context.scene;assets=Path(record['asset_directory']);frames=source['frames'];display=record['display']
-    if 'captions' in source:assert [row[:2] for row in display['captions']]==[row[:2] for row in source['captions']]
+    root=Path(bpy.data.filepath).parent;record=json.loads((root/'manifest.json').read_text())
+    scene=bpy.context.scene;assets=Path(record['asset_directory']);display=record['display']
+    source,data,input_checks=load_assets(assets,display);frames=source['frames']
+    assert source==record['preparation'] and display==json.loads((root/'display.json').read_text()),'Saved input records differ'
     assert record['kind']=='molecular-sequence-scene' and source['passed'] and source['checks']['passed']
     assert scene.frame_end==frames and scene.render.fps==source['fps']
     assert digest(assets/'manifest.json')==record['source_sha256']==scene['sequence_source_sha256']
     assert digest(root/'display.json')==record['display_sha256']==scene['sequence_display_sha256']
-    for name,expected in source['data_sha256'].items():assert digest(assets/name)==expected,name
-    data=np.load(assets/'motion.npz');physical_ids=[identity for values in source['atom_ids'].values() for identity in values]
-    assert len(physical_ids)==len(set(physical_ids))
-    ledger_checks={}
-    for name,check in [('reaction-sequence.json',validate_sequence),('reaction-ledger.json',validate)]:
-        if name not in source['data_sha256']:continue
-        spec=json.loads((assets/name).read_text());ledger_checks[name]=check(spec)
-        first=spec['stages'][0] if name=='reaction-sequence.json' else spec
-        assert {identity for identity,_ in first['reactant_atoms']}==set(physical_ids),'Ledger and scene identities differ'
+    physical_ids=[identity for values in source['atom_ids'].values() for identity in values]
     expected_actors={key+' '+view['id'] for view in display['views'] for key in view['actors']}
     assert set(record['actors'])==expected_actors and len(record['actors'])==len(expected_actors)
     # Coordinate checks read the saved source meshes; generated display geometry
@@ -42,6 +36,7 @@ def main():
         for obj in objects:
             assert obj['view']==view['id'] and obj['component'] in view['actors']
             assert json.loads(obj['atom_ids'])==source['atom_ids'][obj['component']]
+            verify_point_animation(obj,data[obj['component']])
             assert not any(mod.type=='BOOLEAN' for mod in obj.modifiers)
             settings=view['actors'][obj['component']];edges=settings.get('bonds',[])
             if 'bond_file' in settings:edges=np.load(assets/settings['bond_file'])['bonds']
@@ -64,6 +59,9 @@ def main():
             if frame%200==0:print(view['id'],frame,'coordinate samples checked',flush=True)
     bpy.context.window.view_layer=scene.view_layers['Sequence annotations']
     for marker in record['markers']:
+        expected=(np.stack([data[k][:,index] for k,index in marker['atoms']],axis=1) if 'atoms' in marker
+                  else data[marker['component']][:,marker['indices']])
+        verify_point_animation(scene.objects[marker['object']],expected)
         for mod in scene.objects[marker['object']].modifiers:mod.show_viewport=False
     for frame in range(1,frames+2):
         scene.frame_set(frame);graph=bpy.context.evaluated_depsgraph_get()
@@ -88,7 +86,8 @@ def main():
     mask=next(node for node in tree.nodes if node.label=='Select matching premultiplied panel alpha')
     assert mask.inputs['Type'].default_value=='Replace Alpha' and mask.inputs['Alpha'].is_linked
     result={'passed':True,'render_frames':frames,'coordinate_samples_checked_per_view':frames+1,'actor_frame_checks':checked,
-            'physical_heavy_atom_identities':len(physical_ids),'maximum_coordinate_error_nm':error,'ledger_checks':ledger_checks,
+            'physical_heavy_atom_identities':len(physical_ids),'maximum_coordinate_error_nm':error,'ledger_checks':input_checks['ledger_checks'],
+            'required_input_hashes_checked':True,'stored_coordinate_keys_and_linear_timing_checked':True,
             'source_and_display_fingerprints_checked':True,'both_views_and_annotations_checked':True,
             'packed_fonts_and_caption_timing_checked':True,'scope':source['scope'],
             'limits':'Saved coordinate/identity/display checks; reaction-source qualification and rendered clarity remain separate.'}

@@ -34,9 +34,10 @@
 | 准备数据与工程的对应关系 | `interaction_assets.py` 的 `verify_assets`，由局部结合构建器/检查器调用 | 核对全部实体和运动文件，再将 manifest 指纹绑定到新工程；改过坐标后必须重新准备和检查路径。接口采用局部结合 manifest，其他机制应适配其实际文件清单 |
 | 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63、AMSH-LP 及两轮转录准备共用；各自定义反应，只检查输入原子和键子图，不代替几何检查 |
 | 同一批原子的连续反应 | `reaction_ledger.py` 的 `validate_sequence` 或 `--sequence` | 核对阶段交接和独立定义的总反应；固定所选原子集合，不自动处理开放物质池或坐标交接 |
+| 已检查坐标进入 Blender | `coordinate_animation.py` 的 `keyed_points`、`verify_point_animation` | 共用绝对形态键与线性时间映射；保留全部点和采样时点，拒绝 Blender 合并时间键，不推断路径或生物学速率 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
-| 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `keyed_points`、`envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
-| 已检查坐标序列的项目显示 | `build_molecular_sequence_scene.py`、`audit_molecular_sequence_scene.py`，见 [输入约定](molecular-sequence-display.md) | PTP1B 与 AMSH-LP 共享两图原子、标记、背景和保存检查；新机制仍提供经过检查的 nm 坐标、身份、反应账本和显示配置 |
+| 整分子双视图与分层背景 | `build_ubiquitin_transfer_scene.py` 的 `envelope`、`background`、`paired_composite` | K63 与 AMSH-LP 共用；旧 `keyed_points` 导入名保留并指向共用实现。背景换入目标蛋白形状，化学和相机取景仍按项目定义 |
+| 已检查坐标序列的项目显示 | `molecular_sequence_assets.py` → `build_molecular_sequence_scene.py` → `audit_molecular_sequence_scene.py`，见 [输入约定](molecular-sequence-display.md) | 先核对所有必需输入的哈希、身份和索引，再生成两图原子、标记与背景；新机制仍需来源、反应与运动检查 |
 | 字体、材质、环境和合成 | `detail_scene.py`、`style_nodes.py`、`cellular_environment.py`、`compositor_stack.py` | 沿用清楚的主反应区、宋体/Times New Roman 和独立标签层；环境身份与尺度按新区室改选 |
 | 对已有画面追加调色 | `apply_render_recipe.py`、`publish_composite_outputs`，见 [合成输出约定](render-recipes.md) | 保留已合成的分屏/背景及独立文字；多视图不能直接借用一个视图的法线/深度，缺少对齐 pass 时拒绝对应配方 |
 | 双视图分别处理深度、轮廓与对象强调 | `panel_compositor.py`、`publish_panel_sources`，见 [各视图通道](render-recipes.md) | PTP1B/AMSH-LP 已重建检查；先用各自 Render Layers 的 pass 和原 alpha 处理，再回到原布局并叠加文字。明确每个视图的深度范围与主体选择；不改变反应几何或扩充机制 |

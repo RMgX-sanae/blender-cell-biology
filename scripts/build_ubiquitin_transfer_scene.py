@@ -15,23 +15,12 @@ import cellular_environment as environment
 from build_phosphotransfer_scene import visibility
 from compositor_stack import build_stack
 from panel_compositor import publish_panel_sources
+from coordinate_animation import keyed_points
 
 
 def digest(path):
     import hashlib
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-
-
-def keyed_points(name, coordinates, group, edges=()):
-    mesh = bpy.data.meshes.new(name); mesh.from_pydata(coordinates[0].tolist(), list(edges), []); mesh.update()
-    obj = bpy.data.objects.new(name, mesh); group.objects.link(obj)
-    for i, points in enumerate(coordinates):
-        key = obj.shape_key_add(name=f'frame_{i+1:04d}')
-        key.data.foreach_set('co', points.astype(np.float32).ravel()); key.interpolation = 'KEY_LINEAR'
-    keys = mesh.shape_keys; keys.use_relative = False
-    for i, key in enumerate(keys.key_blocks):
-        keys.eval_time = key.frame; keys.keyframe_insert('eval_time', frame=i+1)
-    return obj
 
 
 def envelope(obj, material):
