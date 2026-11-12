@@ -10,6 +10,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from detail_scene import collection, material, mesh, save_and_render, studio
+from audit_source_states import assets
 
 
 def main():
@@ -18,7 +19,7 @@ def main():
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--font-zh', type=Path, required=True)
     p.add_argument('--font-en', type=Path, required=True)
-    p.add_argument('--profile', type=Path, default=Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json')
+    p.add_argument('--profile', type=Path, default=Path(__file__).resolve().parents[1]/'assets/style-structure-materials.json')
     p.add_argument('--engine', choices=['cycles', 'eevee'], default='cycles')
     p.add_argument('--compositor', choices=['clean', 'reference', 'monochrome'], default='clean')
     p.add_argument('--width', type=int, default=1800)
@@ -29,10 +30,7 @@ def main():
         p.error('Choose a fresh output directory')
     a.frames, a.fps, a.frame, a.animate = 1, 24, 1, False
     manifest_path = a.asset_dir/'manifest.json'
-    m = json.loads(manifest_path.read_text())
-    for name, digest in m['data_sha256'].items():
-        if hashlib.sha256((a.asset_dir/name).read_bytes()).hexdigest() != digest:
-            raise ValueError('Prepared asset hash mismatch: '+name)
+    m = assets(a.asset_dir)
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
     profile = json.loads(a.profile.read_text())
@@ -45,16 +43,20 @@ def main():
     shader.inputs['Emission Strength'].default_value = .8
     def text(body, x, z, size, color=ink):
         data = bpy.data.curves.new(body, 'FONT')
-        data.body, data.font = body, fonts[1 if body.isascii() else 0]
+        data.body, data.font, data.font_bold = body, fonts[0], fonts[1]
+        # Use the alternate font slot for Times Regular, not a bold treatment.
+        for char, form in zip(body, data.body_format): form.use_bold = ord(char) < 128 or char in '·—'
         data.size, data.align_x = size, 'CENTER'
         obj = bpy.data.objects.new(body, data); labels.objects.link(obj)
         obj.location, obj.rotation_euler = (x, -10, z), (np.pi/2, 0, 0)
         data.materials.append(color)
     element_colors = {'C': 'B4C5CA', 'N': '7CA8F3', 'O': 'F48A86', 'P': 'E9B45F',
-                      'S': 'E7D36C', 'Fe': 'D4895A', 'Mg': '95D6C2'}
+                      'S': 'E7D36C', 'Fe': 'D4895A', 'Mg': '95D6C2', 'Ca': 'B6D7A8'}
     spheres, element_materials = {}, {}
     for element, color in element_colors.items():
-        mat = element_materials[element] = material('Element '+element, color, .45, 0)
+        mat = element_materials[element] = material('Element '+element, color, .45, 0,
+            settings=profile.get('surface_roles', {}).get('cofactor'))
+        mat['surface_role'] = 'cofactor'
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1)
         template = bpy.context.object
         template.data.materials.append(mat)
@@ -77,7 +79,10 @@ def main():
         legend = []
         for actor in state['actors']:
             data = np.load(a.asset_dir/actor['file'], allow_pickle=False)
-            mat = material(state['pdb']+' '+actor['label'], actor['color'], .48, 0)
+            role = 'nucleic_acid' if actor.get('polymer_type', '').startswith(('polyribonucleotide', 'polydeoxyribonucleotide')) else 'protein'
+            mat = material(state['pdb']+' '+actor['label'], actor['color'], .48, 0,
+                           settings=profile.get('surface_roles', {}).get(role))
+            mat['surface_role'] = role
             obj = mesh(state['pdb']+' '+actor['label'], data['vertices'].tolist(), data['faces'].tolist(), [mat], models)
             obj.parent = rig
             obj['source_state'], obj['source_file'] = state['pdb'], actor['file']

@@ -15,6 +15,8 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 **质量优先：**先读 [quality-standard.md](references/quality-standard.md) 和 [production-workflow.md](references/production-workflow.md)。默认使用精细制作入口。旧 `build_scene.py` 仅作机制白模，不得再当作成品示例；“可运行、方向正确”不能替代精细建模、参考风格复现和连续动画的验收。
 
+**美观是主要验收项：**这是建模 skill。形体、构图、材质灯光、配色与环境层次和科学正确性都应排在前列；改进迁移能力时也须检查代表性模型的实际画面，不能只交付数值测试。不同结构采用合适的纹理、次表面散射和光照，不用杂乱棒线或粗圆柱束代替细胞骨架等真实结构。以少量正式尺寸图判断并修正可见问题，保持共用工作流可生成有完成度的作品；实施见 [材质与灯光迁移](references/material-and-lighting.md)。
+
 **验证效率与产物清理：**开发与迁移默认采用必要的数值检查、少量正式尺寸关键帧和变化区间的低成本短预览；需要交付成片时才完整渲染。用户授权持续清理本任务可重建的大型中间产物，保留来源、参数、检查记录和当前交付。具体取样、原速短预览及清理办法见 [review-and-retention.md](references/review-and-retention.md)。
 
 **分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。

@@ -38,6 +38,7 @@ def main():
         ('expression host mistaken for protein species', '5LZT', lambda s: s['chains'][0].update(source_organism='Escherichia coli')),
         ('AAQ mislabeled native GGQ', '5LZV', lambda s: s['chains'][0]['sites'][0].update(name='GLY')),
         ('unresolved site', '5LZU', lambda s: s['chains'][0]['sites'][0].update(residue=999)),
+        ('fractional-type author site', '5LZU', lambda s: s['chains'][0]['sites'][0].update(residue=183.0)),
         ('unresolved site atom', '5LZU', lambda s: s['chains'][0]['sites'][0].update(atoms=['FAKE'])),
         ('wrong stop-codon base', '5LZU', lambda s: s['chains'][-1]['sites'][0].update(name='G')),
         ('analogue mislabeled GTP', '5LZT', lambda s: s['ligand_instances'][1].update(component='GTP')),
@@ -53,7 +54,9 @@ def main():
             'expected_substitutions': [], 'min_CA_coverage': 0, 'max_CA_rmsd_angstrom': 2}))
     with tempfile.TemporaryDirectory(prefix='source-state-negatives-') as tmp:
         root = Path(tmp)
-        for name in ['changed atom identity', 'shifted polymer', 'dropped Fe-S cluster', 'shifted cofactor', 'stretched state']:
+        for name in ['changed atom identity', 'shifted polymer', 'dropped Fe-S cluster', 'shifted cofactor', 'stretched state',
+                     'changed polymer declaration', 'changed construct declaration', 'changed source binding', 'false fit evidence',
+                     'false material polymer type']:
             target = root/name.replace(' ', '-')
             shutil.copytree(a.asset_dir, target)
             m = json.loads((target/'manifest.json').read_text())
@@ -67,9 +70,19 @@ def main():
                 m['data_sha256'][file] = digest(target/file)
             elif name == 'dropped Fe-S cluster': m['states'][2]['ligands'].pop()
             elif name == 'shifted cofactor': m['states'][0]['ligands'][1]['positions_nm'][0][0] += .1
+            elif name == 'changed polymer declaration': m['states'][0]['actors'][0]['uniprot'] = 'NOT_REVIEWED'
+            elif name == 'changed construct declaration': m['states'][2]['state_label'] = 'Native unmodified endpoint'
+            elif name == 'changed source binding': m['states'][0]['source']['sha256'] = '0'*64
+            elif name == 'false fit evidence': m['states'][0]['alignment_check']['CA_rmsd_angstrom'] = 0.
+            elif name == 'false material polymer type': m['states'][0]['actors'][0]['polymer_type'] = 'polyribonucleotide'
             else: m['states'][0]['alignment_matrix_angstrom'][0][0] *= 1.1
             (target/'manifest.json').write_text(json.dumps(m))
             rejects(name, lambda: check_sources(target, a.sources, a.config))
+        target = root/'reordered-companions';shutil.copytree(a.asset_dir, target)
+        m = json.loads((target/'manifest.json').read_text());m['states'][0]['ligands'].reverse()
+        (target/'manifest.json').write_text(json.dumps(m))
+        check_sources(target, a.sources, a.config)
+        report['companion_order_independence_checked'] = True
     report['negative_cases'] = rejected
     a.output.write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps({'passed': True, 'negative_cases': len(rejected)}))

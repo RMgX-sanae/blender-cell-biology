@@ -21,8 +21,16 @@ from detail_scene import (Parts, collection, duplicate, load_chain, material,
 
 
 def materials(profile):
-    return {k: material(k, color, profile['roughness'], profile['bump'])
-            for k, color in profile['palette'].items()}
+    roles = {'dna1': 'nucleic_acid', 'dna2': 'nucleic_acid', 'rna': 'nucleic_acid',
+             'heads': 'membrane_heads', 'tails': 'membrane_tails',
+             'environment': 'environment', 'environment_near': 'environment'}
+    result = {}
+    for key, color in profile['palette'].items():
+        role = roles.get(key, 'protein')
+        result[key] = material(key, color, profile['roughness'], profile['bump'],
+                               settings=profile.get('surface_roles', {}).get(role))
+        result[key]['surface_role'] = role
+    return result
 
 
 def membrane_front(x, view):
@@ -110,8 +118,8 @@ def molecular_environment(args, mats):
     if args.crowder_dir is None or args.ribosome_dir is None:
         raise ValueError('Environment needs --crowder-dir (1UBQ) and --ribosome-dir (9SPI) prepared assets.')
     group=collection('03 Cytosolic depth layers — schematic placement of source-derived molecules')
-    distant=material('Distant molecular environment','255667',.62,.006)
-    nearer=material('Near peripheral molecular environment','437A84',.6,.006)
+    distant=mats.get('environment') or material('Distant molecular environment','255667',.62,.006)
+    nearer=mats.get('environment_near') or material('Near peripheral molecular environment','437A84',.6,.006)
     ribo=json.loads((args.ribosome_dir/'manifest.json').read_text())
     if not ribo['source_file'].upper().startswith('9SPI'):
         raise ValueError('This depth layout is sized for 9SPI; prepare another layout for another structure.')

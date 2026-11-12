@@ -40,29 +40,49 @@ def mesh(name, vertices, faces, materials, group, indices=None):
     return obj
 
 
-def material(name, color, roughness=.48, bump=.012):
+def material(name, color, roughness=.48, bump=.012, *, settings=None):
     m = bpy.data.materials.new(name)
     m.diffuse_color = (*linear(color), 1)
     m.use_nodes = True
     nodes, links = m.node_tree.nodes, m.node_tree.links
     shader = nodes.get('Principled BSDF')
+    values = {'roughness': roughness, 'bump': bump, 'specular': .32,
+              'subsurface_weight': .025, 'subsurface_radius': [.08, .05, .025],
+              'subsurface_scale': shader.inputs['Subsurface Scale'].default_value,
+              'texture_scale': 16, 'texture_detail': 2, 'bump_strength': .22}
+    if settings:
+        if set(settings)-set(values): raise ValueError('Unknown surface settings: '+str(set(settings)-set(values)))
+        values.update(settings)
+    for key, value in values.items():
+        array = np.asarray(value, dtype=float)
+        if not np.isfinite(array).all() or np.any(array < 0):
+            raise ValueError('Surface settings must be finite and nonnegative: '+key)
+        if key == 'subsurface_radius':
+            if array.shape != (3,): raise ValueError('Subsurface radius needs three scene-unit lengths')
+        elif array.shape != (): raise ValueError('Surface setting must be scalar: '+key)
+    if any(values[k] > 1 for k in ('roughness', 'specular', 'subsurface_weight', 'bump_strength')):
+        raise ValueError('Surface weights must be in [0,1]')
+    if values['texture_scale'] <= 0 or values['texture_detail'] > 15:
+        raise ValueError('Texture scale must be positive and detail within [0,15]')
     shader.inputs['Base Color'].default_value = m.diffuse_color
-    shader.inputs['Roughness'].default_value = roughness
-    shader.inputs['Specular IOR Level'].default_value = .32
-    shader.inputs['Subsurface Weight'].default_value = .025
-    shader.inputs['Subsurface Radius'].default_value = (.08, .05, .025)
-    if bump:
+    for setting, socket in [('roughness', 'Roughness'), ('specular', 'Specular IOR Level'),
+                            ('subsurface_weight', 'Subsurface Weight'), ('subsurface_radius', 'Subsurface Radius'),
+                            ('subsurface_scale', 'Subsurface Scale')]:
+        shader.inputs[socket].default_value = values[setting]
+    if values['bump']:
         noise = nodes.new('ShaderNodeTexNoise')
         noise.label = 'Subtle surface texture; not atom coordinates'
-        noise.inputs['Scale'].default_value = 16
-        noise.inputs['Detail'].default_value = 2
+        noise.inputs['Scale'].default_value = values['texture_scale']
+        noise.inputs['Detail'].default_value = values['texture_detail']
         texture = nodes.new('ShaderNodeTexCoord')
         links.new(texture.outputs['Object'], noise.inputs['Vector'])
         node = nodes.new('ShaderNodeBump')
-        node.inputs['Strength'].default_value = .22
-        node.inputs['Distance'].default_value = bump
+        node.inputs['Strength'].default_value = values['bump_strength']
+        node.inputs['Distance'].default_value = values['bump']
         links.new(noise.outputs['Fac'], node.inputs['Height'])
         links.new(node.outputs['Normal'], shader.inputs['Normal'])
+    m['appearance_parameters'] = json.dumps(values)
+    m['appearance_scope'] = 'Art-directed surface shading in scene units; not measured optics or new molecular geometry'
     return m
 
 

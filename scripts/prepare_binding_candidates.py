@@ -79,9 +79,25 @@ def load_companions(sources, spec, role):
 
 
 def fit_template(first, second, mapping):
-    a = {residue_id(r): r for r in first if r[2] == 'CA'}
-    b = {residue_id(r): r for r in second if r[2] == 'CA'}
+    def ca_sites(rows):
+        sites = {}
+        for row in rows:
+            if row[2] != 'CA': continue
+            key = residue_id(row); point = np.asarray(row[0], dtype=float)
+            if (not valid_residue_id(key) or key in sites or row[1] != 'C'
+                    or point.shape != (3,) or not np.isfinite(point).all()):
+                raise ValueError('Require unique, finite carbon-alpha identities in each source chain')
+            sites[key] = row
+        return sites
+    a, b = ca_sites(first), ca_sites(second)
+    coverage_gate, rmsd_gate = mapping['min_CA_coverage'], mapping['max_CA_rmsd_angstrom']
+    if (any(isinstance(v, bool) or not isinstance(v, (int, float)) or not np.isfinite(v)
+            for v in (coverage_gate, rmsd_gate)) or not 0 <= coverage_gate <= 1 or rmsd_gate < 0):
+        raise ValueError('Require finite CA coverage in [0,1] and a finite nonnegative RMSD gate')
     pairs = mapping['residue_pairs']
+    if any(not isinstance(p, (list, tuple)) or len(p) != 2 or
+           any(not valid_residue_id(value) for value in p) for p in pairs):
+        raise ValueError('CA pairs require integer author numbers or explicit insertion-code identities')
     if (len(pairs) < 3 or len({p[0] for p in pairs}) != len(pairs)
             or len({p[1] for p in pairs}) != len(pairs)
             or any(p[0] not in a or p[1] not in b for p in pairs)):
@@ -100,7 +116,7 @@ def fit_template(first, second, mapping):
     matrix = np.eye(4); matrix[:3, :3] = rotation; matrix[:3, 3] = cb-rotation@ca
     rmsd = float(np.sqrt(np.mean(np.sum((transform(first_points, matrix)-second_points)**2, axis=1))))
     coverage = len(pairs)/len(a)
-    if coverage < mapping['min_CA_coverage'] or rmsd > mapping['max_CA_rmsd_angstrom']:
+    if coverage < coverage_gate or rmsd > rmsd_gate:
         raise ValueError('Template mapping fails the declared coverage/RMSD gate')
     return matrix, {'CA_pairs': pairs, 'substitutions': differences, 'source_CA_coverage': coverage,
                     'CA_rmsd_angstrom': rmsd, 'matrix_angstrom': matrix.tolist()}

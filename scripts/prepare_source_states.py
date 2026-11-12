@@ -1,8 +1,8 @@
 """Prepare reviewed, separate experimental states; never morph or merge them.
 
 Uses the existing source, polymer, ligand, surface and rigid-fit helpers.
-The initial comparison supports identity-operation assemblies and an explicit
-same-numbered CA fitting segment. Other assemblies/maps need prior preparation.
+Supports identity-operation assemblies and explicitly reviewed CA maps.
+Multiple-operation assemblies still require separate preparation.
 """
 import argparse
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 import gemmi
 import numpy as np
 
-from prepare_binding_candidates import checked_source, fit_template, residue_id, sha, transform
+from prepare_binding_candidates import checked_source, fit_template, residue_id, valid_residue_id, sha, transform
 from prepare_interaction import select_ligands
 from prepare_molecular_asset import atom_table, surface, xyz
 
@@ -19,6 +19,33 @@ from prepare_molecular_asset import atom_table, surface, xyz
 def rows(block, category):
     columns = block.get_mmcif_category(category)
     return [dict(zip(columns, values)) for values in zip(*columns.values())]
+
+
+def alignment_maps(config):
+    """Resolve reviewed maps without inferring chain or residue equivalence."""
+    fit = config['alignment']; states = {s['pdb']: s for s in config['states']}
+    if config['reference'] not in states: raise ValueError('Reference state must be selected')
+    if 'maps' in fit:
+        if any(key in fit for key in ('chain', 'author_residues', 'minimum_CA_coverage', 'maximum_rmsd_angstrom')):
+            raise ValueError('Choose explicit per-state maps or the same-numbered alignment, not both')
+        reference_chain = fit['reference_chain']; mappings = fit['maps']
+        if set(mappings) != set(states) or any(not m.get('note') for m in mappings.values()):
+            raise ValueError('Supply one reviewed mapping and its rationale for every state')
+    else:
+        reference_chain = fit['chain']
+        mapping = {'chain': reference_chain, 'residue_pairs': [[n, n] for n in fit['author_residues']],
+                   'expected_substitutions': [], 'min_CA_coverage': fit['minimum_CA_coverage'],
+                   'max_CA_rmsd_angstrom': fit['maximum_rmsd_angstrom']}
+        mappings = {code: dict(mapping) for code in states}
+    if reference_chain not in {c['chain'] for c in states[config['reference']]['chains']}:
+        raise ValueError('Reference fitting chain must be retained')
+    for code, mapping in mappings.items():
+        if mapping['chain'] not in {c['chain'] for c in states[code]['chains']}:
+            raise ValueError('State fitting chain must be retained: '+code)
+    reference = mappings[config['reference']]
+    if reference['chain'] != reference_chain or any(a != b for a, b in reference['residue_pairs']):
+        raise ValueError('The reference state must retain its own chain and residue identities')
+    return reference_chain, mappings
 
 
 def qualify(sources, state):
@@ -85,12 +112,15 @@ def qualify(sources, state):
                 raise ValueError('Ambiguous retained polymer atom identity: '+str(key))
             actual[key] = row
         for site in spec.get('sites', []):
+            if not valid_residue_id(site['residue']):
+                raise ValueError('Reviewed sites require integer author numbers or explicit insertion codes')
             site_rows = [r for r in table[chain] if residue_id(r) == site['residue']]
             if not site_rows or {r[4] for r in site_rows} != {site['name']}:
                 raise ValueError('Reviewed site residue differs or is not retained: '+chain+str(site))
             if not set(site.get('atoms', [])) <= {r[2] for r in site_rows}:
                 raise ValueError('Reviewed site atom is not retained: '+chain+str(site))
         info.append({**spec, 'entity_id': entity['id'], 'label_chains': labels,
+                     'polymer_type': matches[0]['type'],
                      'uniprot_accessions': accessions,
                      'source_organisms': source_organisms,
                      'deposited_mutation_field': entity.get('pdbx_mutation'),
@@ -115,11 +145,8 @@ def prepare(sources, config_path, output):
     if not config.get('limitations') or any(not s.get('selection_note') for s in states):
         raise ValueError('Document selection and state-comparison limits')
     qualified = {s['pdb']: qualify(sources, s) for s in states}
-    fit = config['alignment']
-    reference = qualified[config['reference']][2][fit['chain']]
-    mapping = {'residue_pairs': [[n, n] for n in fit['author_residues']],
-               'expected_substitutions': [], 'min_CA_coverage': fit['minimum_CA_coverage'],
-               'max_CA_rmsd_angstrom': fit['maximum_rmsd_angstrom']}
+    reference_chain, mappings = alignment_maps(config)
+    reference = qualified[config['reference']][2][reference_chain]
     origin = np.asarray(config['origin_angstrom'], dtype=float)
     basis = np.asarray(config['basis_columns'], dtype=float)
     if origin.shape != (3,) or not np.isfinite(origin).all() or basis.shape != (3, 3):
@@ -130,7 +157,8 @@ def prepare(sources, config_path, output):
     for state in states:
         code = state['pdb']
         path, provenance, selected, info, ligands, assembly = qualified[code]
-        matrix, fit_report = fit_template(selected[fit['chain']], reference, mapping)
+        mapping = mappings[code]
+        matrix, fit_report = fit_template(selected[mapping['chain']], reference, mapping)
         def local(points):
             return (transform(points, matrix) - origin) @ basis * .1
         actors = []
