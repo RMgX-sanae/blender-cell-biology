@@ -73,7 +73,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --format pdb --output "$PROJECT
   --output "$PROJECT/ribosome_view" --reveal --render
 ```
 
-`ribosome` 的 A/P/E tRNA 与 mRNA 保持原始坐标；`replisome` 使用 7PFO 的链映射。`--reveal` 以完整亚基为单位隐藏前景，形成观察窗口，不移动或剖开分子。具体隐藏对象和解释见 [section-views.md](section-views.md)。完整装配与内部可见版本均为静态实验结构视图，不是翻译或复制催化动画。分子包络在这些大复合体中固定用 surface LOD；不要将 profile 的 spacefill 字段误称为已经对所有链生效。`audit_intact_molecules.py --asset-dir /... --output /.../audit.json` 可在重开工程后逐一比对表面顶点、拓扑与变换，确认完整性。
+`ribosome` 的 A/P/E tRNA 与 mRNA 保持原始坐标；`replisome` 使用 7PFO 的链映射。`--reveal` 以完整亚基为单位隐藏前景，形成观察窗口，不移动或剖开分子。具体隐藏对象和解释见 [section-views.md](section-views.md)。所选聚合物装配与内部可见版本均为静态实验结构视图，不是翻译或复制催化动画。分子包络在这些大复合体中固定用 surface LOD；不要将 profile 的 spacefill 字段误称为已经对所有链生效。`audit_intact_molecules.py --asset-dir /... --output /.../audit.json` 可在重开工程后逐一比对表面顶点、拓扑与变换，确认完整性。 分角色材质、参考镜头与更完整的保存检查见 [大型复合体的角色与构图](material-and-lighting.md#大型复合体的角色与构图)；generic 输入排除非聚合物配体、离子和水，不代表完整化学装配。
 
 ## 翻译延伸的结构底物循环
 
@@ -101,7 +101,7 @@ python3 "$SKILL/scripts/encode_video.py" "$PROJECT/translation" --ffmpeg /actual
 
 这是明确标注的分层观察：40S 全链隐藏，完整 60S 沿观察方向移至活性分子之后，源对象留在工程中；不是核糖体生理解离。tRNA 刚体端点由共享 C4′ 坐标拟合，拟合误差保存在 manifest；中间运动为教学编排。源 mRNA 片段为 CGUAUCC，A/P 位点对应 AUC/CGU；示意短肽不是 9SPI 中观测的肽。连接线表达连通关系，不声称动画每帧都有真实化学键长。
 
-此示例没有 eEF1A/eEF2、GTP 水解、亚基旋转或混合态，不可称为完整翻译催化循环，也不能由此推断 E 位点释放的唯一时序。源结构缺失的 tRNA 区域和 mRNA 两侧不补成假实验数据。完整天然装配的结构视图继续由 `build_complex_scene.py` 提供。
+此示例没有 eEF1A/eEF2、GTP 水解、亚基旋转或混合态，不可称为完整翻译催化循环，也不能由此推断 E 位点释放的唯一时序。源结构缺失的 tRNA 区域和 mRNA 两侧不补成假实验数据。保留完整已建模聚合物的结构视图继续由 `build_complex_scene.py` 提供；该 generic 输入不包含非聚合物配体和离子。
 
 检查除了数值，还必须包括遮挡：从相机向肽链符号发射射线，确认转移与结尾时可见；逐帧检查主要 tRNA 的实际网格边界、刚体变换、肽链连接和 mRNA 的最终三残基位移。核对 A/P/E 分子间最近距离；进场路径也可能穿插，不能只检查静态端点。`audit_translation.py` 另外检查入场 tRNA 与 mRNA 的原子中心距离，用于发现明显交叉；这一检查不是完整碰撞或能量学认证。
 
@@ -180,7 +180,7 @@ UTP 以 CCD 化学连接为基础，借用源结构 A–T 配对的空间朝向�
 
 RNA 引物仅用符号表示，不能拿它讲解核糖化学。前导链的起始位于画外，未显示聚合酶/引物酶、校对、ATP 化学、引物去除和连接。不能称为完整复制全过程。主链连接管表达路径连通，不是每帧精确的共价键长。
 
-7PFO 的 CMG 11 个完整亚基（2–7、C/D/E/F/G）作为一组后移，不切开，也不暗示当前构造的 DNA 路径就是实验 DNA–CMG 界面。其他复合体成员未选入这一 CMG 参考层；完整 7PFO 仍用 `build_complex_scene.py` 查看。`audit_replication.py` 检查亲代身份、互补链共用轨迹、增长次序、引物先决条件、完整亚基、前后层次和标签边界。
+7PFO 的 CMG 11 个完整亚基（2–7、C/D/E/F/G）作为一组后移，不切开，也不暗示当前构造的 DNA 路径就是实验 DNA–CMG 界面。其他复合体成员未选入这一 CMG 参考层；7PFO 的全部已建模聚合物仍用 `build_complex_scene.py` 查看。`audit_replication.py` 检查亲代身份、互补链共用轨迹、增长次序、引物先决条件、完整亚基、前后层次和标签边界。
 
 两种新示例都先抽查关键帧，再用 `render_saved.py --frames all` 和 `encode_video.py` 完成视频。小内存机器优先顺序渲染；同时运行多个 Cycles 任务若使单帧耗时明显上升，应保留已完成帧，按已保存的同一工程和设置续渲缺失区间。逐段帧必须尺寸/fps/合成设置一致；检查全部 PNG 可读、帧号连续后编码，再完整解码 MP4 并查看关键时点。不要把部分序列当成完成品。
 

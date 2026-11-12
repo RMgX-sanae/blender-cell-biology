@@ -11,7 +11,7 @@ import sys
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 
 
 def linear(hex_color):
@@ -306,6 +306,10 @@ def studio(profile, args, camera_defaults):
     group.objects.link(camera)
     camera.location = settings['position']
     aim(camera, settings.get('target', (0, 0, 0)))
+    roll=settings.get('roll_degrees',0)
+    if not math.isfinite(roll):raise ValueError('Camera roll must be finite degrees')
+    if roll:
+        camera.rotation_euler=(camera.rotation_euler.to_quaternion()@Quaternion((0,0,1),math.radians(roll))).to_euler()
     data.type = settings.get('type', 'ORTHO')
     data.ortho_scale = settings['scale']
     data.lens = settings.get('lens', 52)

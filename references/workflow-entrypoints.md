@@ -51,7 +51,7 @@
 | 换膜蛋白结构与装配，保留分布/渲染流程 | [项目资产配置](molecular-asset-config.md)：`prepare_molecular_asset.py --config` → 原分布与场景入口 | **独立重建**：原 β2AR 选择与项目配置结果一致；1J4N AQP1 四聚体从新下载装配重建，整体两种外观与膜侧向图已检查。膜方向仍须来源判断，不含水通路或门控 |
 | 受体膜环境或静态转录复合物 | [精细制作流程](production-workflow.md)：`build_molecular_scene.py` 的 membrane/transcription | **既有模型**：分别对应 3SN6/5FLM；同脚本 motor 是运输示意，不包含出芽或融合 |
 | 曲面上的受体朝向、簇或极性分布 | [受体分布](receptors-and-distributions.md)：`prepare_receptor_distribution.py` → `build_receptor_distribution_scene.py` | **独立重建**：完整 3SN6 复合物、三种静态分布和六种外观检查；另检查经缩放/旋转的项目网格及错误绕序。密度/聚集是假设，未验证生理丰度或扩散 |
-| 完整核糖体/复制复合体及内部观察 | [完整单体观察](section-views.md)、[精细制作流程](production-workflow.md)：`build_complex_scene.py`、`audit_intact_molecules.py` | **既有模型**：9SPI/7PFO；隐藏完整遮挡亚基，不能切开分子，也不能把结构视图称作催化动画 |
+| 核糖体/复制复合体的聚合物结构及内部观察 | [完整单体观察](section-views.md)、[角色与构图](material-and-lighting.md#大型复合体的角色与构图)：`build_complex_scene.py`、`audit_complex_scene.py` | **既有模型**：9SPI/7PFO；按真实链类型路由材质，保留完整源表面和核酸位置，隐藏完整遮挡亚基；generic 输入不含非聚合物配体/离子，不是完整化学装配或催化动画 |
 | 线粒体或动物细胞总览 | [细胞与细胞器](cells-and-organelles.md)、[精细制作流程](production-workflow.md)：`build_organelle_scene.py`；或 `prepare_cell_geometry.py` → `build_cell_scene.py` | **既有模型**：连续嵴膜、核膜—ER 关系等示意；20 类细胞与 27 类组件表仍是建模配方，不能当作全部已重建 |
 | 展示同一来源细胞的膜、DNA 和一种细胞器标记 | [同源细胞展示](registered-cell-display.md)：`prepare_allen_environment.py` → `build_registered_cell_scene.py` → `audit_registered_cell_scene.py` | **独立重建的静态展示**：三套不同 Allen 细胞来源、四张 Cycles 明暗渲染；保留全部源顶点、面和相对位置。源边界有实际开边/非流形边，不能当封闭体积或完整膜模型 |
 | 在细胞体积内放置完整对象并避开已知结构 | [体积内放置](volume-distributions.md)：`prepare_volume_case.py` → `blender_volume.py export` → `prepare_volume_layout.py` → `blender_volume.py place/audit` | **静态接入独立重建**：Allen 原始体素、64 个数值探针；另有 40 个完整评估网格副本及保存工程检查，一张 Cycles 静态图。原掩膜及冲突保留；未验证实际细胞器丰度、运输或动态分布 |

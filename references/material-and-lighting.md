@@ -45,6 +45,28 @@
 
 通用反应双视图 `build_molecular_sequence_scene.py` 可通过 `--style-profile` 使用显式组件角色、灯光、语义配色和背景三层合成；配置及保存检查见 [分子序列外观](molecular-sequence-display.md#按参考选择外观)。[PTP1B 外观配置](../assets/style-sequence-ptp1b.json) 是一个具体起点；新反应重新对应组件，取景和结构表示继续由其 display 文件控制。
 
+## 大型复合体的角色与构图
+
+`build_complex_scene.py` 的 9SPI/7PFO 结构视图也可读取 `surface_roles`。材质角色由来源链的蛋白/核酸身份决定，不能由色板键名猜测：例如复制体中使用 `heads` 颜色的 AND-1 仍是蛋白，核糖体的青色 rRNA 仍用核酸材质。未提供角色配置时保留原材质数值；不把这些表面颜色或散射参数称为实验测量。
+
+`assets/style-complex-replisome.json` 给出 7PFO 的金色主结构、冷色辅助亚基和洋红/米色 DNA 配方。它采用完整源包络与核酸原子显示，没有模仿参考中的原子空间填充或添加无来源的拥挤背景。继承的 `generic` 输入只包含已建模聚合物，排除非聚合物配体、离子和水；这个入口是结构观察，不是完整化学装配或催化模型。
+
+```bash
+"$BLENDER" -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_complex_scene.py" -- \
+  --scene replisome --asset-dir "$PROJECT/replisome" --reveal \
+  --style-profile "$SKILL/assets/style-complex-replisome.json" \
+  --width 1600 --samples 48 --output "$PROJECT/complex" --render
+"$BLENDER" --disable-autoexec -b "$PROJECT/complex/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/audit_complex_scene.py" -- \
+  --asset-dir "$PROJECT/replisome" --profile "$SKILL/assets/style-complex-replisome.json" \
+  --output "$PROJECT/complex/saved-check.json"
+```
+
+该入口限正交镜头。显式 `camera.position/target` 保持所选视角与瞄准点；`scale` 太小会拒绝，而不是自动覆盖或裁掉源结构。共享 `studio` 支持有限数值的 `camera.roll_degrees`，用于让长复合体在横向画面中更清楚；它只滚转镜头，不改变分子坐标。取景保留全部已建模亚基的边界，包括 `--reveal` 隐藏但仍留在工程中的完整亚基。未设置镜头控制时保留原自动取景。
+
+保存检查核对完整组件清单、源表面、核酸原子中心/显示半径、实际分配的角色材质与颜色、指定灯光和取景；距离推断的键、光学真值和最终美观不由此证明。`test_complex_scene.py` 在重开的真实工程中破坏材质分配、源几何、镜头或灯光并确认拒绝，随后恢复；实际画面仍须独立查看。
+
 ## 相互作用入口的迁移
 
 相互作用入口 `build_interaction_scene.py` 可用 `--surface-profile assets/style-structure-materials.json` 接入同一组 PBR 角色着色器，适用于 `cinematic` / `teaching`。此参数只读取 `surface_roles`；灯光、相机与合成仍由该入口的风格和取景参数控制。来源 `polymer_type` 决定蛋白/核酸角色，配体用 `cofactor`。`--representation surface|atoms` 选择原有表面或原子实例表示；原子球半径是显示参数，不是实验测量的原子半径。
