@@ -38,7 +38,8 @@ def build(asset_dir,settings,appearance,subject_bounds,membrane=None):
             matrix=base@np.linalg.matrix_power(data[name]['repeat_nm'],index) if name=='actin' else base
             points=data[name]['vertices']@matrix[:3,:3].T+matrix[:3,3]
             lo,hi=points.min(0),points.max(0)
-            if np.all(hi>=subject_bounds[0]) and np.all(lo<=subject_bounds[1]):raise ValueError('Background bounds overlap the complete actor path')
+            if np.all(hi>=subject_bounds[0]) and np.all(lo<=subject_bounds[1]):
+                raise ValueError(f'Background bounds overlap the complete actor path: {name}, placement {row["position_nm"]}, bounds {lo.tolist()} to {hi.tolist()}, subject {np.asarray(subject_bounds).tolist()}')
             clearance=None
             if membrane:
                 guard=membrane['head_offset_nm']+membrane['head_radius_nm']-membrane['hydrophobic_half_width_nm']

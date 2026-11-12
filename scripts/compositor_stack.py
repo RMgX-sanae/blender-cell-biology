@@ -69,7 +69,8 @@ def isolate_labels(scene, background, minimum_pixels=26):
     output = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
     mat.node_tree.links.new(emission.outputs[0], output.inputs['Surface'])
     for obj in fonts:
-        obj.data.materials.clear(); obj.data.materials.append(mat)
+        if not obj.get('compositor_preserve_text_color'):
+            obj.data.materials.clear(); obj.data.materials.append(mat)
         camera = scene.camera
         depth = -(camera.matrix_world.inverted() @ obj.matrix_world.translation).z
         span = camera.data.ortho_scale if camera.data.type == 'ORTHO' else depth*camera.data.sensor_width/camera.data.lens

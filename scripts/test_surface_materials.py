@@ -36,6 +36,29 @@ class SurfaceHandoff(unittest.TestCase):
         self.shader.inputs['Roughness'].default_value=.8
         with self.assertRaisesRegex(ValueError,'Saved shader differs'):self.check()
 
+    def test_opt_in_typography_keeps_diagram_ink(self):
+        from compositor_stack import isolate_labels
+        previous=bpy.context.window.scene;scene=bpy.data.scenes.new('Ink regression')
+        bpy.context.window.scene=scene;objects=[]
+        try:
+            camera=bpy.data.objects.new('Ink camera',bpy.data.cameras.new('Ink camera'))
+            camera.data.type='ORTHO';camera.data.ortho_scale=20;camera.location.z=10
+            scene.collection.objects.link(camera);scene.camera=camera;objects.append(camera)
+            labels=[]
+            for preserve in (False,True):
+                data=bpy.data.curves.new('Ink label','FONT');data.body='ATP'
+                obj=bpy.data.objects.new('Ink label',data);scene.collection.objects.link(obj);objects.append(obj);labels.append(obj)
+                data.materials.append(self.mat)
+                if preserve:obj['compositor_preserve_text_color']=True
+            isolate_labels(scene,'091A24')
+            self.assertIsNot(labels[0].data.materials[0],self.mat)
+            self.assertEqual(labels[1].data.materials[0],self.mat)
+            self.assertTrue(scene.view_layers[scene['compositor_beauty_layer']].layer_collection.children[scene['compositor_label_collection']].exclude)
+        finally:
+            bpy.context.window.scene=previous
+            for obj in objects:bpy.data.objects.remove(obj,do_unlink=True)
+            bpy.data.scenes.remove(scene)
+
     def test_unused_shader_rejected(self):
         tree=self.mat.node_tree;other=tree.nodes.new('ShaderNodeEmission')
         tree.links.new(other.outputs[0],tree.nodes.get('Material Output').inputs['Surface'])

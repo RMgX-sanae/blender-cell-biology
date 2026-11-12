@@ -8,6 +8,8 @@ ROOT = Path(os.environ['BIO_FILM_PROJECT']).resolve()
 if ROOT.is_relative_to(SKILL):
     raise ValueError('Generated film projects must be outside the skill directory')
 OPTIONS = json.loads((ROOT / 'project.json').read_text())
+from appearance_config import load_saved,chapter_profile
+APPEARANCE = load_saved(OPTIONS)
 FFMPEG = OPTIONS['ffmpeg']
 FONT = OPTIONS['font_zh']
 LATIN_FONT = OPTIONS['font_en']
@@ -17,7 +19,9 @@ def validate_render_settings(settings, shot):
     expected = {'engine': OPTIONS['engine'], 'width': OPTIONS['width'],
                 'height': 2*round(OPTIONS['width']*9/32), 'percentage': 100,
                 'samples': OPTIONS['samples'], 'fps': OPTIONS['fps'], 'fps_base': 1,
-                'compositor': OPTIONS['compositor'], 'frame_start': 1, 'frames': shot['frames']}
+                'compositor': OPTIONS.get('appearance_recipe') or OPTIONS['compositor'], 'frame_start': 1, 'frames': shot['frames']}
+    if OPTIONS.get('style_profile_sha256'):
+        expected.update(style_profile_sha256=OPTIONS['style_profile_sha256'],environment_sha256=OPTIONS.get('environment_sha256'))
     differences = {key: {'expected': value, 'actual': settings.get(key)}
                    for key, value in expected.items() if settings.get(key) != value}
     if shot['fps'] != OPTIONS['fps']:

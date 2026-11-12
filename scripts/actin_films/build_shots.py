@@ -15,9 +15,11 @@ import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS
+from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS, APPEARANCE, chapter_profile
 sys.path.insert(0,str(SKILL/'scripts'))
 from detail_scene import Parts, collection, material, mesh, path, studio
+import detail_scene as ds
+import chapter_appearance
 
 
 
@@ -55,7 +57,18 @@ class Shot:
         repairs=ROOT/'assets/contact-repairs.json'
         self.repairs=json.loads(repairs.read_text()) if repairs.exists() else {}
         self.primary=[];self.labels=[];self.scene_scale=52
-        bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
+        self.appearance=chapter_profile(APPEARANCE,config['id']);self.material_cache={}
+        if self.appearance is not None:
+            scene=bpy.context.scene
+            # Excluded text/context objects survive operator-based selection.
+            # Each chapter needs its own complete scene and layer membership.
+            for obj in list(scene.objects):bpy.data.objects.remove(obj,do_unlink=True)
+            bpy.context.window.view_layer=scene.view_layers[0]
+            for layer in list(scene.view_layers)[1:]:scene.view_layers.remove(layer)
+            for key in ('compositor_label_layer','compositor_label_collection','compositor_beauty_layer','actin_appearance'):
+                if key in scene:del scene[key]
+        else:
+            bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
         bpy.data.orphans_purge(do_recursive=True)
         for group in list(bpy.data.collections):
             if not group.objects and not group.children:
@@ -64,16 +77,29 @@ class Shot:
             self.groups[n]=collection(n)
         palette={'teal':'4CACA9','blue':'4D83B5','gold':'E8B852','pink':'BF6A9C',
                  'green':'8DB788','red':'D98873','cream':'D5DCCB','dim':'45616B','ink':'ECF2F0'}
-        self.mats={k:material(k,v,.53,0) for k,v in palette.items()}
+        if self.appearance is not None:palette.update(self.appearance.get('palette',{}))
+        self.palette=palette
+        self.mats={k:material(k,v,.53,0,settings=self.appearance.get('surface_roles',{}).get('protein') if self.appearance else None) for k,v in palette.items()}
+        if self.appearance is not None:
+            for key,mat in self.mats.items():mat['surface_role']='protein';mat['palette_key']=key
         self.ink=bpy.data.materials.new('Emission typography');self.ink.use_nodes=True
         nodes=self.ink.node_tree.nodes;nodes.clear()
         emission=nodes.new('ShaderNodeEmission');emission.inputs['Color'].default_value=(.76,.88,.87,1)
+        if self.appearance is not None:emission.inputs['Color'].default_value=(*ds.linear(palette['ink']),1)
         emission.inputs['Strength'].default_value=.85
         out=nodes.new('ShaderNodeOutputMaterial');self.ink.node_tree.links.new(emission.outputs[0],out.inputs['Surface'])
         self.diagram_ink=self.ink.copy();self.diagram_ink.name='Dark diagram typography'
         self.diagram_ink.node_tree.nodes.get('Emission').inputs['Color'].default_value=(.012,.025,.032,1)
         self.font=bpy.data.fonts.load(FONT);self.font.pack()
         self.latin_font=bpy.data.fonts.load(LATIN_FONT);self.latin_font.pack()
+
+    def shade(self,color,role):
+        if self.appearance is None:return self.mats[color]
+        key=(color,role)
+        if key not in self.material_cache:
+            mat=material(role+' '+color,self.palette[color],.53,0,settings=self.appearance.get('surface_roles',{}).get(role))
+            mat['surface_role']=role;mat['palette_key']=color;self.material_cache[key]=mat
+        return self.material_cache[key]
 
     def rig(self,name,parent=None,matrix=None):
         obj=bpy.data.objects.new(name,None);self.groups['Molecules'].objects.link(obj)
@@ -196,7 +222,7 @@ class Shot:
         data.materials.append(color or self.ink);self.labels.append(obj);return obj
 
     def line(self,points,color='cream',width=.08,name='Schematic connection'):
-        return path(name,points,width,self.mats[color],self.groups['Schematics'])
+        return path(name,points,width,self.shade(color,'schematic_linker'),self.groups['Schematics'])
 
     def arrow(self,a,b,color='cream'):
         a,b=Vector(a),Vector(b);v=(b-a).normalized()
@@ -209,13 +235,13 @@ class Shot:
         obj=bpy.context.object;obj.name='Diagram node '+label
         obj.dimensions=(width,.35,2.2);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
         for c in list(obj.users_collection):c.objects.unlink(obj)
-        self.groups['Schematics'].objects.link(obj);obj.data.materials.append(self.mats[color])
+        self.groups['Schematics'].objects.link(obj);obj.data.materials.append(self.shade(color,'schematic_symbol'))
         mod=obj.modifiers.new('Diagram corner radius','BEVEL');mod.width=.2;mod.segments=3
         self.text(label,(x,-40,z),1.2,color=self.diagram_ink);return obj
 
     def token(self,label,pos,color='gold',radius=.75):
         p=Parts();p.ball((0,0,0),radius,seg=20,rings=12)
-        obj=p.object('Schematic '+label,[self.mats[color]],self.groups['Schematics']);obj.location=pos
+        obj=p.object('Schematic '+label,[self.shade(color,'schematic_symbol')],self.groups['Schematics']);obj.location=pos
         lab=self.text(label,(0,-40,0),radius*.8,color=self.diagram_ink)
         lab.parent=obj;lab.location=(0,-40,0)
         obj['representation']='chemical/signaling symbol, not atomic scale'
@@ -255,15 +281,21 @@ class Shot:
         profile=json.loads((SKILL/'assets/style-molecular-reference.json').read_text())
         profile['background']='172B35';profile['bump']=0;profile['roughness']=.53
         profile['exposure']=.3;profile['compositor']['contrast']=1
+        pan=[0,0];light_scale=1.4;self.original_scene_scale=self.scene_scale
+        if self.appearance is not None:
+            profile=chapter_appearance.studio_profile(profile,self.appearance)
+            camera=self.appearance.get('camera',{});self.scene_scale*=camera.get('scale_multiplier',1)
+            pan=camera.get('center_offset_nm',[0,0])
+            light_scale=1
         args=argparse.Namespace(engine=OPTIONS['engine'],width=self.width,samples=OPTIONS['samples'],fps=self.c['fps'],frames=self.n,compositor=OPTIONS['compositor'])
-        studio(profile,args,{'position':(0,-100,0),'target':(0,0,0),'scale':self.scene_scale,'light_scale':1.4})
+        studio(profile,args,{'position':(pan[0],-100,pan[1]),'target':(pan[0],0,pan[1]),'scale':self.scene_scale,'light_scale':light_scale})
         scene=bpy.context.scene;scene.render.resolution_y=2*round(self.width*9/32)
         scene.render.image_settings.color_mode='RGB';scene.render.image_settings.compression=25
         scene.render.use_file_extension=True
         scene.render.film_transparent=True
         scene.render.fps=self.c['fps']
         scene.render.fps_base=1
-        if self.c['id']=='a03':
+        if self.c['id']=='a03' and self.appearance is None:
             # An explicit editorial dip separates Arp recruitment from the
             # selected monomer-pool view. Whole units enter view at the cut.
             for tree in [t for t in bpy.data.node_groups if t.name.startswith('COMP_')]:
@@ -274,9 +306,11 @@ class Shot:
             scene.eevee.taa_render_samples=OPTIONS['samples']
         W=self.scene_scale
         readable=self.c['id'] in {'a03','a04','a08','c04','f02','f04','f07'}
-        self.text(self.c['title'],(0,-75,W*.244),W*(.029 if readable else .025))
+        title=self.text(self.c['title'],(pan[0],-75,pan[1]+W*.244),W*(.029 if readable else .025))
+        if self.appearance is not None:title['chapter_title']=True
         for i,beat in enumerate(self.c['beats']):
-            obj=self.text(beat,(0,-75,W*.192),W*(.026 if readable else .024))
+            obj=self.text(beat,(pan[0],-75,pan[1]+W*.192),W*(.026 if readable else .024))
+            if self.appearance is not None:obj['chapter_beat_index']=i
             boundaries=self.c.get('beat_boundaries',[0,1/3,2/3,1])
             self.visibility(obj,boundaries[i],1 if i==2 else boundaries[i+1]-1/self.n)
         # A few whole source-derived background proteins give depth; their
@@ -284,11 +318,13 @@ class Shot:
         data=np.load(ROOT/'assets/ubiquitin/chain_A.npz')
         rng=np.random.default_rng(901)
         for i in range(12):
+            if self.appearance is not None:break
             x=rng.uniform(-W*.52,W*.52);z=rng.uniform(-W*.16,W*.16)
             if abs(x)<W*.32:continue
             obj=mesh('Context ubiquitin '+str(i),data['vertices'].tolist(),data['faces'].tolist(),[self.mats['dim']],self.groups['Environment'])
             obj.location=(x,24+rng.uniform(0,8),z);obj.rotation_euler=rng.uniform(0,math.tau,3)
             obj['source_structure']='1UBQ';obj['placement']='schematic environmental depth, not measured density'
+        appearance_record=chapter_appearance.finish(self,self.appearance,OPTIONS,profile) if self.appearance is not None else None
         scene.frame_set(1);bpy.context.view_layer.update()
         folder=ROOT/'shots'/self.c['id'];folder.mkdir(exist_ok=True)
         scene.render.filepath=str(folder/'preview.png')
@@ -299,6 +335,7 @@ class Shot:
         record={**self.c,'events':self.events,'scene_scale_nm':self.scene_scale,
                 'source_script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 'objects':len(scene.objects),'representation_limits':json.loads((ROOT/'assets/manifest.json').read_text())}
+        if appearance_record is not None:record['appearance']=appearance_record
         (folder/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
         return folder
 
@@ -450,7 +487,7 @@ def formin_seed(s):
     linkers=[];linker_checks=[]
     for record in repairs['linkers']:
         obj=path('Unresolved FH2 linker '+record['chain'],[(0,0,0)]*21,.055,
-                 s.mats['pink' if record['chain']=='G' else 'green'],s.groups['Schematics'])
+                 s.shade('pink' if record['chain']=='G' else 'green','schematic_linker'),s.groups['Schematics'])
         obj['geometry_evidence']=record['representation'];linkers.append(obj);lengths=[]
         obj['source_linker_contour_nm']=record['contour_upper_bound_nm']
         obj['linker_anchor_start']={'object':heads[record['start_lobe']].name,'position':record['start']}
@@ -516,7 +553,7 @@ def formin_growth(s,reentry=False):
     linkers=[]
     for item in record['linkers']:
         obj=path('Unresolved FH2 linker '+item['chain'],[(0,0,0)]*21,.055,
-            s.mats['pink' if item['chain']=='G' else 'green'],s.groups['Schematics'])
+            s.shade('pink' if item['chain']=='G' else 'green','schematic_linker'),s.groups['Schematics'])
         obj['geometry_evidence']=item['representation'];obj['source_linker_contour_nm']=item['contour_upper_bound_nm']
         for label in ['start','end']:
             anchor=item[label+'_anchor']
@@ -544,10 +581,11 @@ def formin_growth(s,reentry=False):
     # FH1 has no resolved coordinates in this source. A timed graphic cue
     # indicates supply via profilin without inventing an atomic tether pose.
     center=Vector(np.load(ROOT/'assets/profilin_on_morph.npz')['vertices'].mean(0))
+    cue_material=s.shade('ink','schematic_linker') if s.appearance is not None else s.ink
     for cycle,prof in enumerate(profilins):
         label=s.text('FH1 → profilin 供料',(26,-40,10),1.65)
-        shaft=path('FH1 supply cue '+str(cycle),[(0,0,0)]*21,.055,s.ink,s.groups['Schematics'])
-        tip=path('FH1 supply arrow '+str(cycle),[(0,0,0)]*3,.055,s.ink,s.groups['Schematics'])
+        shaft=path('FH1 supply cue '+str(cycle),[(0,0,0)]*21,.055,cue_material,s.groups['Schematics'])
+        tip=path('FH1 supply arrow '+str(cycle),[(0,0,0)]*3,.055,cue_material,s.groups['Schematics'])
         for obj in [shaft,tip]:obj['geometry_evidence']='Graphic functional supply cue; not a physical bond or resolved FH1 structure'
         for f in range(1,s.n+1):
             bpy.context.scene.frame_set(f);bpy.context.view_layer.update()
@@ -577,7 +615,7 @@ def chemistry(s):
             for pos,el in zip(ligand['positions_nm'],ligand['elements']):
                 parts.ball((np.array(pos)-center)*2.1, .18 if el=='Mg' else .14,seg=10,rings=7)
             col='green' if ligand['ccd']=='MG' else ('pink' if ligand['ccd']=='BEF' else 'gold' if ligand['ccd']=='PO4' else 'cream')
-            obj=parts.object(record['id']+' '+ligand['ccd'],[s.mats[col]],s.groups['Molecules'])
+            obj=parts.object(record['id']+' '+ligand['ccd'],[s.shade(col,'cofactor')],s.groups['Molecules'])
             obj.location=(x,-1,-4.1)
             obj['source_structure']=record['id'];obj['ccd']=ligand['ccd'];obj['magnification']=2.1
             if ligand['ccd']=='PO4':
@@ -615,7 +653,7 @@ def network(s,formin=False):
                 for sign in [-1,1]:
                     p.ball((x,y,16.5+sign*.65),.36,seg=8,rings=5)
                     p.tube([(x,y,16.5+sign*.42),(x+.15,y,16.5)],.08)
-        mem=p.object('Membrane lipids schematic',[s.mats['dim']],s.groups['Schematics'])
+        mem=p.object('Membrane lipids schematic',[s.shade('dim','membrane_symbol')],s.groups['Schematics'])
         s.move(mem,Matrix.Identity(4),T(0,0,1.5),(.4,.66),(0,0,0),'membrane shape output, not simulated force')
         s.text('细胞膜',(0,-15,14),1.9)
         s.text('CapZ 封端',(23,-18,-15),2.0)

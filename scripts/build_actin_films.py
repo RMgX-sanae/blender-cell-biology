@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 SKILL = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL / 'scripts'
 CHAPTERS = SCRIPTS / 'actin_films'
+sys.path.insert(0,str(CHAPTERS))
+from appearance_config import configure as configure_appearance
 SOURCES = ['7USC', '7USE', '1K8K', '7TPT', '9B27', '2BTF', '6VAO', '6UC4',
            '6FM2-assembly1', '2BAP', '1FOE', '4JD2', '8F8R', '8F8Q',
            '7AQK', '3J6F', '8A2R', '8A2S', '8A2T', '1UBQ']
@@ -67,6 +69,8 @@ def main():
     parser.add_argument('--quality', choices=QUALITY)
     parser.add_argument('--engine', choices=('eevee', 'cycles'))
     parser.add_argument('--compositor', choices=('clean', 'reference', 'monochrome'))
+    parser.add_argument('--style-profile',type=Path,help='Explicit actin role materials, palette, lighting, framing and protected compositor')
+    parser.add_argument('--environment-dir',type=Path,help='Prepared native-nm cytosolic shapes referenced by the appearance profile')
     parser.add_argument('--narration', choices=('none', 'macos', 'provided'))
     parser.add_argument('--voice')
     parser.add_argument('--shots', default='all')
@@ -96,6 +100,9 @@ def main():
                    narration=args.narration or old.get('narration', 'none'),
                    voice=args.voice or old.get('voice', 'Tingting'))
     options.update(QUALITY[options['quality']])
+    appearance=configure_appearance(options,old,args.style_profile,args.environment_dir,root,stages)
+    if appearance is not None and args.compositor:
+        parser.error('Use render_recipe in the appearance profile; --compositor selects legacy branches')
     options['font_zh'] = font_file(args.font_zh or old.get('font_zh'),
         ['/System/Library/Fonts/Supplemental/Songti.ttc'], root/'assets/Songti-Regular.ttf', 'Songti SC')
     options['font_en'] = font_file(args.font_en or old.get('font_en'),

@@ -17,24 +17,30 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from project_context import ROOT, SKILL, FFMPEG, FONT, LATIN_FONT, OPTIONS, validate_render_settings
 sys.path.insert(0,str(SKILL/'scripts'))
 from render_cache import valid_png
+from chapter_appearance import label_state
+from audit_appearance import audit as audit_appearance
 
 def scan(folder):
     scene=bpy.context.scene
     obs=sorted(scene.objects,key=lambda o:o.name)
     molecules=[o for o in obs if o.get('atoms_file')]
-    transforms=[];shapes=[];gates=[];visible=[];keys=[];framing=[]
+    transforms=[];shapes=[];gates=[];visible=[];keys=[];framing=[];label_clipping=[]
     linker_checks={o.name:{'maximum_curve_length_nm':0.,'maximum_anchor_error_nm':0.,
                           'contour_upper_bound_nm':float(o['source_linker_contour_nm'])}
                    for o in obs if o.get('source_linker_contour_nm')}
     W=scene.camera.data.ortho_scale
     for f in range(scene.frame_start,scene.frame_end+1):
         scene.frame_set(f);bpy.context.view_layer.update()
+        labels=label_state(scene) if 'actin_appearance'in scene else {}
         deps=bpy.context.evaluated_depsgraph_get()
         h=hashlib.sha256()
         for o in obs:
-            h.update(o.name.encode());h.update(bytes([o.hide_render]))
-            if o.hide_render:continue
-            h.update(np.round(np.array(o.matrix_world),7).tobytes())
+            label=labels.get(o.name);hidden=label['hidden'] if label else o.hide_render
+            h.update(o.name.encode());h.update(bytes([hidden]))
+            if hidden:continue
+            h.update(np.round(label['matrix'] if label else np.array(o.matrix_world),7).tobytes())
+            if label and any(not (0<=p[0]<=1 and 0<=p[1]<=1 and p[2]>0) for p in label['bounds']):
+                label_clipping.append({'frame':f,'object':o.name})
             if o.type=='MESH' and o.data.shape_keys:
                 h.update(np.array([k.value for k in o.data.shape_keys.key_blocks],dtype=np.float32).tobytes())
             if o.type=='CURVE':
@@ -68,7 +74,8 @@ def scan(folder):
             eo=o.evaluated_get(deps)
             bounds=np.array([o.matrix_world@Vector(p) for p in eo.bound_box])
             # Reserve the fixed title/beat and subtitle/footer bands.
-            if max(abs(bounds[:,0]))>W*.49 or max(abs(bounds[:,2]))>W*.178:
+            center=np.array(scene.camera.location)[[0,2]] if 'actin_appearance'in scene else np.zeros(2)
+            if max(abs(bounds[:,0]-center[0]))>W*.49 or max(abs(bounds[:,2]-center[1]))>W*.178:
                 framing.append({'frame':f,'object':o.name,'x':[float(min(bounds[:,0])),float(max(bounds[:,0]))],
                                 'z':[float(min(bounds[:,2])),float(max(bounds[:,2]))]})
     matrices=np.array(transforms,dtype=np.float32).reshape(len(keys),len(molecules),4,4)
@@ -80,6 +87,7 @@ def scan(folder):
             'finite':bool(np.isfinite(matrices).all()),'framing_warning_frames':len(set(r['frame'] for r in framing)),
             'unresolved_linker_checks':linker_checks,
             'framing_examples':framing[::max(1,len(framing)//30)][:30],
+            'label_clipping_count':len(label_clipping),'label_clipping_examples':label_clipping[:30],
             'molecules':[{'name':o.name,'asset':o['atoms_file'],'source':o.get('source_structure'),
                           'biological_id':o.get('biological_id')} for o in molecules]}
     (folder/'evaluated-audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
@@ -100,7 +108,13 @@ def main():
                   'samples':scene.cycles.samples if scene.render.engine=='CYCLES' else scene.eevee.taa_render_samples,
                   'compositor':scene.get('selected_compositor'),'frame_start':scene.frame_start,
                   'frames':scene.frame_end-scene.frame_start+1}
+        if 'actin_appearance'in scene:
+            appearance=json.loads(scene['actin_appearance'])
+            settings.update(style_profile_sha256=appearance['profile_sha256'],environment_sha256=appearance['environment_sha256'])
         validate_render_settings(settings,c)
+        appearance_report=audit_appearance(scene)
+        if appearance_report is not None:
+            (folder/'appearance-audit.json').write_text(json.dumps(appearance_report,indent=2)+'\n')
         keys,report=scan(folder)
         print('AUDITED',c['id'],report['frames'],report['unique_visual_states'],report['framing_warning_frames'],flush=True)
         if a.audit_only:continue
