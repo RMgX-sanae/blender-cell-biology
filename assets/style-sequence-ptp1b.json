@@ -1,0 +1,137 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "implementation_assumptions": [
+    "Warm protein, distinct pink reaction group and cool depth structures adopt selected visual features of the reference; this is a PTP1B display, not a p53 or DNA scene.",
+    "Source envelopes and atom markers retain the existing display representation; the reference atom-spacefill image is not reproduced literally.",
+    "Source coordinates are in nm and the two panels use independent uniform display scales. Shader texture and scattering are artistic choices checked at those scales, not calibrated optical constants.",
+    "Component roles select shaders and do not reclassify the chemical role of water or phosphoryl groups."
+  ],
+  "lighting": [
+    {
+      "name": "Observed top-left soft key",
+      "position": [
+        -12,
+        -18,
+        26
+      ],
+      "power": 6500,
+      "color": "FFE8C8",
+      "size": 14
+    },
+    {
+      "name": "Restrained cool fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 1800,
+      "color": "B4D9EE",
+      "size": 16
+    },
+    {
+      "name": "Cool depth separation",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 6500,
+      "color": "B8DEEF",
+      "size": 10
+    },
+    {
+      "name": "Readable underside fill",
+      "position": [
+        0,
+        -16,
+        -12
+      ],
+      "power": 3500,
+      "color": "D3E2EC",
+      "size": 16
+    }
+  ],
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": 0,
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.48,
+      "specular": 0.3,
+      "bump": 0.004,
+      "texture_scale": 10,
+      "bump_strength": 0.16,
+      "subsurface_weight": 0.065,
+      "subsurface_radius": [
+        0.09,
+        0.06,
+        0.035
+      ],
+      "subsurface_scale": 1
+    },
+    "cofactor": {
+      "roughness": 0.35,
+      "specular": 0.28,
+      "bump": 0,
+      "subsurface_weight": 0
+    },
+    "environment": {
+      "roughness": 0.78,
+      "specular": 0.14,
+      "bump": 0.002,
+      "texture_scale": 10,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.015,
+      "subsurface_radius": [
+        0.04,
+        0.03,
+        0.02
+      ],
+      "subsurface_scale": 1
+    }
+  },
+  "name": "PTP1B sequence: warm source protein and restrained cool depth",
+  "background": "#081821",
+  "component_roles": {
+    "enzyme": "protein",
+    "peptide": "protein",
+    "phosphoryl": "cofactor",
+    "water": "cofactor"
+  },
+  "semantic_colors": {
+    "enzyme": "#E6AD4A",
+    "enzyme_context": "#7D9198",
+    "phosphoryl": "#FF78B7"
+  },
+  "environment_palette": {
+    "ptp1b": "#2D505D",
+    "ubiquitin": "#345D66",
+    "mdm2": "#3E4D67"
+  },
+  "environment_compositor": {
+    "dark": {
+      "blur_pixels_1280": [
+        16,
+        7,
+        22
+      ],
+      "opacity": [
+        0.32,
+        0.2,
+        0.12
+      ]
+    }
+  },
+  "atom_subdivisions": 3
+}

@@ -40,13 +40,19 @@ def annotation_line(obj, material, radius):
     tree.links.new(solid.outputs['Mesh'], paint.inputs['Geometry']); tree.links.new(paint.outputs['Geometry'], target)
 
 
-def background(asset_dir, scale, components=('donor', 'e2', 'uev')):
+def background(asset_dir, scale, components=('donor', 'e2', 'uev'), *, profile=None):
+    profile=profile or {};palette=profile.get('environment_palette',{})
+    if set(palette)-set(components):raise ValueError('Environment colors refer to absent source components')
     groups = [ds.collection('Molecular background '+n) for n in ('far', 'middle', 'near')]
     colors = dict(zip(components, ['#778f9a', '#789994', '#8f839e'])); meshes = {}; records = []
+    colors.update(palette)
+    settings=profile.get('surface_roles',{}).get('environment')
     for k, color in colors.items():
         d = np.load(asset_dir/('background_'+k+'.npz'))
         mesh = bpy.data.meshes.new('Whole background '+k); mesh.from_pydata(d['vertices'].tolist(), [], d['faces'].tolist()); mesh.update()
-        mesh.materials.append(ds.material('Background '+k, color, .65, 0))
+        material=ds.material('Background '+k, color, .65, 0,settings=settings)
+        if settings is not None:material['surface_role']='environment'
+        mesh.materials.append(material)
         for polygon in mesh.polygons: polygon.use_smooth = True
         meshes[k] = mesh
     rng = np.random.default_rng(924)
@@ -64,7 +70,7 @@ def background(asset_dir, scale, components=('donor', 'e2', 'uev')):
     return groups, records
 
 
-def paired_composite(scene, close, annotations, bg_layers, background_color, width):
+def paired_composite(scene, close, annotations, bg_layers, background_color, width, *, environment_settings=None):
     """Compose synchronized whole-molecule panels after build_stack initializes labels."""
     tree = scene.compositing_node_group
     # The label collection is created by build_stack after our view layers.
@@ -96,7 +102,7 @@ def paired_composite(scene, close, annotations, bg_layers, background_color, wid
     annotate = sn.node(tree, 'CompositorNodeRLayers'); annotate.layer = annotations.name
     over = sn.node(tree, 'CompositorNodeAlphaOver'); tree.links.new(crop.outputs[0], over.inputs['Background']); tree.links.new(annotate.outputs['Image'], over.inputs['Foreground'])
     tree.links.new(over.outputs['Image'], base.inputs['Foreground'])
-    tree.links.new(environment.composite(tree, bg_layers, background_color, width), base.inputs['Background'])
+    tree.links.new(environment.composite(tree, bg_layers, background_color, width,settings=environment_settings), base.inputs['Background'])
     publish_panel_sources(tree, {'overview': (left_render.node, mix.inputs[2]), 'detail': (right_render, mix.inputs[1])})
     # The original render-layer passes no longer describe both composed panels.
     tree['display_passes'] = '[]'

@@ -94,6 +94,44 @@ class SurfaceHandoff(unittest.TestCase):
         finally:
             bpy.data.objects.remove(surface,do_unlink=True);bpy.data.objects.remove(atoms,do_unlink=True)
 
+    def test_molecular_depth_controls_and_rejections(self):
+        from cellular_environment import composite
+        layers=[bpy.context.scene.view_layers.new('Depth test '+name) for name in ('far','middle','near')]
+        tree=bpy.data.node_groups.new('Depth control test','CompositorNodeTree')
+        try:
+            composite(tree,layers,'081821',640,settings={'blur_pixels_1280':[12,6,20],'opacity':[.3,.2,.1]})
+            for layer,pixels,opacity in zip(layers,[6,3,10],[.3,.2,.1]):
+                blur=next(n for n in tree.nodes if n.label==layer.name+' defocus')
+                over=next(n for n in tree.nodes if n.label==layer.name+' background strength')
+                self.assertEqual(tuple(blur.inputs['Size'].default_value),(pixels,pixels))
+                self.assertAlmostEqual(over.inputs['Factor'].default_value,opacity)
+                self.assertEqual(over.inputs['Foreground'].links[0].from_node,blur)
+            for settings in [{'opacity':[.2,float('nan'),.2]},{'opacity':[.2,1.1,.2]},
+                             {'blur_pixels_1280':[1,2]},{'blur_pixels_1280':[-1,2,3]},
+                             {'blur_pixel_1280':[1,2,3]}]:
+                with self.subTest(settings=settings),self.assertRaises(ValueError):
+                    composite(tree,layers,'081821',640,settings=settings)
+            with self.assertRaises(ValueError):composite(tree,layers[:2],'081821',640,settings={'opacity':[.2,.2,.2]})
+        finally:
+            for layer in layers:bpy.context.scene.view_layers.remove(layer)
+            bpy.data.node_groups.remove(tree)
+
+    def test_studio_look_follows_selected_view_transform(self):
+        from types import SimpleNamespace
+        from detail_scene import studio
+        args=SimpleNamespace(engine='eevee',samples=1,width=64,fps=24,frames=1,compositor='clean')
+        profile={'world':'839BAA','background':'081821','lighting':[],'compositor':{}}
+        camera={'position':[0,0,10],'target':[0,0,0],'scale':10}
+        for settings,transform,look in [({},'AgX','AgX - Medium High Contrast'),
+                ({'view_transform':'Standard'},'Standard','None'),
+                ({'view_transform':'Standard','look':'Medium High Contrast'},'Standard','Medium High Contrast')]:
+            with self.subTest(settings=settings):
+                studio({**profile,**settings},args,camera)
+                self.assertEqual(bpy.context.scene.view_settings.view_transform,transform)
+                self.assertEqual(bpy.context.scene.view_settings.look,look)
+        with self.assertRaises(TypeError):
+            studio({**profile,'view_transform':'Standard','look':'AgX - Medium High Contrast'},args,camera)
+
 
 if __name__=='__main__':
     result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(SurfaceHandoff))

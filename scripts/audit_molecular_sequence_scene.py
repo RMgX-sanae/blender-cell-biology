@@ -8,6 +8,89 @@ from audit_phosphotransfer_scene import vertices
 from build_ubiquitin_transfer_scene import digest
 from coordinate_animation import verify_point_animation
 from molecular_sequence_assets import load_assets
+from audit_surface_materials import check_materials
+from audit_interaction_scene import displayed_materials
+from detail_scene import linear
+
+
+def check_appearance(scene,record,root):
+    appearance=record.get('appearance')
+    if appearance is None:return None
+    assert appearance==json.loads((root/'style-profile.json').read_text()),'Saved appearance record differs'
+    assert digest(root/'style-profile.json')==record['appearance_sha256']==scene['sequence_style_profile_sha256'],'Appearance fingerprint differs'
+    roles=set(appearance['component_roles'].values())
+    if 'environment' in appearance['surface_roles']:roles.add('environment')
+    shaders=check_materials(appearance,roles)
+    colors=dict(record['display']['colors'][record['style']]);colors.update(appearance.get('semantic_colors',{}))
+    assert record['resolved_colors']==colors,'Resolved semantic colors differ'
+    def equal(actual,expected,label):
+        assert np.allclose(actual,expected,rtol=1e-5,atol=1e-6),label
+    def color_check(obj,material,color):
+        assert displayed_materials(obj)=={material},'Actual material assignment differs: '+obj.name
+        equal(material.diffuse_color,color,'Display color differs: '+obj.name)
+        socket=material.node_tree.nodes.get('Principled BSDF').inputs['Base Color']
+        assert not socket.is_linked,'Unreviewed base-color override: '+obj.name
+        equal(socket.default_value,color,'Surface color differs: '+obj.name)
+    for view in record['display']['views']:
+        for key,settings in view['actors'].items():
+            obj=scene.objects[key+' '+view['id']];material=bpy.data.materials[view['id']+' '+key]
+            assert material['surface_role']==appearance['component_roles'][key],'Component material role differs'
+            color=settings.get('color',colors[settings.get('color_key',key)])
+            color_check(obj,material,(*linear(color),1))
+    palette=appearance.get('environment_palette',{})
+    fallback=dict(zip(record['display']['background_components'],['#778f9a','#789994','#8f839e']))
+    for entry in record['environment']:
+        obj=scene.objects[entry['object']];key=entry['component'];material=bpy.data.materials['Background '+key]
+        rgb=linear(palette.get(key,fallback[key]))
+        if record['style']=='dark' and not palette:rgb=[value*.55 for value in rgb]
+        color_check(obj,material,(*rgb,1))
+        layer='Molecular background '+('far','middle','near')[entry['depth_layer']]+' render'
+        bpy.context.window.view_layer=scene.view_layers[layer];bpy.context.view_layer.update()
+        evaluated=obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        equal(np.asarray(evaluated.matrix_world),entry['matrix'],'Background source placement differs')
+        data=np.load(Path(record['asset_directory'])/('background_'+key+'.npz'))
+        points=np.empty(len(obj.data.vertices)*3);obj.data.vertices.foreach_get('co',points)
+        equal(points.reshape(-1,3),data['vertices'],'Background source shape differs')
+        assert np.array_equal([list(p.vertices) for p in obj.data.polygons],data['faces']),'Background source faces differ'
+    if 'atom_subdivisions' in appearance:
+        for obj in scene.objects:
+            for modifier in obj.modifiers:
+                if modifier.type!='NODES':continue
+                for node in modifier.node_group.nodes:
+                    if node.bl_idname=='GeometryNodeMeshIcoSphere':
+                        assert node.inputs['Subdivisions'].default_value==appearance['atom_subdivisions'],'Atom display tessellation differs'
+    studio=json.loads(scene['style_profile'])
+    for key in ('lighting','world','view_transform','look','exposure','background'):
+        if key in appearance:assert studio[key]==appearance[key],'Selected studio field differs: '+key
+    equal(scene.world.node_tree.nodes['Background'].inputs['Color'].default_value,(*linear(studio['world']),1),'World color differs')
+    assert scene.view_settings.view_transform==studio.get('view_transform','AgX'),'View transform differs'
+    default_look='AgX - Medium High Contrast' if scene.view_settings.view_transform=='AgX' else 'None'
+    assert scene.view_settings.look==studio.get('look',default_look),'View look differs'
+    equal(scene.view_settings.exposure,studio.get('exposure',0),'Exposure differs')
+    for item in studio['lighting']:
+        light=scene.objects[item['name']]
+        assert light.type=='LIGHT' and light.data.type=='AREA','Selected area light missing'
+        equal(light.location,np.array(item['position'])*1.2,'Light position differs')
+        equal(light.data.energy,item['power']*1.2**2,'Light power differs')
+        equal(light.data.size,item['size']*1.2,'Light size differs')
+        equal(light.data.color,linear(item['color']),'Light color differs')
+    settings=appearance.get('environment_compositor',{}).get(record['style'],{})
+    assert record['environment_compositor']==settings,'Environment settings record differs'
+    def node(label):
+        found=[n for n in scene.compositing_node_group.nodes if n.label==label]
+        assert len(found)==1,'Missing or ambiguous appearance node: '+label
+        return found[0]
+    equal(node('Cellular environment base color').outputs[0].default_value,
+          (*linear(settings.get('background',studio['background'])),1),'Environment base color differs')
+    for index,depth in enumerate(('far','middle','near')):
+        prefix='Molecular background '+depth+' render'
+        blur=node(prefix+' defocus');strength=node(prefix+' background strength')
+        pixels=settings.get('blur_pixels_1280',[18,9,28])[index]*scene.render.resolution_x/1280
+        equal(blur.inputs['Size'].default_value,[pixels,pixels],'Environment blur differs')
+        equal(strength.inputs['Factor'].default_value,settings.get('opacity',[.26,.24,.14])[index],'Environment opacity differs')
+        assert strength.inputs['Foreground'].links[0].from_node==blur,'Environment blur disconnected'
+    return {'passed':True,'role_materials':len(shaders['materials']),'source_background_instances':len(record['environment']),
+            'lighting_checked':len(studio['lighting']),'depth_layers_checked':3,'profile_sha256':record['appearance_sha256']}
 
 
 def main():
@@ -22,6 +105,7 @@ def main():
     assert scene.frame_end==frames and scene.render.fps==source['fps']
     assert digest(assets/'manifest.json')==record['source_sha256']==scene['sequence_source_sha256']
     assert digest(root/'display.json')==record['display_sha256']==scene['sequence_display_sha256']
+    appearance_check=check_appearance(scene,record,root)
     physical_ids=[identity for values in source['atom_ids'].values() for identity in values]
     expected_actors={key+' '+view['id'] for view in display['views'] for key in view['actors']}
     assert set(record['actors'])==expected_actors and len(record['actors'])==len(expected_actors)
@@ -90,6 +174,7 @@ def main():
             'required_input_hashes_checked':True,'stored_coordinate_keys_and_linear_timing_checked':True,
             'source_and_display_fingerprints_checked':True,'both_views_and_annotations_checked':True,
             'packed_fonts_and_caption_timing_checked':True,'scope':source['scope'],
+            'appearance_check':appearance_check,
             'limits':'Saved coordinate/identity/display checks; reaction-source qualification and rendered clarity remain separate.'}
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='ledger_checks'},ensure_ascii=False))

@@ -44,6 +44,26 @@
 
 检查器核对准备文件/显示配置指纹、原子身份、全部保存坐标和线性时间键、视图变换、显示边、标记位置与可见性、字体和字幕。它在内存中关闭生成几何的 viewport modifiers 来检查原始动画点；不会保存这一审计状态。表面、线宽、遮挡和颜色必须另外看真实渲染。深/浅色、Eevee/Cycles 和合成配方独立选择；一个已验收组合不能替其他组合通过。
 
+## 按参考选择外观
+
+可选 `--style-profile` 接入项目的角色材质、语义色、灯光与背景景深。例如保留上述 PTP1B 数据和显示文件，增加：
+
+```bash
+--style-profile "$SKILL/assets/style-sequence-ptp1b.json"
+```
+
+这个例子采用暖色蛋白、粉色磷酰基和冷色源结构背景。配色和光学数值是视觉选择，不是测量；换机制时复制配置并重新填写组件映射，不把 PTP1B 的身份自动套给其他酶。
+
+- `component_roles` 必须覆盖实际显示的每个组件，指向 `surface_roles` 中的着色器设置。角色是外观分类，不改变水或反应基团的化学身份。蛋白、反应原子和环境分别选择粗糙度、微纹理及散射。
+- `semantic_colors` 覆盖 `display.colors` 的已有键，两图、标记和图例共用；明确写在 actor/highlight 上的 `color` 仍优先。画面要核对相邻关键结构，避免暖色主蛋白把同色反应基团淹没。
+- `lighting`、`world`、`view_transform`、`look`、`exposure` 和 `background` 实际接入工作室。未指定 `look` 时，AgX 保留原来的 `AgX - Medium High Contrast`，其他变换使用 `None`；显式 look 必须属于当前 Blender 的所选变换，不兼容的组合会报错。灯位/大小使用该双视图入口既有的 1.2 倍工作室缩放，功率按其平方缩放；不能把它当物理标定。`--style dark|light` 仍选择文字和显示配置的基色。
+- `environment_palette` 按 `background_components` 的实际身份选色；显式提供时不再额外乘旧的深色压暗系数。`surface_roles.environment` 控制完整来源背景形状的材质。`environment_compositor.dark/light` 接受 `background`、三个远/中/近层的 `blur_pixels_1280` 和 `opacity`；虚化随建工程时的输出宽度缩放。三层布局仍为示意，主体与文字不进入背景模糊。
+- `atom_subdivisions` 可取 1–5，仅调整显示原子球、标记和图例球的细分，不改变原子位置、半径、键或表面包络。正式尺寸检查轮廓，避免放大后的多边形边缘。
+
+观察方向、取景范围和结构表示仍由 `display.views` 控制，合成配方用 `--recipe`；非空的 `camera`、`representation`、`palette` 或 `compositor` 外观字段会拒绝，防止误以为通用双视图入口消费了其他生成器的配置。参考迁移需要同时检查这些显示设置，不能只调色。
+
+未传 `--style-profile` 保留旧入口的材质、配色和合成参数。传入时，工程目录保存实际配置及指纹；原保存检查器另核对组件的实际材质指派、节点参数、语义颜色、完整背景网格与变换、灯光、色彩变换和三层虚化。被当前 View Layer 排除的背景对象须在各自图层求值后检查变换，不能把重开文件时的未求值矩阵当真实位置。检查通过仍需看最终像素，未检查的风格组合保持未验证。
+
 ## 复用非均匀采样的坐标轨迹
 
 独立项目已有合格路径、但采样不等间距时，可直接使用共用形态键入口：

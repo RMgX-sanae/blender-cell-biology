@@ -58,10 +58,19 @@ def build(asset_dir,scale_nm,frames):
         'motion':'Slow closed authored drift, not a diffusion simulation.'}
 
 
-def composite(tree,layers,background,width):
+def composite(tree,layers,background,width,*,settings=None):
+    settings=settings or {}
+    unknown=set(settings)-{'background','blur_pixels_1280','opacity'}
+    if unknown:raise ValueError('Unknown molecular environment compositor settings: '+str(unknown))
+    for key in ('blur_pixels_1280','opacity'):
+        if key not in settings:continue
+        values=np.asarray(settings[key],float)
+        if values.shape!=(3,) or not np.isfinite(values).all() or np.any(values<0) or (key=='opacity' and np.any(values>1)):
+            raise ValueError('Expected three finite nonnegative environment '+key+' values; opacity must be at most one')
+    if settings and len(layers)!=3:raise ValueError('Environment settings require three depth layers')
     color=sn.node(tree,'CompositorNodeRGB','Cellular environment base color')
-    color.outputs[0].default_value=(*ds.linear(background),1);image=color.outputs[0]
-    for layer,pixels,strength in zip(layers,[18,9,28],[.26,.24,.14]):
+    color.outputs[0].default_value=(*ds.linear(settings.get('background',background)),1);image=color.outputs[0]
+    for layer,pixels,strength in zip(layers,settings.get('blur_pixels_1280',[18,9,28]),settings.get('opacity',[.26,.24,.14])):
         render=sn.node(tree,'CompositorNodeRLayers');render.layer=layer.name
         blur=sn.node(tree,'CompositorNodeBlur',layer.name+' defocus')
         blur.inputs['Size'].default_value=(pixels*width/1280,pixels*width/1280)

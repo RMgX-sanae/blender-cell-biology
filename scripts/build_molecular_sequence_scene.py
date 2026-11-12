@@ -27,10 +27,23 @@ def main():
     parser.add_argument('--style',choices=['dark','light'],default='dark');parser.add_argument('--recipe',default='neutral')
     parser.add_argument('--engine',choices=['eevee','cycles'],default='eevee');parser.add_argument('--width',type=int,default=1280)
     parser.add_argument('--samples',type=int,default=24);parser.add_argument('--render',action='store_true')
+    parser.add_argument('--style-profile',type=Path,help='Project role materials, semantic colors, lighting and depth-background settings')
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     if args.output.exists():parser.error('Use a fresh scene directory')
     assets=args.asset_dir.resolve();display=json.loads(args.display.read_text())
     source,data,input_checks=load_assets(assets,display);count=source['frames']
+    appearance=json.loads(args.style_profile.read_text()) if args.style_profile else None
+    if appearance is not None:
+        components={key for view in display['views'] for key in view['actors']}
+        roles=appearance.get('component_roles',{});surfaces=appearance.get('surface_roles',{})
+        if set(roles)!=components or set(roles.values())-set(surfaces):
+            parser.error('Map every displayed component to an explicit configured surface role')
+        if set(appearance.get('semantic_colors',{}))-set(display['colors'][args.style]):
+            parser.error('Semantic colors must use existing display color identities')
+        if any(appearance.get(key) for key in ('camera','representation','palette','compositor')):
+            parser.error('Use display views/representations and --recipe; camera, representation, palette and compositor profile controls are not consumed here')
+        if 'atom_subdivisions' in appearance and (type(appearance['atom_subdivisions']) is not int or not 1<=appearance['atom_subdivisions']<=5):
+            parser.error('Atom display subdivisions must be an integer from 1 to 5')
     if not args.font_zh.is_file() or not args.font_en.is_file():parser.error('Supply Songti and Times New Roman font files')
     recipes=json.loads((SKILL/'assets/render-recipes.json').read_text())['recipes']
     recipe=next((r.copy() for r in recipes if r['id']==args.recipe),None)
@@ -40,11 +53,14 @@ def main():
     overlays=ds.collection('Sequence annotations');labels=ds.collection('Figure labels');framing=ds.collection('Source view frames')
     profile=json.loads((SKILL/'assets'/('style-molecular-reference.json' if args.style=='dark' else 'style-studio.json')).read_text())
     profile.update(camera={},bump=0,background='#071f2b' if args.style=='dark' else '#edf0e9')
+    if appearance is not None:
+        profile.update({key:appearance[key] for key in ('lighting','world','view_transform','look','exposure','background') if key in appearance})
     args.fps,args.frames,args.compositor=source['fps'],count,'clean'
     camera=ds.studio(profile,args,{'position':[0,0,40],'target':[0,0,0],'scale':22,'light_scale':1.2})
     camera.matrix_world=Matrix.Translation((0,0,40));camera.data.dof.use_dof=False
     scene.render.resolution_y=2*round(args.width*9/32)
-    colors=display['colors'][args.style];parents={};transforms={};actors=[];markers=[]
+    colors=dict(display['colors'][args.style]);colors.update((appearance or {}).get('semantic_colors',{}))
+    parents={};transforms={};actors=[];markers=[]
     for view,group,offset in zip(display['views'],groups,[[-5.5,0,0],[5.5,0,0]]):
         name=view['id'];basis=np.array(view['basis_columns'],float);center=np.array(view['center_nm'],float)
         if basis.shape!=(3,3) or not np.allclose(basis.T@basis,np.eye(3),atol=1e-7) or not np.isclose(np.linalg.det(basis),1):parser.error('Require a proper rigid viewing basis')
@@ -61,7 +77,10 @@ def main():
             return visible.tolist()
         for key,settings in view['actors'].items():
             if key not in source['atom_ids']:parser.error('Display refers to an absent component: '+key)
-            material=ds.material(name+' '+key,settings.get('color',colors[settings.get('color_key',key)]),.52,0)
+            role=appearance['component_roles'][key] if appearance is not None else None
+            material=ds.material(name+' '+key,settings.get('color',colors[settings.get('color_key',key)]),.52,0,
+                                 settings=appearance['surface_roles'][role] if role else None)
+            if role:material['surface_role']=role
             representation=settings['representation']
             if representation=='surface':
                 obj=keyed_points(key+' '+name,data[key],group);envelope(obj,material)
@@ -76,13 +95,19 @@ def main():
                             for node in modifier.node_group.nodes:
                                 if node.bl_idname=='GeometryNodeCurvePrimitiveCircle':node.inputs['Radius'].default_value=settings['bond_radius_nm']
             else:parser.error('Use surface, sticks or spheres for prepared component display')
+            if appearance is not None and 'atom_subdivisions' in appearance:
+                for modifier in obj.modifiers:
+                    for node in modifier.node_group.nodes:
+                        if node.bl_idname=='GeometryNodeMeshIcoSphere':
+                            node.inputs['Subdivisions'].default_value=appearance['atom_subdivisions']
             obj.parent=parent;obj['component']=key;obj['view']=name;obj['atom_ids']=json.dumps(source['atom_ids'][key]);actors.append(obj.name)
         for highlight in display.get('highlights',[]):
             if name not in highlight['views']:continue
             key=highlight['component'];indices=highlight['indices']
             coordinates=data[key][:,indices];obj=keyed_points(highlight['id']+' '+name,coordinates,overlays)
             obj.parent=parent;obj['display_annotation']=True
-            color=highlight.get('color',colors[highlight.get('color_key',key)]);sn.instance_spheres(obj,sn.material(obj.name,{'material':'paint'},color,'paint'),radius=highlight['radius_nm'])
+            color=highlight.get('color',colors[highlight.get('color_key',key)]);sn.instance_spheres(obj,sn.material(obj.name,{'material':'paint'},color,'paint'),radius=highlight['radius_nm'],
+                subdivisions=(appearance or {}).get('atom_subdivisions',2))
             visible=annotation_visibility(obj,coordinates,highlight['radius_nm'])
             markers.append({'object':obj.name,'component':key,'indices':indices,'view':name,'visible':visible})
         for bond in display.get('bond_annotations',[]):
@@ -105,11 +130,12 @@ def main():
     for x,(key,title) in zip(np.linspace(-7.8,7.8,len(display['legend'])),display['legend']):
         text(title,float(x),-4.3,.52)
         dot=sn.point_object(title+' color',[[x-1.4,-4.12,12]],overlays)
-        sn.instance_spheres(dot,sn.material(title,{'material':'paint'},colors[key],'paint'),radius=.09)
+        sn.instance_spheres(dot,sn.material(title,{'material':'paint'},colors[key],'paint'),radius=.09,
+                            subdivisions=(appearance or {}).get('atom_subdivisions',2))
     for begin,end,body in display['captions']:visibility(text(body,0,-5.4,.64),*frame_window(begin,end,count))
     ds.path('Panel separator',[(0,-3.5,12),(0,3.55,12)],.016,sn.material('Divider',{'material':'paint'},'#bad6d9' if args.style=='dark' else '#365a64','paint'),overlays)
-    bg,bg_record=background(assets,8.6/display['views'][0]['span_nm'],tuple(display['background_components']))
-    if args.style=='dark':
+    bg,bg_record=background(assets,8.6/display['views'][0]['span_nm'],tuple(display['background_components']),profile=appearance)
+    if args.style=='dark' and not (appearance or {}).get('environment_palette'):
         seen=set()
         for group in bg:
             for obj in group.objects:
@@ -128,7 +154,9 @@ def main():
     for group in bg:
         layer=scene.view_layers.new(group.name+' render');isolate(layer,[group]);bg_layers.append(layer)
     recipe.update(background=profile['background'],label_min_pixels=25*args.width/1280)
-    compositor=build_stack(scene,recipe);paired_composite(scene,close,annotations,bg_layers,profile['background'],args.width)
+    environment_settings=(appearance or {}).get('environment_compositor',{}).get(args.style,{})
+    compositor=build_stack(scene,recipe);paired_composite(scene,close,annotations,bg_layers,profile['background'],args.width,
+                                                      environment_settings=environment_settings)
     for action in bpy.data.actions:
         for layer in action.layers:
             for strip in layer.strips:
@@ -138,10 +166,15 @@ def main():
     args.output.mkdir(parents=True)
     scene['sequence_source_sha256']=digest(assets/'manifest.json');scene['sequence_display_sha256']=digest(args.display)
     (args.output/'display.json').write_bytes(args.display.read_bytes())
+    if appearance is not None:
+        (args.output/'style-profile.json').write_bytes(args.style_profile.read_bytes())
+        scene['sequence_style_profile_sha256']=digest(args.style_profile)
     record={'kind':'molecular-sequence-scene','frames':count,'fps':source['fps'],'preparation':source,'asset_directory':str(assets),'display':display,
             'source_sha256':scene['sequence_source_sha256'],'display_sha256':scene['sequence_display_sha256'],'input_checks':input_checks,
             'actors':actors,'markers':markers,'transforms':transforms,'style':args.style,'recipe':args.recipe,'engine':args.engine,
             'fonts':{'zh':str(args.font_zh),'en':str(args.font_en)},'compositor':compositor,'environment':bg_record,
+            'appearance':appearance,'appearance_sha256':digest(args.style_profile) if appearance is not None else None,
+            'resolved_colors':colors,'environment_compositor':environment_settings,
             'scope':source['scope'],'limits':'Geometry/chemistry belong to the preparation; window framing and enlarged foreground markers are display choices.'}
     (args.output/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
     scene.frame_set(round(count*.25));bpy.ops.wm.save_as_mainfile(filepath=str(args.output/'scene.blend'))

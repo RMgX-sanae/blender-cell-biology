@@ -43,6 +43,8 @@
 
 `build_molecular_scene.py` 按已定义的蛋白、核酸、膜部件与背景角色路由；来源对照入口按 mmCIF 聚合物类型路由。背景实例的完整结构保留原尺寸，位置、数量和景深只是展示安排，不能称为实测细胞组成。
 
+通用反应双视图 `build_molecular_sequence_scene.py` 可通过 `--style-profile` 使用显式组件角色、灯光、语义配色和背景三层合成；配置及保存检查见 [分子序列外观](molecular-sequence-display.md#按参考选择外观)。[PTP1B 外观配置](../assets/style-sequence-ptp1b.json) 是一个具体起点；新反应重新对应组件，取景和结构表示继续由其 display 文件控制。
+
 ## 相互作用入口的迁移
 
 相互作用入口 `build_interaction_scene.py` 可用 `--surface-profile assets/style-structure-materials.json` 接入同一组 PBR 角色着色器，适用于 `cinematic` / `teaching`。此参数只读取 `surface_roles`；灯光、相机与合成仍由该入口的风格和取景参数控制。来源 `polymer_type` 决定蛋白/核酸角色，配体用 `cofactor`。`--representation surface|atoms` 选择原有表面或原子实例表示；原子球半径是显示参数，不是实验测量的原子半径。

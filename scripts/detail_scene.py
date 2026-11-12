@@ -265,7 +265,8 @@ def studio(profile, args, camera_defaults):
     scene.render.fps = args.fps
     scene.frame_start, scene.frame_end = 1, args.frames
     scene.view_settings.view_transform = profile.get('view_transform', 'AgX')
-    scene.view_settings.look = 'AgX - Medium High Contrast'
+    default_look = 'AgX - Medium High Contrast' if scene.view_settings.view_transform == 'AgX' else 'None'
+    scene.view_settings.look = profile.get('look', default_look)
     scene.view_settings.exposure = profile.get('exposure', 0)
     scene.world = bpy.data.worlds.new('Environment')
     scene.world.use_nodes = True
