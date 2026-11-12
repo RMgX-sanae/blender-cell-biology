@@ -14,6 +14,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from interaction_assets import verify_assets
 from interaction_membrane import audit_display,plane_clearance
 from detail_scene import linear
+from audit_interaction_appearance import check_appearance
 
 
 def displayed_materials(obj):
@@ -38,9 +39,7 @@ def displayed_materials(obj):
     return assigned
 
 
-def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
-    a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
+def audit():
     scene=bpy.context.scene;folder=Path(scene['interaction_asset_dir'])
     manifest_path=folder/'manifest.json'
     manifest=json.loads(manifest_path.read_text())
@@ -145,9 +144,16 @@ def main():
             'snapshot_source_frame':snapshot,
             'errors':errors,'passed':not errors,
             'limits':'Technical and geometric checks only. Inspect readability, source suitability and biological scope separately; inspect timing when delivering animation. A snapshot checks one saved pose only.'}
+    result['appearance']=check_appearance(scene,manifest)
+    return result
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
+    a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);result=audit()
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,ensure_ascii=False,indent=2))
-    print(json.dumps({'passed':not errors,'errors':errors,'minimum_margin':minimum_margin}))
-    if errors:raise SystemExit(1)
+    print(json.dumps({'passed':result['passed'],'errors':result['errors'],'minimum_margin':result['camera_minimum_fractional_margin']}))
+    if not result['passed']:raise SystemExit(1)
 
 
 if __name__=='__main__':main()

@@ -43,12 +43,17 @@ def display_parts(membrane):
     return {'Membrane heads':heads,'Membrane tails':tails,'Cargo tether':tether}
 
 
-def build_display(membrane,group,profile):
+def build_display(membrane,group,profile,appearance=None):
     import style_nodes as sn
     colors={'Membrane heads':'#638fa0','Membrane tails':'#365f72','Cargo tether':profile['palette'][0]}
+    roles={'Membrane heads':('heads','membrane_heads'),'Membrane tails':('tails','membrane_tails'),'Cargo tether':('tether','schematic_tether')}
     objects=[]
     for name,parts in display_parts(membrane).items():
-        mat=sn.material(name,{**profile,'roughness':.8},colors[name],'pbr')
+        if appearance is not None:
+            import detail_scene as ds
+            key,role=roles[name];color=appearance.get('membrane_palette',{}).get(key,colors[name])
+            mat=ds.material(name,color,.8,0,settings=appearance.get('surface_roles',{}).get(role));mat['surface_role']=role
+        else:mat=sn.material(name,{**profile,'roughness':.8},colors[name],'pbr')
         obj=parts.object(name,[mat],group);obj['membrane_display_role']=name
         objects.append(obj)
     return objects

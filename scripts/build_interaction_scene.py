@@ -1,5 +1,6 @@
 """Make an editable local protein-interaction cycle from reviewed source actors."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -15,6 +16,8 @@ import style_nodes as sn
 from compositor_stack import isolate_labels, publish_composite_outputs
 from interaction_assets import verify_assets
 from interaction_membrane import build_display
+import interaction_appearance as ia
+import interaction_environment as ie
 
 
 def main():
@@ -24,6 +27,7 @@ def main():
     p.add_argument('--style',choices=('clay','cinematic','teaching','illustrative','fluorescence'),default='cinematic')
     p.add_argument('--engine',choices=('eevee','cycles'),default='eevee')
     p.add_argument('--font-en',type=Path,required=True)
+    p.add_argument('--font-zh',type=Path,help='Songti Regular for any Chinese labels; mixed English uses Times New Roman')
     p.add_argument('--crowder-dir',type=Path)
     p.add_argument('--width',type=int,default=1280)
     p.add_argument('--samples',type=int,default=24)
@@ -31,6 +35,8 @@ def main():
     p.add_argument('--moving-label',help='Accurate display name when showing selected moving subunits')
     p.add_argument('--partner-colors',nargs=2,metavar=('ANCHOR','MOVING'),help='Two sRGB #RRGGBB colors, also used by the legend')
     p.add_argument('--surface-profile',type=Path,help='Use existing surface_roles shaders with cinematic/teaching PBR styles')
+    p.add_argument('--style-profile',type=Path,help='Explicit interaction materials, actor colors, lights, camera and render recipe')
+    p.add_argument('--environment-dir',type=Path,help='Native-nm cytosolic sources; requires a reviewed environment section in --style-profile')
     p.add_argument('--representation',choices=('surface','atoms'),help='Override the existing polymer representation')
     p.add_argument('--orbit-degrees',type=float,default=0,help='Orbit camera and lights about the partner axis for an intact internal view')
     p.add_argument('--snapshot-frame',type=int,help='Build a static review with framing for one prepared pose')
@@ -39,10 +45,15 @@ def main():
     if a.output.exists():p.error('Use a fresh output directory')
     if a.style=='illustrative' and a.engine!='eevee':p.error('The selected toon material requires Eevee')
     if not a.font_en.is_file():p.error('Supply an installed Times New Roman Regular font file')
+    if a.font_zh and not a.font_zh.is_file():p.error('Supply an installed Songti Regular font file')
     if a.partner_colors and any(not re.fullmatch(r'#[0-9a-fA-F]{6}',c) for c in a.partner_colors):
         p.error('Partner colors must be #RRGGBB')
     m=json.loads((a.asset_dir/'manifest.json').read_text())
     integrity=verify_assets(a.asset_dir,m)
+    appearance=ia.read_profile(a.style_profile,m['actors']) if a.style_profile else None
+    if appearance is not None and (a.surface_profile or a.crowder_dir):p.error('Full appearance cannot be combined with legacy --surface-profile or --crowder-dir')
+    if bool(a.environment_dir)!=bool(appearance and appearance.get('environment')):p.error('Provide both --environment-dir and a reviewed appearance environment')
+    if appearance and a.partner_colors and appearance.get('actor_colors'):p.error('Choose actor_colors or --partner-colors, not both')
     visible=set(a.visible_actors or [actor['id'] for actor in m['actors']])
     if visible-set(actor['id'] for actor in m['actors']) or any(not any(actor['id'] in visible and actor['role']==role for actor in m['actors']) for role in ['moving','anchor']):
         p.error('Select known whole actors, with at least one actor from each partner')
@@ -58,13 +69,18 @@ def main():
         poses=poses[a.snapshot_frame-1:a.snapshot_frame];n=1
     library=json.loads((Path(__file__).resolve().parents[1]/'assets/style-library.json').read_text())
     profile=dict(library['profiles'][a.style])
+    if appearance:
+        if 'representation'in appearance:profile['representation']=appearance['representation']
+        if 'background'in appearance:profile['background']=appearance['background']
+        env_settings=appearance.get('environment',{}).get('compositor',{})
+        if 'background'in env_settings:profile['background']=env_settings['background']
     if a.representation:profile['representation']=a.representation
     if a.style=='illustrative':
         profile['palette']=['#78a8e8','#d69a68','#5d87c0']
     if a.style=='fluorescence':
         profile.update(emission_strength=2.4,emission_depth=.85)
     if a.partner_colors:profile['palette']=a.partner_colors+profile['palette'][2:]
-    surface_profile=json.loads(a.surface_profile.read_text()) if a.surface_profile else None
+    surface_profile=appearance if appearance and appearance.get('surface_roles') else json.loads(a.surface_profile.read_text()) if a.surface_profile else None
     if surface_profile is not None and (profile['material']!='pbr' or not surface_profile.get('surface_roles')):
         p.error('A surface profile requires a PBR style and nonempty surface_roles')
     def actor_material(actor,color):
@@ -84,6 +100,7 @@ def main():
         if actor['id'] in visible:points[actor['role']].append(d['atoms'])
         color=profile['palette'][0 if actor['role']=='anchor' else 1]
         if not a.partner_colors:color=actor.get('color',color)
+        if appearance:color=appearance.get('actor_colors',{}).get(actor['id'],color)
         if not re.fullmatch(r'#?[0-9a-fA-F]{6}',color):raise ValueError('Actor colors must be sRGB hex values')
         if actor['kind']=='polymer':
             mat=actor_material(actor,color)
@@ -93,10 +110,11 @@ def main():
             else:
                 obj=ds.mesh(actor['id'],d['vertices'],d['faces'],[mat],molecules)
         else:
-            color=actor.get('color','#e9bd65');mat=actor_material(actor,color)
+            color=appearance.get('actor_colors',{}).get(actor['id'],actor.get('color','#e9bd65')) if appearance else actor.get('color','#e9bd65');mat=actor_material(actor,color)
             obj=sn.point_object(actor['id'],d['atoms'],molecules)
             sn.instance_spheres(obj,mat,radius=.11,subdivisions=2)
         obj.parent=rigs[actor['role']];obj['biological_id']=actor['id']
+        if appearance is not None:obj.pass_index=1
         obj.hide_render=actor['id'] not in visible
         obj['source_structure']=actor.get('source_pdb',m['example']['pdb']);obj['source_asset']=str((a.asset_dir/actor['file']).resolve())
         obj['source_author_chain']=actor['chain']
@@ -131,23 +149,30 @@ def main():
         view=m['membrane']['view'];az,el=np.radians([view['azimuth_degrees'],view['elevation_degrees']])
         front=np.array([np.cos(az)*np.cos(el),np.sin(az)*np.cos(el),np.sin(el)])
         right=np.array([-np.sin(az),np.cos(az),0]);up=np.cross(front,right)
-        build_display(m['membrane'],environment,profile)
-    projected=[]
+        build_display(m['membrane'],environment,profile,appearance)
+    projected=[];world_bounds=[]
     basis=np.column_stack([right,up,front])
+    camera_settings=appearance.get('camera',{}) if appearance else {}
+    if appearance:
+        basis=ia.camera_basis(camera_settings,basis,a.orbit_degrees);right,up,front=basis.T
     anchor_bounds=np.concatenate(bounds['anchor']);mobile_bounds=np.concatenate(bounds['moving'])
     for pose in poses:
         xyz=np.concatenate([anchor_bounds,mobile_bounds@pose[:3,:3].T+pose[:3,3]])
-        projected.append(xyz@basis)
+        projected.append(xyz@basis);world_bounds.append(xyz)
     projected=np.concatenate(projected);lo=projected.min(0);hi=projected.max(0)
     if m.get('membrane'):
         membrane_bottom=np.asarray(m['membrane']['origin_nm'])-np.asarray(m['membrane']['normal'])*m['membrane']['head_offset_nm']
         lo[1]=min(lo[1],float(membrane_bottom@basis[:,1])-.5)
     center=((lo+hi)/2)@basis.T
     width=max((hi[0]-lo[0])*1.25,(hi[1]-lo[1])*16/9*1.5)
+    if 'target'in camera_settings:
+        center=np.array(camera_settings['target']);extents=np.maximum(abs(lo-center@basis),abs(hi-center@basis))
+        width=max(extents[0]*2*1.25,extents[1]*2*16/9*1.5)
     a.fps=m['fps'];a.frames=n;a.compositor='clean'
     studio=json.loads((Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json').read_text())
     studio['background']=profile['background'];studio['bump']=0;studio['exposure']=0
-    if a.orbit_degrees:
+    if appearance:studio=ia.studio_profile(studio,appearance);studio['background']=profile['background']
+    if a.orbit_degrees and not (appearance and 'lighting'in appearance):
         rotation=basis@original_basis.T
         studio['lighting']=[{**light,'position':(center+rotation@(np.array(light['position'])-center)).tolist()}
                             for light in studio['lighting']]
@@ -164,31 +189,39 @@ def main():
         scene.camera.data.dof.use_dof=True
         scene.camera.data.dof.focus_distance=width*2
         scene.camera.data.dof.aperture_fstop=.3
+    label_distance=width*2
+    if appearance:width,label_distance=ia.configure_camera(scene,camera_settings,basis,center,width,a.style)
     scene.render.resolution_y=2*round(a.width*9/32)
     scene.render.film_transparent=True
     if hasattr(scene,'eevee'):scene.eevee.taa_render_samples=a.samples
     if profile['compositor']=='ink':
         for layer in scene.view_layers:layer.use_pass_normal=True
-    sn.compositor(scene,profile)
+    if appearance is None:sn.compositor(scene,profile)
     font=bpy.data.fonts.load(str(a.font_en));font.pack()
+    font_zh=bpy.data.fonts.load(str(a.font_zh)) if a.font_zh else None
+    if font_zh:font_zh.pack()
     ink_color='#20272a' if np.mean(ds.linear(profile['background']))>.4 else '#e8eeed'
     ink=sn.material('Readable labels',profile,ink_color,'paint')
     def text(body,x,y,size,color=None):
         data=bpy.data.curves.new(body,'FONT');data.body=body;data.font=font;data.size=size;data.align_x='CENTER'
+        if re.search(r'[\u3400-\u9fff]',body):
+            if font_zh is None:raise ValueError('Chinese labels require --font-zh with Songti')
+            data.font=font_zh;data.font_bold=font
+            for char,form in zip(body,data.body_format):form.use_bold=ord(char)<128 or char in 'αβγμσ'
         obj=bpy.data.objects.new(body,data);labels.objects.link(obj)
-        obj.location=scene.camera.matrix_world@Vector((x,y,-width*2))
+        obj.location=scene.camera.matrix_world@Vector((x,y,-label_distance))
         obj.rotation_euler=scene.camera.rotation_euler
         data.materials.append(ink if color is None else sn.material(body,profile,color,'paint'))
         return obj
     moving_label=a.moving_label or m['example']['moving_label']
     text(m.get('display_title',m['example']['anchor_label']+' / '+moving_label),0,width*.24,width*.035)
-    instance_legend=not a.partner_colors and any('color' in actor for actor in m['actors'] if actor['kind']=='polymer')
+    instance_legend=not a.partner_colors and (bool(appearance and (appearance.get('actor_colors') or appearance.get('actor_labels'))) or any('color' in actor for actor in m['actors'] if actor['kind']=='polymer'))
     if instance_legend:
-        members=[actor for actor in m['actors'] if actor['kind']=='polymer' and actor['id'] in visible]
+        members=[actor for actor in m['actors'] if (actor['kind']=='polymer' or appearance and actor['id'] in appearance.get('actor_labels',{})) and actor['id'] in visible]
         entries=[]
         for i,actor in enumerate(members):
             x=(i-(len(members)-1)/2)*.86/len(members)
-            text(actor.get('label',actor['chain']),width*x,-width*.235,width*.022)
+            text(appearance.get('actor_labels',{}).get(actor['id'],actor.get('label',actor['chain'])) if appearance else actor.get('label',actor['chain']),width*x,-width*.235,width*.022)
             entries.append((actor['id'],x-.068,resolved_colors[actor['id']],[actor['id']]))
     else:
         text(m['example']['anchor_label'],-width*.22,-width*.235,width*.028)
@@ -197,21 +230,31 @@ def main():
                  for i,(role,x) in enumerate([('anchor',-.40),('moving',.04)])]
     for name,x,color,identities in entries:
         bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=width*.009,
-            location=scene.camera.matrix_world@Vector((width*x,-width*.225,-width*2)))
+            location=scene.camera.matrix_world@Vector((width*x,-width*.225,-label_distance)))
         dot=bpy.context.object;dot.name=name+' legend color'
         dot['legend_for_objects']=json.dumps(identities)
         dot.data.materials.append(sn.material(dot.name,profile,color,'paint'))
-    typography=isolate_labels(scene,profile['background'])
-    tree=scene.compositing_node_group
-    for node in tree.nodes:
-        if node.bl_idname=='CompositorNodeRLayers':node.layer=typography['beauty']
-    output=next(n for n in tree.nodes if n.bl_idname=='NodeGroupOutput')
-    previous=output.inputs['Image'].links[0].from_socket
-    layer=tree.nodes.new('CompositorNodeRLayers');layer.layer=typography['layer']
-    over=tree.nodes.new('CompositorNodeAlphaOver')
-    tree.links.new(previous,over.inputs['Background']);tree.links.new(layer.outputs['Image'],over.inputs['Foreground'])
-    tree.links.new(over.outputs['Image'],output.inputs['Image'])
-    publish_composite_outputs(tree,previous,layer.outputs['Image'])
+    env_record=None;compositor_record=None
+    if appearance is not None:
+        groups=[]
+        if a.environment_dir:
+            cloud=np.concatenate(world_bounds)
+            groups,env_record=ie.build(a.environment_dir,appearance['environment'],appearance,(cloud.min(0),cloud.max(0)),m.get('membrane'))
+        compositor_record=ia.build_compositor(scene,appearance,profile['background'],a.width)
+        typography=compositor_record['protected_labels']
+        if groups:ie.compose(scene,groups,appearance['environment'],profile['background'],a.width)
+    else:
+        typography=isolate_labels(scene,profile['background'])
+        tree=scene.compositing_node_group
+        for node in tree.nodes:
+            if node.bl_idname=='CompositorNodeRLayers':node.layer=typography['beauty']
+        output=next(n for n in tree.nodes if n.bl_idname=='NodeGroupOutput')
+        previous=output.inputs['Image'].links[0].from_socket
+        layer=tree.nodes.new('CompositorNodeRLayers');layer.layer=typography['layer']
+        over=tree.nodes.new('CompositorNodeAlphaOver')
+        tree.links.new(previous,over.inputs['Background']);tree.links.new(layer.outputs['Image'],over.inputs['Foreground'])
+        tree.links.new(over.outputs['Image'],output.inputs['Image'])
+        publish_composite_outputs(tree,previous,layer.outputs['Image'])
     if a.crowder_dir:
         d=np.load(a.crowder_dir/'chain_A.npz')
         mat=sn.material('Distant ubiquitin',{**profile,'roughness':.85},'#263f49','pbr')
@@ -233,7 +276,33 @@ def main():
         scene['binding_evidence_class']=m['binding_candidate']['evidence_class']
     scene['animation_mode']=m['mode'];scene['source_limits']=m['example']['limits']
     scene.frame_set(1);bpy.context.view_layer.update()
+    appearance_record=None
+    if appearance is not None:
+        # Check all prepared bounding boxes, including the virtual seam, before
+        # saving. Lighting and composition may not hide a failed source path.
+        from bpy_extras.object_utils import world_to_camera_view
+        for f in range(1,len(poses)+1):
+            scene.frame_set(f);bpy.context.view_layer.update()
+            for obj in objects:
+                if obj.hide_render:continue
+                for corner in obj.bound_box:
+                    point=world_to_camera_view(scene,scene.camera,obj.matrix_world@Vector(corner))
+                    if point.z<=0 or not (.035<=point.x<=.965 and .10<=point.y<=.85):raise ValueError('Appearance camera clips the complete path or overlaps label space')
+        scene.frame_set(1);bpy.context.view_layer.update()
+        camera={'matrix':np.array(scene.camera.matrix_world).tolist(),'type':scene.camera.data.type,
+                'ortho_scale':scene.camera.data.ortho_scale,'lens':scene.camera.data.lens,
+                'sensor_width':scene.camera.data.sensor_width,'dof':scene.camera.data.dof.use_dof,
+                'focus_distance':scene.camera.data.dof.focus_distance,'fstop':scene.camera.data.dof.aperture_fstop}
+        appearance_record=ia.save_request(scene,a.style_profile,appearance,studio,camera,env_record,compositor_record)
     a.output.mkdir(parents=True)
+    if appearance_record is not None:
+        saved_profile=a.output/'style-profile.json';saved_profile.write_bytes(a.style_profile.read_bytes())
+        appearance_record['source_path']=appearance_record['path'];appearance_record['path']=str(saved_profile.resolve())
+        appearance_record['font_en_sha256']=hashlib.sha256(a.font_en.read_bytes()).hexdigest()
+        appearance_record['font_zh_sha256']=hashlib.sha256(a.font_zh.read_bytes()).hexdigest() if a.font_zh else None
+        appearance_record['actor_colors']=resolved_colors;appearance_record['style']=a.style
+        appearance_record['build_parameters']={k:str(v) if isinstance(v,Path) else v for k,v in vars(a).items()}
+        scene['interaction_appearance']=json.dumps(appearance_record)
     bpy.ops.wm.save_as_mainfile(filepath=str(a.output/'scene.blend'))
     if a.render:
         for frame in sorted(set([1,n//4+1,n//2+1,3*n//4+1,n])):
@@ -242,8 +311,9 @@ def main():
     (a.output/'manifest.json').write_text(json.dumps({'asset':m,'style':a.style,'engine':a.engine,
         'source_objects':[o.name for o in objects],'visible_actors':sorted(visible),'snapshot_source_frame':a.snapshot_frame,'camera_scale_nm':width,'fps':m['fps'],'frames':n,
         'partner_colors':profile['palette'][:2],'actor_colors':resolved_colors,'surface_profile':surface_profile,
+        'appearance':appearance_record,
         'representation':profile['representation'],'orbit_degrees':a.orbit_degrees,'protected_typography':typography,
-        'rendered_keyframes':a.render,'font_en':str(a.font_en),'environment_illustrative':bool(a.crowder_dir),
+        'rendered_keyframes':a.render,'font_en':str(a.font_en),'font_zh':str(a.font_zh) if a.font_zh else None,'environment_illustrative':bool(a.crowder_dir or a.environment_dir),
         'camera_dof':'Art-directed for readability; camera optics are not a microscope simulation'},ensure_ascii=False,indent=2))
 
 

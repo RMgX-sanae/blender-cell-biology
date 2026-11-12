@@ -73,6 +73,8 @@
 
 相互作用入口 `build_interaction_scene.py` 可用 `--surface-profile assets/style-structure-materials.json` 接入同一组 PBR 角色着色器，适用于 `cinematic` / `teaching`。此参数只读取 `surface_roles`；灯光、相机与合成仍由该入口的风格和取景参数控制。来源 `polymer_type` 决定蛋白/核酸角色，配体用 `cofactor`。`--representation surface|atoms` 选择原有表面或原子实例表示；原子球半径是显示参数，不是实验测量的原子半径。
 
+需要同时实施参考灯光、镜头、身份色或有来源背景时，改用 [相互作用外观交接](interaction-appearance.md) 的 `--style-profile`。新入口有明确字段，复用共用角色着色器、合成配方和景深节点；原 `--surface-profile` 的含义不变。3SN6 实验构建体保持纯底，已有膜侧 AP2 用于检验经过区室核对的原尺寸细胞质背景。
+
 多链伙伴可为各成员设置 `color` 与简洁 `label`，主体与图例同步分色；显式 `--partner-colors` 则统一按两个伙伴着色。逐图检查标签长度与数量，避免复杂装配的图例拥挤。孤立结构可用 `--orbit-degrees` 绕伙伴轴转动镜头与灯光，重新取景并保留全部源坐标；膜场景沿用其已核定的 `membrane.view`。观察被遮挡的界面时先调整视角，保持完整分子。保存工程检查同时核对身份、颜色、共同变换和取景；实际材质参数仍用 `audit_surface_materials.py` 检查。
 
 ## 细胞与细胞器的迁移

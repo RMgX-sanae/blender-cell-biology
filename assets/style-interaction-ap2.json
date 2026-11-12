@@ -1,0 +1,274 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "world": "839BAA",
+  "lighting": [
+    {
+      "name": "Observed top-left soft key",
+      "position": [
+        -12,
+        -18,
+        26
+      ],
+      "power": 6500,
+      "color": "FFE8C8",
+      "size": 14
+    },
+    {
+      "name": "Restrained cool fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 1800,
+      "color": "B4D9EE",
+      "size": 16
+    },
+    {
+      "name": "Cool depth separation",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 6500,
+      "color": "B8DEEF",
+      "size": 10
+    },
+    {
+      "name": "Readable underside fill",
+      "position": [
+        0,
+        -16,
+        -12
+      ],
+      "power": 3500,
+      "color": "D3E2EC",
+      "size": 16
+    }
+  ],
+  "view_transform": "AgX",
+  "exposure": 0,
+  "background": "081821",
+  "camera": {
+    "type": "ORTHO",
+    "fstop": 0
+  },
+  "render_recipe": "neutral",
+  "name": "AP2 cargo-side view with reviewed native-size cytosolic context",
+  "representation": "surface",
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.48,
+      "specular": 0.3,
+      "bump": 0.004,
+      "texture_scale": 10,
+      "bump_strength": 0.16,
+      "subsurface_weight": 0.065,
+      "subsurface_radius": [
+        0.09,
+        0.06,
+        0.035
+      ],
+      "subsurface_scale": 1
+    },
+    "membrane_heads": {
+      "roughness": 0.4,
+      "specular": 0.3,
+      "bump": 0.0025,
+      "texture_scale": 12,
+      "bump_strength": 0.12,
+      "subsurface_weight": 0.055,
+      "subsurface_radius": [
+        0.06,
+        0.04,
+        0.025
+      ],
+      "subsurface_scale": 1
+    },
+    "membrane_tails": {
+      "roughness": 0.62,
+      "specular": 0.23,
+      "bump": 0.001,
+      "texture_scale": 18,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.02,
+      "subsurface_radius": [
+        0.025,
+        0.018,
+        0.012
+      ],
+      "subsurface_scale": 1
+    },
+    "environment": {
+      "roughness": 0.78,
+      "specular": 0.14,
+      "bump": 0.002,
+      "texture_scale": 10,
+      "bump_strength": 0.1,
+      "subsurface_weight": 0.015,
+      "subsurface_radius": [
+        0.04,
+        0.03,
+        0.02
+      ],
+      "subsurface_scale": 1
+    }
+  },
+  "actor_colors": {
+    "anchor_P": "#F6E9C9",
+    "moving_A": "#76B7BF",
+    "moving_B": "#567995",
+    "moving_M": "#E6B656",
+    "moving_S": "#C67BA4"
+  },
+  "membrane_palette": {
+    "heads": "#36545F",
+    "tails": "#29434B",
+    "tether": "#F6E9C9"
+  },
+  "implementation_assumptions": [
+    "Pre-open AP2 local cargo recognition only; activation/PIP2 and complete endocytosis remain outside this scene.",
+    "Native-nm background source envelopes are illustrative cytosolic context, not observed concentrations or a measured local neighborhood.",
+    "Rabbit actin is the previously qualified mammalian shape proxy; no species equivalence is inferred."
+  ],
+  "environment": {
+    "compartment": "cytosol",
+    "context_note": "AP2 and cargo encounter on the reviewed cytosolic side of the 6YAF-derived planar membrane. Whole background envelopes must remain on that side and outside the complete actor path.",
+    "context_sources": [
+      "https://www.rcsb.org/structure/6YAF",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7375805/"
+    ],
+    "objects": [
+      {
+        "asset": "ribosome",
+        "depth": "far",
+        "position_nm": [
+          30,
+          -35,
+          9
+        ],
+        "rotation_degrees": [
+          30,
+          40,
+          20
+        ]
+      },
+      {
+        "asset": "ribosome",
+        "depth": "far",
+        "position_nm": [
+          4,
+          -45,
+          10
+        ],
+        "rotation_degrees": [
+          100,
+          -25,
+          60
+        ]
+      },
+      {
+        "asset": "actin",
+        "depth": "middle",
+        "position_nm": [
+          4,
+          -36,
+          7
+        ],
+        "rotation_degrees": [
+          70,
+          15,
+          -25
+        ],
+        "repeat_indices": [
+          -4,
+          -3,
+          -2,
+          -1,
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "asset": "ubiquitin",
+        "depth": "middle",
+        "position_nm": [
+          25,
+          -19,
+          -1
+        ],
+        "rotation_degrees": [
+          40,
+          20,
+          50
+        ]
+      },
+      {
+        "asset": "ubiquitin",
+        "depth": "middle",
+        "position_nm": [
+          -15,
+          -12,
+          0
+        ],
+        "rotation_degrees": [
+          150,
+          60,
+          15
+        ]
+      },
+      {
+        "asset": "ubiquitin",
+        "depth": "near",
+        "position_nm": [
+          -24,
+          12,
+          -1
+        ],
+        "rotation_degrees": [
+          15,
+          40,
+          70
+        ]
+      }
+    ],
+    "compositor": {
+      "blur_pixels_1280": [
+        18,
+        9,
+        28
+      ],
+      "opacity": [
+        0.34,
+        0.22,
+        0.14
+      ]
+    },
+    "palette": {
+      "ribosome": "#466D78",
+      "actin": "#515E77",
+      "ubiquitin": "#597A89"
+    }
+  },
+  "actor_labels": {
+    "anchor_P": "货物肽",
+    "moving_A": "α亚基",
+    "moving_B": "β2亚基",
+    "moving_M": "μ2亚基",
+    "moving_S": "σ2亚基"
+  }
+}

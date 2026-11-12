@@ -12,6 +12,8 @@
 
 `assets/interaction-examples.json` 是可扩展的明确选择表：PDB、作者链、固定/移动伙伴、保留配体、标签和构建体边界。`prepare_interaction.py` 保留完整已建模链，单独保留指定配体，生成来源锚定的动作；`build_interaction_scene.py` 保存可编辑模型、全部帧关键帧与完整分子环境。
 
+需要将参考图的材质、各实体颜色、灯光、镜头、合成与区室背景实际用于此入口时，使用 [相互作用外观交接](interaction-appearance.md) 的 `--style-profile`。旧 `--surface-profile` 保留仅设置角色材质的语义；新外观不改变已准备的结构与路径。
+
 ```bash
 python3 "$SKILL/scripts/fetch_structure.py" 1BRS --output "$PROJECT/sources"
 "$PYTHON" "$SKILL/scripts/prepare_interaction.py" \
