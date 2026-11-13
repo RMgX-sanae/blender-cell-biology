@@ -60,6 +60,17 @@ def main():
                          'kind':'noncovalent', 'distance_angstrom':[2.4,4.0], 'annotation':'inspect'}]
     rejects('deposited 1.30 A RNA-protein link is not auto-approved', spec)
     assert len(rejected[-1]['relations'][0]['errors']) == 2
+    if 'rf1-deoxy-ester' in cases:
+        for name, change in [
+            ('nominal A silently treated as intact ribose', lambda s: s['residue_inventories'][0]['expected_absent'].pop("O2'")),
+            ('present O3 silently treated as absent', lambda s: s['residue_inventories'][0]['expected_absent'].update({"O3'":'Incorrect omission'})),
+            ('nonexistent CCD atom omitted', lambda s: s['residue_inventories'][0]['expected_absent'].update({'NOT_AN_ATOM':'Incorrect atom'})),
+            ('missing construct explanation', lambda s: s['residue_inventories'][0]['expected_absent'].update({"O2'":''})),
+            ('inventory assigned to wrong residue', lambda s: s['residue_inventories'][0].update(residue=75)),
+            ('duplicate residue inventory', lambda s: s['residue_inventories'].append(copy.deepcopy(s['residue_inventories'][0]))),
+        ]:
+            spec = copy.deepcopy(cases['rf1-deoxy-ester']); change(spec); rejects(name, spec)
+        assert positive['rf1-deoxy-ester']['residue_inventories'][0]['missing_from_ccd'] == ["O2'", 'OP3']
     # Saved/reloaded source mutations: update the receipt so geometry and
     # annotation checks must reject independently of the checksum gate.
     with tempfile.TemporaryDirectory(prefix='site-links-') as temporary:

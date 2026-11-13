@@ -40,6 +40,33 @@ def inspect(sources, spec):
         bonds = {frozenset((r['atom_id_1'], r['atom_id_2'])): r['value_order']
                  for r in rows(ccd, '_chem_comp_bond.')}
         components[code] = (atom_types, bonds, meta)
+    inventories = []
+    seen_residues = set()
+    for item in spec.get('residue_inventories', []):
+        key = (item['chain'], item['residue'])
+        absent = item['expected_absent']
+        if (key in seen_residues or not item.get('note') or not isinstance(absent, dict)
+                or any(not isinstance(reason, str) or not reason.strip() for reason in absent.values())):
+            raise ValueError('Require a unique residue inventory and explanations for expected omissions')
+        seen_residues.add(key)
+        selected = [r for r in table.get(item['chain'], []) if residue_id(r) == item['residue']]
+        if not selected or {r[4] for r in selected} != {item['component']}:
+            raise ValueError('Residue inventory source identity differs: '+str(key))
+        expected = {name: gemmi.Element(element).name for name, element in components[item['component']][0].items()
+                    if element not in ('H', 'D')}
+        if not set(absent) <= set(expected):
+            raise ValueError('Expected omission is not a CCD heavy atom: '+str(key))
+        actual = {r[2]: r[1] for r in selected}
+        wanted = {name: element for name, element in expected.items() if name not in absent}
+        errors = []
+        if actual != wanted:
+            errors.append('Actual heavy-atom inventory differs from CCD minus the reviewed omissions')
+        inventories.append({**item, 'actual_heavy_atoms': actual,
+                            'missing_from_ccd': sorted(set(expected)-set(actual)),
+                            'unexpected_atoms': sorted(set(actual)-set(expected)),
+                            'element_mismatches': sorted(name for name in actual.keys() & expected.keys()
+                                                         if actual[name] != expected[name]),
+                            'passed': not errors, 'errors': errors})
     sites = {}
     for name, site in spec['sites'].items():
         selected = [r for r in table.get(site['chain'], [])
@@ -107,11 +134,11 @@ def inspect(sources, spec):
                           'ccd_bond_order': ccd_order, 'direct_connections': direct,
                           'other_symmetry_conformer_or_label_connections': other,
                           'passed': not errors, 'errors': errors})
-    return {'passed': all(r['passed'] for r in relations), 'id': spec['id'],
+    return {'passed': all(r['passed'] for r in relations+inventories), 'id': spec['id'],
             'interpretation': spec['interpretation'], 'evidence': spec['evidence'],
             'source': provenance, 'assembly': assembly, 'chains': chain_info,
             'ccd_sources': {code: data[2] for code, data in components.items()},
-            'sites': sites, 'relations': relations,
+            'sites': sites, 'relations': relations, 'residue_inventories': inventories,
             'limits': 'Only selected heavy-atom sites in a single model, retained blank/A alternate conformers and an identity-operation assembly. No global contact audit, hydrogen-bond angle/protonation check, affinity, dynamics, reaction-path or experimental validation. A missing struct_conn record alone does not disprove a bond. Thresholds and relation kinds need independent review.'}
 
 

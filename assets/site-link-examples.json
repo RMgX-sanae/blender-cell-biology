@@ -311,6 +311,111 @@
           "annotation": "required"
         }
       ]
+    },
+    {
+      "id": "rf1-deoxy-ester",
+      "interpretation": "9NO7 has a genuine peptidyl ester but an experimentally2-prime-deoxy A76 despite its A component code. Passing this inventory check qualifies the modified source, not a native reaction model.",
+      "evidence": [
+        "https://doi.org/10.1126/science.ads9030",
+        "https://www.rcsb.org/structure/9NO7"
+      ],
+      "source": {
+        "pdb": "9NO7",
+        "sha256": "6e978609f1f56f5b2176177e3c185fe0cda1da0a8b967537f5aaa40386cf374f",
+        "assembly_id": "1",
+        "chains": [
+          {
+            "chain": "w",
+            "description": "Peptide chain release factor 1",
+            "uniprot": "P96077"
+          },
+          {
+            "chain": "x",
+            "description": "P-site Peptidyl-tRNA fMEAAAKC-tRNAcys RNA-part"
+          },
+          {
+            "chain": "z",
+            "description": "P-site Peptidyl-tRNA fMEAAAKC-tRNAcys Peptide-part"
+          }
+        ],
+        "ligand_instances": [],
+        "selection_note": "Site and residue-inventory check only. All selected modeled polymer atoms are retained; no complete ribosome, solvent or motion qualification is implied."
+      },
+      "ccd_sha256": {
+        "A": "46db841d33a8147dcd5a3802123e362d708c875f9ba7db457525f094ab55179a",
+        "CYS": "b28c79381f9f41fe57a9e97468fc8101d5fd1064272a22da1eed6d05d27a24cc",
+        "MEQ": "44878087d055ad8898c0179f67c3b2b36455f863f3b1ea1c3d368ff719b20e2b"
+      },
+      "residue_inventories": [
+        {
+          "chain": "x",
+          "residue": 76,
+          "component": "A",
+          "expected_absent": {
+            "OP3": "Internal phosphate participates in the RNA phosphodiester linkage.",
+            "O2'": "The primary paper Figure5 and structure title identify a synthetic2-prime-deoxy substrate."
+          },
+          "note": "Compare the actual retained heavy atoms, not just the nominal A component. Do not automatically rebuild the absent hydroxyl as an unresolved experimental atom."
+        }
+      ],
+      "sites": {
+        "peptide_C": {
+          "chain": "z",
+          "residue": 7,
+          "component": "CYS",
+          "atom": "C",
+          "element": "C"
+        },
+        "tRNA_O3": {
+          "chain": "x",
+          "residue": 76,
+          "component": "A",
+          "atom": "O3'",
+          "element": "O"
+        },
+        "tRNA_C3": {
+          "chain": "x",
+          "residue": 76,
+          "component": "A",
+          "atom": "C3'",
+          "element": "C"
+        },
+        "Q230_methyl": {
+          "chain": "w",
+          "residue": 230,
+          "component": "MEQ",
+          "atom": "CE",
+          "element": "C"
+        }
+      },
+      "relations": [
+        {
+          "id": "source_ester",
+          "sites": [
+            "peptide_C",
+            "tRNA_O3"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.2,
+            1.5
+          ],
+          "annotation": "required"
+        },
+        {
+          "id": "ribose_to_ester_oxygen",
+          "sites": [
+            "tRNA_C3",
+            "tRNA_O3"
+          ],
+          "kind": "covalent",
+          "distance_angstrom": [
+            1.3,
+            1.6
+          ],
+          "annotation": "required"
+        }
+      ]
     }
   ]
 }
