@@ -17,6 +17,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from detail_scene import Parts,collection,duplicate,load_chain,material,path,save_and_render,studio
 from build_molecular_scene import nucleic_atoms
 from build_translation_scene import emission,smooth,text_object,update_line
+import replication_appearance as appearance
 
 
 def pose(index,side,fork,count):
@@ -44,6 +45,7 @@ def main():
     p.add_argument('--replisome-dir',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--font',type=Path)
+    p.add_argument('--font-latin',type=Path,help='Times New Roman; required for role/recipe appearance')
     p.add_argument('--style-profile',type=Path,default=Path(__file__).resolve().parent.parent/'assets/style-molecular-reference.json')
     p.add_argument('--engine',choices=['cycles','eevee'],default='cycles')
     p.add_argument('--compositor',choices=['clean','reference','monochrome'])
@@ -60,7 +62,15 @@ def main():
     source=json.loads((a.asset_dir/'manifest.json').read_text())
     cmg_source=json.loads((a.replisome_dir/'manifest.json').read_text())
     if not cmg_source['source_file'].upper().startswith('7PFO'):p.error('CMG chain selection requires 7PFO.')
-    profile=json.loads(a.style_profile.read_text())
+    request,modern=appearance.read_profile(a.style_profile)
+    if modern and (not a.font_latin or not a.font_latin.is_file()):
+        p.error('Role/recipe appearance requires --font-latin (Times New Roman regular).')
+    if modern and a.compositor:
+        p.error('Use render_recipe in the appearance profile, without legacy --compositor.')
+    if modern:
+        defaults=json.loads((Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json').read_text())
+        profile={**defaults,**request,'palette':{**defaults['palette'],**request.get('palette',{})},'camera':{}}
+    else:profile=request
     bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
     parents=collection('01 Parent strands — identities retained')
     new=collection('02 Newly synthesized DNA and primer symbols')
@@ -69,7 +79,9 @@ def main():
     proto_group=collection('80 Reusable complete nucleotide prototypes')
     annotation=collection('05 Polarity and explanation')
     palette=profile['palette']
-    mats={role:material(role,palette[key],profile['roughness'],min(profile['bump'],.003))
+    mats={role:(appearance.shade(profile,role,palette[key],
+            'primer_symbol' if role=='primer' else 'nucleic_acid',profile['roughness'],min(profile['bump'],.003))
+            if modern else material(role,palette[key],profile['roughness'],min(profile['bump'],.003)))
           for role,key in {'parent':'dna2','leading':'protein','lagging':'dna1','primer':'accent'}.items()}
     count=72;sequence=('CGAT'*18)
     data={(b,ch):np.load(a.asset_dir/f'{b}_{ch}.npz') for b in 'CGAT' for ch in 'AB'}
@@ -98,9 +110,11 @@ def main():
             if role=='lagging' and i//12!=(i+1)//12:continue
             backbones[role,i]=path(f'{role} backbone guide {i:02}',[(0,0,0)]*2,.038,mats[mat],links)
     cmg=[];cmg_points=[]
-    cmg_mat=material('Intact CMG depth layer',palette['heads'],.62,profile['bump'])
-    shader=cmg_mat.node_tree.nodes.get('Principled BSDF');rgba=shader.inputs['Base Color'].default_value
-    shader.inputs['Base Color'].default_value=tuple(v*.65 for v in rgba[:3])+(1,)
+    cmg_mat=(appearance.shade(profile,'Intact CMG depth layer',palette['heads'],'protein',.62,profile['bump'])
+             if modern else material('Intact CMG depth layer',palette['heads'],.62,profile['bump']))
+    if not modern:
+        shader=cmg_mat.node_tree.nodes.get('Principled BSDF');rgba=shader.inputs['Base Color'].default_value
+        shader.inputs['Base Color'].default_value=tuple(v*.65 for v in rgba[:3])+(1,)
     for ch in '234567CDEFG':
         ob,d=load_chain(a.replisome_dir,ch,cmg_mat,context,'CMG complete chain '+ch)
         cmg.append(ob);cmg_points.extend(d['vertices'])
@@ -108,10 +122,15 @@ def main():
     front=np.array((0,-.35,1.));front/=np.linalg.norm(front)
     right=np.array((1.,0,0));up=np.cross(front,right)
     depth=float(((cmg_points-cmg_center)@front).max())+5
-    camera=studio(profile,a,{'position':front*65,'target':(0,0,0),'scale':33,'light_scale':1.1})
+    camera_settings=request.get('camera',{}) if modern else {}
+    pan=camera_settings.get('center_offset_nm',[0,0]);shift=right*pan[0]+up*pan[1]
+    camera=studio(profile,a,{'position':front*65+shift,'target':shift,
+        'scale':33*camera_settings.get('scale_multiplier',1),'light_scale':1 if modern else 1.1})
     font=bpy.data.fonts.load(str(a.font)) if a.font else None;zh=bool(font)
     bg=profile['background'].lstrip('#');light=sum(int(bg[i:i+2],16) for i in (0,2,4))>480
-    ink=emission('Annotation ink','15252C' if light else 'E4EAEC')
+    ink=emission('Annotation ink',palette.get('ink','15252C' if light else 'E4EAEC'))
+    guide_mats={role:emission('Annotation '+role,palette[key])
+                for role,key in {'parent':'dna2','leading':'protein','lagging':'dna1','primer':'accent'}.items()} if modern else mats
     def label(body,name,size,x,y,mat=ink):
         ob=text_object(body,name,size,mat,annotation,font)
         ob.rotation_euler=camera.rotation_euler
@@ -121,21 +140,22 @@ def main():
     label('前导链：连续延伸' if zh else 'Leading strand: continuous','Leading explanation',.44,-13.7,-6.7)
     label('RNA 引物符号' if zh else 'RNA primer symbols','Primer legend',.32,2.5,7.3)
     label('亲代 DNA' if zh else 'Parental DNA','Parent legend',.34,5,9)
-    path('Parent color key',[right*3.8+up*9.2+front*20,right*4.7+up*9.2+front*20],.055,mats['parent'],annotation)
-    path('Primer color key',[right*1.3+up*7.5+front*20,right*2.2+up*7.5+front*20],.055,mats['primer'],annotation)
-    label('分层示意：CMG 后移；复制叉与运动为构造｜未显示引物去除和连接' if zh else
-          'Layered CMG reference; authored fork and motion | Primer removal and ligation omitted',
-          'Presentation scope',.24,-14.8,-9.3)
+    path('Parent color key',[right*3.8+up*9.2+front*20,right*4.7+up*9.2+front*20],.055,guide_mats['parent'],annotation)
+    path('Primer color key',[right*1.3+up*7.5+front*20,right*2.2+up*7.5+front*20],.055,guide_mats['primer'],annotation)
+    if not modern:
+        label('分层示意：CMG 后移；复制叉与运动为构造｜未显示引物去除和连接' if zh else
+              'Layered CMG reference; authored fork and motion | Primer removal and ligation omitted',
+              'Presentation scope',.24,-14.8,-9.3)
     for body,x,y in [('5′',-13.4,4.6),('3′',-13.4,-4.9),('3′',12.6,.7),('5′',12.6,-1.4)]:
         label(body,f'Parent polarity {body} {x} {y}',.32,x,y)
     label('5′','Leading new 5′',.31,-12.1,-5.5)
     lead_end=label('3′','Leading new 3′',.31,0,-5.5)
-    lead_arrow=path('Leading synthesis direction',[(0,0,0)]*2,.024,mats['leading'],annotation)
-    lead_tip=path('Leading direction arrowhead',[(0,0,0)]*3,.024,mats['leading'],annotation)
+    lead_arrow=path('Leading synthesis direction',[(0,0,0)]*2,.024,guide_mats['leading'],annotation)
+    lead_tip=path('Leading direction arrowhead',[(0,0,0)]*3,.024,guide_mats['leading'],annotation)
     lag_arrows={};lag_labels={}
     for j in [11,23,35,47,59,71]:
-        lag_arrows[j]=(path(f'Lagging fragment {j//12+1} direction',[(0,0,0)]*2,.024,mats['lagging'],annotation),
-                       path(f'Lagging fragment {j//12+1} arrowhead',[(0,0,0)]*3,.024,mats['lagging'],annotation))
+        lag_arrows[j]=(path(f'Lagging fragment {j//12+1} direction',[(0,0,0)]*2,.024,guide_mats['lagging'],annotation),
+                       path(f'Lagging fragment {j//12+1} arrowhead',[(0,0,0)]*3,.024,guide_mats['lagging'],annotation))
         lag_labels[j]=(label('5′',f'Lagging fragment {j//12+1} 5′',.26,0,5.4),
                        label('3′',f'Lagging fragment {j//12+1} 3′',.26,0,5.4))
     # Each daughter duplex uses the same matched local nucleotide-pair geometry.
@@ -202,8 +222,8 @@ def main():
         frames.append({'frame':frame,'fork_index':fork,'fork_x_nm':fork_x,'leading_DNA_indices':list(range(leading_end+1)),
                        'lagging_fragments':fragments,'CMG_offset_nm':cmg_offset.tolist()})
     label('两条新链均以 5′ → 3′ 合成' if zh else 'Both new strands grow 5′ → 3′','Synthesis rule',.48,-14.8,9)
-    halo=emission('Annotation halo','F8F9FA' if light else '10212B')
-    for original in list(annotation.objects):
+    halo=emission('Annotation halo','F8F9FA' if light else '10212B') if not modern else None
+    for original in ([] if modern else list(annotation.objects)):
         if original.type!='FONT':continue
         d=original.data.copy();d.offset=.016;d.materials.clear();d.materials.append(halo)
         ob=bpy.data.objects.new('Outline '+original.name,d);annotation.objects.link(ob)
@@ -214,8 +234,9 @@ def main():
                 ob.hide_render=ob.hide_viewport=not state['lagging_fragments'][number]['active']
                 ob.keyframe_insert(data_path='hide_render',frame=state['frame'])
                 ob.keyframe_insert(data_path='hide_viewport',frame=state['frame'])
+    appearance_record=appearance.finish(bpy.context.scene,a,request,profile,context) if modern else None
     bpy.ops.file.pack_all()
-    save_and_render(a,{'scene':'Semiconservative replication fork — explicit teaching construction',
+    manifest={'scene':'Semiconservative replication fork — explicit teaching construction',
         'source_prototypes':source,'CMG_source':cmg_source,'sequence_parent_A_5_to_3':sequence,
         'complement_parent_B_3_to_5':sequence.translate(str.maketrans('ATCG','TAGC')),
         'units':'1 Blender unit = 1 nm','nucleotide_count_per_parent':count,
@@ -230,7 +251,12 @@ def main():
             'Leading-strand initiation is outside this window. Polymerases/primase, nucleotide binding, ATP chemistry, proofreading, primer removal and ligation are omitted.',
             'Fragment lengths, fork speed and helix curvature are authored for readability, not measured biological parameters.',
             'Local nucleotide atoms remain intact; connecting tubes bridge the authored path and are not validated covalent bond geometry.',
-            'All parent identities persist; new DNA appears as complete units. This does not show diffusion or binding of every nucleotide.']})
+            'All parent identities persist; new DNA appears as complete units. This does not show diffusion or binding of every nucleotide.']}
+    if modern:
+        manifest['appearance']=appearance_record
+        manifest['limitations'][1]='RNA primers are three-unit symbols; their atomic ribose/base chemistry is not represented.'
+    save_and_render(a,manifest)
+    if modern:(a.output/'appearance.json').write_bytes(a.style_profile.read_bytes())
 
 
 if __name__=='__main__':main()

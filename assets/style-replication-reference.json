@@ -1,0 +1,110 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "name": "Reference-lit replication fork over intact CMG context",
+  "background": "091A24",
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": 0,
+  "render_recipe": "neutral",
+  "camera": {
+    "scale_multiplier": 1,
+    "center_offset_nm": [
+      0,
+      0
+    ]
+  },
+  "context_blur_pixels_1280": 3,
+  "palette": {
+    "heads": "305460",
+    "dna1": "D565AD",
+    "dna2": "E4D8C5",
+    "protein": "F1C764",
+    "accent": "B9D58D",
+    "ink": "EBF1F1"
+  },
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.56,
+      "specular": 0.26,
+      "bump": 0.004,
+      "subsurface_weight": 0.025
+    },
+    "nucleic_acid": {
+      "roughness": 0.46,
+      "specular": 0.27,
+      "bump": 0.002,
+      "texture_scale": 12,
+      "bump_strength": 0.14,
+      "subsurface_weight": 0.035
+    },
+    "primer_symbol": {
+      "roughness": 0.42,
+      "specular": 0.24,
+      "bump": 0,
+      "subsurface_weight": 0.02
+    }
+  },
+  "lighting": [
+    {
+      "name": "Warm upper-left key",
+      "position": [
+        -12,
+        2.8315750690980526,
+        22.18067137460141
+      ],
+      "power": 6200,
+      "size": 12,
+      "color": "FFE7B8"
+    },
+    {
+      "name": "Cool face fill",
+      "position": [
+        15,
+        -1.793330877095432,
+        14.205068263308563
+      ],
+      "power": 3200,
+      "size": 15,
+      "color": "C9E6F1"
+    },
+    {
+      "name": "CMG rim",
+      "position": [
+        0,
+        16.80067874331511,
+        -2.595610480006549
+      ],
+      "power": 5000,
+      "size": 11,
+      "color": "B8DEEF"
+    },
+    {
+      "name": "Fork fill",
+      "position": [
+        -3,
+        -13.402788660397446,
+        8.022796029111149
+      ],
+      "power": 4000,
+      "size": 14,
+      "color": "FFE9D4"
+    }
+  ],
+  "implementation_assumptions": [
+    "The reference supplies warm detailed foreground, cool structural context and restrained depth; it is not evidence for a replication interface.",
+    "All11CMG modeled chains remain intact and move together behind the authored fork.",
+    "Parent DNA, leading new DNA, lagging new DNA and primer symbols retain distinct semantic colors; the latter do not model RNA atomic chemistry.",
+    "Local1BNA nucleotide shapes, the authored72-bp sequence and existing144-frame growth order are retained.",
+    "Orthographic scale and pan are supported; alternate view directions require reauthoring labels and visibility."
+  ]
+}

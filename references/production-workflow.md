@@ -176,12 +176,19 @@ UTP 以 CCD 化学连接为基础，借用源结构 A–T 配对的空间朝向�
 "$BLENDER" -b --factory-startup --python-exit-code 1 \
   --python "$SKILL/scripts/build_replication_scene.py" -- \
   --asset-dir "$PROJECT/replication_prototypes" --replisome-dir "$PROJECT/replisome" \
-  --output "$PROJECT/replication" --font /absolute/path/to/a/CJK-font.ttf --render
+  --style-profile "$SKILL/assets/style-replication-reference.json" \
+  --font "$FONT_ZH" --font-latin "$FONT_EN" \
+  --output "$PROJECT/replication" --width 1600 --samples 32
 "$BLENDER" -b "$PROJECT/replication/scene.blend" --python-exit-code 1 \
   --python "$SKILL/scripts/audit_replication.py" -- \
   --asset-dir "$PROJECT/replication_prototypes" --replisome-dir "$PROJECT/replisome" \
   --output "$PROJECT/replication-audit.json"
+"$BLENDER" -b "$PROJECT/replication/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/replication/keys" --frames 1,72,144
 ```
+
+`FONT_ZH` 使用宋体，`FONT_EN` 使用 Times New Roman；省略 `--font` 使用英文。参考外观、有效对象材质槽与分层检查见 [replication-appearance.md](replication-appearance.md)。
 
 1BNA 提供四组完整互补核苷酸的局部几何；72 bp 的 CGAT 重复序列、复制叉曲率及时间均为构造。两条亲代链始终保留，每条子双链与一条新链配对。前导新链的索引递增；后随链在每段引物之后按索引递减，二者化学方向均为 5′→3′。每个 12 单位片段含 3 个 RNA 引物符号和 9 个 DNA 单位，是为画面可读性设定的长度。
 
@@ -189,7 +196,7 @@ RNA 引物仅用符号表示，不能拿它讲解核糖化学。前导链的起�
 
 7PFO 的 CMG 11 个完整亚基（2–7、C/D/E/F/G）作为一组后移，不切开，也不暗示当前构造的 DNA 路径就是实验 DNA–CMG 界面。其他复合体成员未选入这一 CMG 参考层；7PFO 的全部已建模聚合物仍用 `build_complex_scene.py` 查看。`audit_replication.py` 检查亲代身份、互补链共用轨迹、增长次序、引物先决条件、完整亚基、前后层次和标签边界。
 
-两种新示例都先抽查关键帧，再用 `render_saved.py --frames all` 和 `encode_video.py` 完成视频。小内存机器优先顺序渲染；同时运行多个 Cycles 任务若使单帧耗时明显上升，应保留已完成帧，按已保存的同一工程和设置续渲缺失区间。逐段帧必须尺寸/fps/合成设置一致；检查全部 PNG 可读、帧号连续后编码，再完整解码 MP4 并查看关键时点。不要把部分序列当成完成品。
+开发时先检查关键帧和已保存的运动；更改运动时检查相应短预览。需要完整视频交付时，再用 `render_saved.py --frames all` 和 `encode_video.py` 完成成片。小内存机器优先顺序渲染；保留已完成帧，按同一工程和设置续渲缺失区间。编码前核对尺寸、fps、合成设置及帧号，完整解码 MP4 并查看关键时点；局部预览不代表整片已验收。
 
 ## 细胞器与细胞总览
 

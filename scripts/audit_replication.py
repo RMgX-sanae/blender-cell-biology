@@ -47,9 +47,17 @@ def main():
         cmg_max[ob.name]=float((d['vertices']@np.array(front)).max())
     previous_lead=set();previous_lag=[set() for _ in range(count//12)]
     final_counts={};minimum_depth_gap=float('inf');rigid_error=0.;pair_error=0.
+    original_layer=bpy.context.window.view_layer;original_frame=s.frame_current
+    appearance=json.loads(s['replication_appearance']) if 'replication_appearance' in s else None
+    beauty=s.view_layers[s['compositor_beauty_layer']] if appearance else original_layer
+    context=s.view_layers[appearance['context_layer']] if appearance else original_layer
+    typography=s.view_layers[s['compositor_label_layer']] if appearance else original_layer
     for frame in range(s.frame_start,s.frame_end+1):
-        s.frame_set(frame);state=m['frame_poses'][frame-1]
-        roles={role:{i for (r,i),ob in objects.items() if r==role and not ob.hide_render}
+        bpy.context.window.view_layer=beauty;s.frame_set(frame);beauty.update()
+        graph=bpy.context.evaluated_depsgraph_get()
+        evaluated={key:ob.evaluated_get(graph) for key,ob in objects.items()}
+        state=m['frame_poses'][frame-1]
+        roles={role:{i for (r,i),ob in evaluated.items() if r==role and not ob.hide_render}
                for role in ['parent_A','parent_B','leading','lagging']}
         if roles['parent_A']!=set(range(count)) or roles['parent_B']!=set(range(count)):
             errors.append(f'Parent identity lost at {frame}')
@@ -67,7 +75,7 @@ def main():
             previous_lag[block]=dna
             if present and j+5>state['fork_index']+1e-6:errors.append(f'Primer ahead of exposed template at {frame}')
         min_actor=float('inf')
-        for (role,i),ob in objects.items():
+        for (role,i),ob in evaluated.items():
             if ob.hide_render:continue
             r=np.array(ob.matrix_world.to_3x3());rigid_error=max(rigid_error,float(np.max(np.abs(r.T@r-np.eye(3)))))
             if ob.hide_viewport:errors.append(f'Visible object hidden in viewport at {frame}')
@@ -77,17 +85,23 @@ def main():
             if min(v.x for v in xy)<0 or max(v.x for v in xy)>1 or min(v.y for v in xy)<0 or max(v.y for v in xy)>1:
                 cropped.append([frame,ob.name])
             if role in ['leading','lagging']:
-                parent=objects['parent_B' if role=='leading' else 'parent_A',i]
+                parent=evaluated['parent_B' if role=='leading' else 'parent_A',i]
                 pair_error=max(pair_error,float(np.max(np.abs(np.array(ob.matrix_world)-np.array(parent.matrix_world)))))
-        positions=[np.array(ob.location) for ob in cmg]
+        bpy.context.window.view_layer=context;context.update();graph=bpy.context.evaluated_depsgraph_get()
+        evaluated_cmg=[ob.evaluated_get(graph) for ob in cmg]
+        positions=[np.array(ob.location) for ob in evaluated_cmg]
         if not all(np.allclose(x,positions[0],atol=2e-6) for x in positions):errors.append(f'CMG subunits move apart at {frame}')
-        max_cmg=max(cmg_max[ob.name]+ob.location.dot(front) for ob in cmg)
+        max_cmg=max(cmg_max[ob.name]+ob.location.dot(front) for ob in evaluated_cmg)
         minimum_depth_gap=min(minimum_depth_gap,min_actor-max_cmg)
-        for ob in [o for o in s.objects if o.type=='FONT' and not o.hide_render and not o.name.startswith('Outline ')]:
+        bpy.context.window.view_layer=typography;typography.update();graph=bpy.context.evaluated_depsgraph_get()
+        for original in [o for o in s.objects if o.type=='FONT' and not o.name.startswith('Outline ')]:
+            ob=original.evaluated_get(graph)
+            if ob.hide_render:continue
             xy=[world_to_camera_view(s,s.camera,ob.matrix_world@Vector(v)) for v in ob.bound_box]
             if min(v.x for v in xy)<0 or max(v.x for v in xy)>1 or min(v.y for v in xy)<0 or max(v.y for v in xy)>1:
                 cropped.append([frame,ob.name])
         final_counts={k:len(v) for k,v in roles.items()}
+    bpy.context.window.view_layer=original_layer;s.frame_set(original_frame);original_layer.update()
     if rigid_error>3e-6:errors.append('Nucleotide unit scaled or deformed')
     if pair_error>2e-6:errors.append('Daughter complement does not share its parent track')
     if minimum_depth_gap<=0:errors.append('CMG reference layer overlaps foreground depth')
@@ -97,6 +111,9 @@ def main():
         'maximum_rigid_error':rigid_error,'maximum_pair_transform_error':pair_error,
         'minimum_CMG_depth_gap_nm':minimum_depth_gap,'cropped':cropped,'errors':errors,
         'scope':'Actual saved identities, rigid units, complement pairing, synthesis order, symbolic primer prerequisites, intact offset CMG and camera. Not a biological time calibration or atomic simulation.'}
+    if appearance:
+        from audit_replication_appearance import audit
+        report['appearance']=audit(s)
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps({k:report[k] for k in ['frames','final_visible_units','minimum_CMG_depth_gap_nm','errors']}))
     if errors:raise RuntimeError('Replication audit failed; see report.')
