@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from molecular_asset_io import chain_file
 from articulated_ca_motion import Contacts, plan, sample, shape
 from interaction_motion import progress
 
@@ -27,7 +28,7 @@ def model(assets, config):
     for key in [config['moving_unit']]+config['fixed_units']:
         unit=units[key];matrix=np.array(unit['matrix_nm']);coordinates=[];ids=[];numbers=[];owners=[]
         for index,c in enumerate(unit['chains']):
-            data=np.load(assets/'prototypes'/('chain_'+c+'.npz'))
+            data=np.load(chain_file(assets/'prototypes', c))
             coordinates.append(data['atoms']@matrix[:3,:3].T+matrix[:3,3])
             ids.extend(f'3IYV:assembly1:{unit["reference_chains"][c]}:{int(n)}:{r}:CA'
                        for n,r in zip(data['residue_numbers'],data['residue_names']))

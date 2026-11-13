@@ -13,6 +13,7 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from detail_scene import collection, load_chain, material, path, save_and_render, studio
 from build_molecular_scene import nucleic_atoms
 from build_translation_scene import atom, emission, smooth, text_object, update_line
@@ -72,7 +73,7 @@ def main():
         ob, d = load_chain(args.asset_dir,ch,pol_mat,context,'Intact Pol II chain '+ch)
         pol_objects.append(ob)
         maximum_depth = max(maximum_depth,float((d['vertices']@front).max()))
-    data = {ch:np.load(args.asset_dir/f'chain_{ch}.npz') for ch in 'NPT'}
+    data = {ch:np.load(chain_file(args.asset_dir, ch)) for ch in 'NPT'}
     template = nucleic_atoms(data['T'],'Template DNA — all modeled residues',mats['dna2'],scaffold)
     template['source_nucleic_chain'] = 'T'
     non_template = nucleic_atoms(data['N'],'Non-template DNA — hidden whole chain',mats['dna1'],scaffold)

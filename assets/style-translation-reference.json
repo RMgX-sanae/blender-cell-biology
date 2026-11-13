@@ -1,0 +1,116 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "name": "Reference-lit intact translation substrates over whole ribosomal context",
+  "background": "091A24",
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": 0,
+  "render_recipe": "neutral",
+  "camera": {
+    "scale_multiplier": 1,
+    "center_offset_nm": [
+      0,
+      0
+    ]
+  },
+  "context_blur_pixels_1280": 3,
+  "palette": {
+    "alpha": "2B6268",
+    "beta": "245B83",
+    "heads": "35525C",
+    "protein": "F1C764",
+    "rna": "EB754C",
+    "accent": "B9D58D",
+    "dna1": "B6479A",
+    "dna2": "E4D8C5",
+    "peptide": "F8E8CD",
+    "amino_acid": "FE9E56",
+    "ink": "EBF1F1",
+    "secondary_ink": "AFC3CB"
+  },
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.56,
+      "specular": 0.26,
+      "bump": 0.004,
+      "subsurface_weight": 0.025
+    },
+    "nucleic_acid": {
+      "roughness": 0.46,
+      "specular": 0.27,
+      "bump": 0.002,
+      "texture_scale": 12,
+      "bump_strength": 0.14,
+      "subsurface_weight": 0.035
+    },
+    "peptide_symbol": {
+      "roughness": 0.4,
+      "specular": 0.27,
+      "bump": 0,
+      "subsurface_weight": 0.02
+    }
+  },
+  "lighting": [
+    {
+      "name": "Warm upper-left key",
+      "position": [
+        -12,
+        -18,
+        26
+      ],
+      "power": 8000,
+      "color": "FFE7B8",
+      "size": 16
+    },
+    {
+      "name": "Cool face fill",
+      "position": [
+        18,
+        -18,
+        4
+      ],
+      "power": 3800,
+      "color": "C9E6F1",
+      "size": 20
+    },
+    {
+      "name": "Context rim",
+      "position": [
+        0,
+        12,
+        18
+      ],
+      "power": 6000,
+      "color": "B8DEEF",
+      "size": 16
+    },
+    {
+      "name": "Substrate fill",
+      "position": [
+        -8,
+        -25,
+        4
+      ],
+      "power": 7000,
+      "color": "FFE9D4",
+      "size": 20
+    }
+  ],
+  "implementation_assumptions": [
+    "Reference supplies warm detailed foreground, subdued cool molecular context and depth separation; it is not evidence for the translation mechanism or measured optical parameters.",
+    "Keep the existing full modeled 60S as context and hidden 40S. Intact 60S is shifted behind the actors for a layered teaching view; it is not ribosome dissociation.",
+    "Atomic tRNA/mRNA geometry and schematic peptide symbols, all object identities, colors by molecule and authored motion remain explicit.",
+    "The context is a separate slightly defocused layer. No unrelated crowding proxies or new biological abundance are introduced.",
+    "Only frontal orthographic scale/pan is supported here. Alternate angles require checking and reauthoring the substrate path, labels and visibility."
+  ]
+}

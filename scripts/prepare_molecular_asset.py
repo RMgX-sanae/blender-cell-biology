@@ -16,6 +16,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 from scipy.spatial import cKDTree
 from skimage.measure import marching_cubes
+from molecular_asset_io import chain_filenames
 
 
 def atom_table(path, include_insertion_codes=False):
@@ -171,7 +172,7 @@ def main():
         'source_file': args.structure.name,
         'source_sha256': source_sha256,
         'entry_url': 'https://www.rcsb.org/structure/' + args.structure.stem.upper(),
-        'preset': args.preset, 'units': 'nm', 'model_index': 0,
+        'preset': args.preset, 'units': 'nm', 'model_index': 0, 'chain_file_schema': 1,
         'source_origin_angstrom': origin.tolist(), 'source_basis_columns': basis.tolist(),
         'surface': {'method': 'sum of equal atom-centred Gaussians; illustrative envelope',
                     'spacing_angstrom': args.spacing, 'sigma_angstrom': args.sigma,
@@ -195,6 +196,7 @@ def main():
         manifest['orientation_source'] = 'https://www.uniprot.org/uniprotkb/P07550/entry'
     if args.preset == 'motor':
         manifest['selection_note'] = '4HNA A alpha-tubulin, B beta-tubulin, K kinesin motor; exclude DARPin D. Does not supply an intact two-headed motor or microtubule lattice.'
+    filenames = chain_filenames(table)
     args.output.mkdir(parents=True)
     for chain, rows in table.items():
         coords = (xyz(rows) - origin) @ basis
@@ -207,12 +209,15 @@ def main():
             pairs = cKDTree(coords).query_pairs(1.85, output_type='ndarray')
             distances = np.linalg.norm(coords[pairs[:, 0]] - coords[pairs[:, 1]], axis=1)
             bonds = pairs[distances > .4].astype(np.int32)
-        np.savez_compressed(args.output / f'chain_{chain}.npz',
+        asset_path = args.output / filenames[chain]
+        np.savez_compressed(asset_path, source_chain=np.array(chain),
                             vertices=vertices * .1, faces=faces, atoms=coords.astype(np.float32) * .1,
                             elements=np.array([r[1] for r in rows]), atom_names=names,
                             residue_numbers=np.array([r[3] for r in rows]),
                             residue_names=residues, bonds=bonds)
-        info = {'chain': chain, 'atoms': len(rows), 'vertices': len(vertices),
+        info = {'chain': chain, 'file': filenames[chain],
+                'sha256': hashlib.sha256(asset_path.read_bytes()).hexdigest(),
+                'atoms': len(rows), 'vertices': len(vertices),
                 'faces': len(faces), 'nucleic_acid': nucleic,
                 'centroid_nm': (coords.mean(0) * .1).tolist(),
                 'bounds_nm': [(coords.min(0) * .1).tolist(), (coords.max(0) * .1).tolist()]}

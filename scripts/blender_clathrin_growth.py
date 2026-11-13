@@ -11,6 +11,7 @@ import numpy as np
 from mathutils import Matrix, Quaternion, Vector, kdtree
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 import blender_clathrin_assembly as assembly
 import detail_scene as ds
 from compositor_stack import build_stack
@@ -72,7 +73,7 @@ def build(args):
     group=ds.collection('Source CA probes');units={u['id']:u for u in source['instances']}
     for unit_id in visible:
         for chain in units[unit_id]['chains']:
-            raw=dict(np.load(assets/'prototypes'/('chain_'+chain+'.npz')));surface=scene.objects[unit_id+'/'+chain]
+            raw=dict(np.load(chain_file(assets/'prototypes', chain)));surface=scene.objects[unit_id+'/'+chain]
             mesh=bpy.data.meshes.new('CA '+unit_id+'/'+chain);mesh.from_pydata(raw['atoms'].tolist(),[],[]);mesh.update()
             probe=bpy.data.objects.new('CA '+unit_id+'/'+chain,mesh);group.objects.link(probe)
             probe.parent=surface.parent;probe.hide_render=True;probe['source_chain']=chain;probe['assembly_unit_id']=unit_id
@@ -144,7 +145,7 @@ def export(output):
     if {o.name for o in scene.objects if o.type=='MESH'}!=expected|probe_names:raise ValueError('Unexpected/missing display or probe mesh')
     for unit in source['instances']:
         for chain in unit['chains']:
-            obj=scene.objects[unit['id']+'/'+chain];raw=dict(np.load(assets/'prototypes'/('chain_'+chain+'.npz')))
+            obj=scene.objects[unit['id']+'/'+chain];raw=dict(np.load(chain_file(assets/'prototypes', chain)))
             coords=np.empty(len(obj.data.vertices)*3);obj.data.vertices.foreach_get('co',coords)
             faces=np.array([list(p.vertices) for p in obj.data.polygons])
             if obj.parent!=scene.objects[unit['id']] or not np.allclose(obj.matrix_basis,np.eye(4),atol=1e-7):raise ValueError('Whole chain moved within unit')

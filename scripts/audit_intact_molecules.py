@@ -6,6 +6,8 @@ import sys
 
 import bpy
 import numpy as np
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 
 
 def main():
@@ -17,7 +19,7 @@ def main():
     for obj in bpy.context.scene.objects:
         if obj.type!='MESH' or 'source_chain' not in obj:continue
         chain=obj['source_chain']
-        data=np.load(args.asset_dir/f'chain_{chain}.npz',allow_pickle=False)
+        data=np.load(chain_file(args.asset_dir, chain),allow_pickle=False)
         coords=np.empty(len(obj.data.vertices)*3,dtype=np.float32)
         obj.data.vertices.foreach_get('co',coords)
         loops=np.empty(len(obj.data.loops),dtype=np.int32)

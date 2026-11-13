@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from molecular_asset_io import chain_file
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 from scipy.spatial import cKDTree
@@ -257,7 +258,7 @@ def main():
     chains = config['chains']
     if set(item['chain'] for item in config['display']['legend']) != set(chains):
         p.error('Legend must cover exactly the selected chains')
-    atom_arrays = [np.load(assets/f'chain_{chain}.npz')['atoms'] for chain in chains]
+    atom_arrays = [np.load(chain_file(assets, chain))['atoms'] for chain in chains]
     atoms = np.concatenate(atom_arrays)
     if config['surface']['kind'] == 'ellipsoid':
         vertices, faces = ellipsoid(config['surface']['semiaxes_nm'])
@@ -286,7 +287,7 @@ def main():
         lipid_heads=heads, lipid_directions=directions, shell_vertices=shell_vertices, shell_faces=shell_faces)
     record = {'kind': 'source-receptor-distribution', 'config': config, 'asset_dir': str(assets),
         'source': source, 'source_manifest_sha256': digest(assets/'manifest.json'),
-        'chain_hashes': {c: digest(assets/f'chain_{c}.npz') for c in chains},
+        'chain_hashes': {c: digest(chain_file(assets, c)) for c in chains},
         'atoms_per_instance': len(atoms), 'atoms_by_chain': dict(zip(chains, map(len, atom_arrays))),
         'surface_area_nm2': placed['surface_area_nm2'], 'attempts': placed['attempts'],
         'surface_audit': surface_audit,

@@ -10,6 +10,7 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from detail_scene import (collection, fit_orthographic, load_chain,
                           material, save_and_render, studio)
 from build_molecular_scene import nucleic_atoms
@@ -60,7 +61,7 @@ def main():
             role={'At':'A-site tRNA','Pt':'P-site tRNA','Et':'E-site tRNA','Mr':'mRNA'}.get(chain)
             if role:
                 color={'At':'protein','Pt':'rna','Et':'accent','Mr':'dna1'}[chain]
-                data=np.load(args.asset_dir/f'chain_{chain}.npz',allow_pickle=False)
+                data=np.load(chain_file(args.asset_dir, chain),allow_pickle=False)
                 obj=nucleic_atoms(data,role,surface(color,True),active)
             else:
                 large=chain.startswith('L')
@@ -74,7 +75,7 @@ def main():
                   'C':'CDC45','H':'AND-1','I':'AND-1','J':'AND-1',
                   'K':'TIMELESS','L':'TIPIN','Q':'Claspin'}.get(chain)
             if chain in ('M','N'):
-                data=np.load(args.asset_dir/f'chain_{chain}.npz',allow_pickle=False)
+                data=np.load(chain_file(args.asset_dir, chain),allow_pickle=False)
                 color='dna1' if chain=='M' else 'dna2'
                 obj=nucleic_atoms(data,role,surface(color,True),active)
             else:

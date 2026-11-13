@@ -14,6 +14,7 @@ import numpy as np
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector, Euler
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from receptor_appearance_audit import check_appearance
 
 
@@ -29,8 +30,8 @@ def audit(project):
     present_names = {obj.name for obj in scene.objects if 'instance_id' in obj}
     if expected_names != present_names: issues.append('Missing or unexpected receptor instances')
     for chain in config['chains']:
-        source = np.load(source_dir/f'chain_{chain}.npz')
-        if hashlib.sha256((source_dir/f'chain_{chain}.npz').read_bytes()).hexdigest() != prepared['chain_hashes'][chain]:
+        source = np.load(chain_file(source_dir, chain))
+        if hashlib.sha256((chain_file(source_dir, chain)).read_bytes()).hexdigest() != prepared['chain_hashes'][chain]:
             issues.append('Changed source chain '+chain)
         for row in [r for r in manifest['objects'] if r['chain'] == chain]:
             obj = scene.objects.get(row['object'])

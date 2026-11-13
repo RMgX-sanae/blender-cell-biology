@@ -11,6 +11,7 @@ import sys
 
 import bpy
 import numpy as np
+from molecular_asset_io import chain_file
 from mathutils import Quaternion, Vector
 
 
@@ -164,7 +165,7 @@ def path(name, points, radius, mat, group, cyclic=False):
 
 
 def load_chain(directory, chain, mat, group, name=None, representation='surface'):
-    data = np.load(Path(directory) / f'chain_{chain}.npz', allow_pickle=False)
+    data = np.load(chain_file(directory, chain), allow_pickle=False)
     if representation == 'spacefill':
         parts = Parts()
         radii = {'C': .17, 'N': .155, 'O': .152, 'S': .18, 'P': .18}

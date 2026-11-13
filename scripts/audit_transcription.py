@@ -6,6 +6,8 @@ import sys
 
 import bpy
 import numpy as np
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
@@ -32,7 +34,7 @@ def main():
     intact=[]
     mapping={'T':'Template DNA — all modeled residues',
              'N':'Non-template DNA — hidden whole chain','P':'RNA primer P residues 7–19'}
-    data={ch:np.load(a.asset_dir/f'chain_{ch}.npz') for ch in mapping}
+    data={ch:np.load(chain_file(a.asset_dir, ch)) for ch in mapping}
     for ch,name in mapping.items():
         d=data[ch];mask=d['residue_numbers']<20 if ch=='P' else np.ones(len(d['atoms']),bool)
         ob=bpy.data.objects[name]
@@ -44,7 +46,7 @@ def main():
     context_count=0
     for ob in s.objects:
         if 'source_chain' not in ob:continue
-        d=np.load(a.asset_dir/f'chain_{ob["source_chain"]}.npz')
+        d=np.load(chain_file(a.asset_dir, ob['source_chain']))
         v=np.empty(len(ob.data.vertices)*3,dtype=np.float32);ob.data.vertices.foreach_get('co',v)
         f=np.empty(len(ob.data.loops),dtype=np.int32);ob.data.loops.foreach_get('vertex_index',f)
         if not (np.array_equal(v.reshape(-1,3),d['vertices']) and np.array_equal(f,d['faces'].ravel())

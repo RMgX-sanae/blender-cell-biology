@@ -7,6 +7,7 @@ from pathlib import Path
 
 import gemmi
 import numpy as np
+from molecular_asset_io import chain_file
 from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation
 
@@ -98,7 +99,7 @@ def audit(sources,config_path,motion,saved=None):
     bounds=[]
     if saved is not None:
         for chain in units[moving]['chains']:
-            vertices=sample_data['surface_'+chain];raw=dict(np.load(assets/'prototypes'/('chain_'+chain+'.npz')))
+            vertices=sample_data['surface_'+chain];raw=dict(np.load(chain_file(assets/'prototypes', chain)))
             require(np.allclose(vertices,raw['vertices'],atol=2e-6,rtol=0),'Exported display surface differs')
             weights=sample_data.get('weights_'+chain)
             if weights is not None:

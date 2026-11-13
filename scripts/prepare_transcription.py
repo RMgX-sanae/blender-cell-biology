@@ -10,6 +10,7 @@ from pathlib import Path
 
 import gemmi
 import numpy as np
+from molecular_asset_io import chain_file
 from reaction_ledger import validate
 
 
@@ -101,7 +102,7 @@ def main():
     source = json.loads((args.asset_dir/'manifest.json').read_text())
     if not source['source_file'].upper().startswith('5FLM'):
         p.error('The residue map is specific to 5FLM.')
-    rna = np.load(args.asset_dir/'chain_P.npz')
+    rna = np.load(chain_file(args.asset_dir, 'P'))
     mask = rna['residue_numbers'] == 20
     product = {str(n): np.array(x, dtype=float) for n, x in
                zip(rna['atom_names'][mask], rna['atoms'][mask])}

@@ -13,6 +13,7 @@ import shutil
 
 import gemmi
 import numpy as np
+from molecular_asset_io import chain_file
 from scipy.optimize import least_squares
 from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation
@@ -98,7 +99,7 @@ def main():
     first=json.loads((a.substrate_dir/'manifest.json').read_text())
     if source['source_sha256']!=first['source_asset']['source_sha256']:
         p.error('Use the same prepared 5FLM as the first C cycle.')
-    data={c:np.load(a.asset_dir/f'chain_{c}.npz') for c in 'PT'}
+    data={c:np.load(chain_file(a.asset_dir, c)) for c in 'PT'}
     def residue(c,r):
         d=data[c];mask=d['residue_numbers']==r
         return {str(n):x.astype(float) for n,x in zip(d['atom_names'][mask],d['atoms'][mask])}

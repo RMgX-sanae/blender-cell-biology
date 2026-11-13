@@ -10,6 +10,8 @@ import sys
 
 import bpy
 import numpy as np
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 
 
 def main():
@@ -24,7 +26,7 @@ def main():
             points=np.array([v.co[:] for v in obj.data.vertices])
             if not np.isfinite(points).all():errors.append('Nonfinite geometry: '+obj.name)
             if args.asset_dir and obj.get('element'):
-                source=np.load(args.asset_dir/f"chain_{obj['source_chain']}.npz",allow_pickle=False)
+                source=np.load(chain_file(args.asset_dir, obj['source_chain']),allow_pickle=False)
                 expected=source['atoms'][source['elements']==obj['element']]
                 if points.shape!=expected.shape or not np.allclose(points,expected,atol=1e-6,rtol=0):
                     errors.append('Source atom coordinates changed: '+obj.name)
@@ -48,7 +50,7 @@ def main():
     if args.asset_dir:
         chains=sorted({obj.get('source_chain') for obj in scene.objects if obj.get('source_chain')})
         if chains:
-            reference_points=np.concatenate([np.load(args.asset_dir/f'chain_{c}.npz',allow_pickle=False)['vertices'] for c in chains])
+            reference_points=np.concatenate([np.load(chain_file(args.asset_dir, c),allow_pickle=False)['vertices'] for c in chains])
     states=[]
     margins=[]
     for frame in frames:

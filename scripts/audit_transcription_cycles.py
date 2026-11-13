@@ -10,6 +10,7 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from audit_transcription import centers
 from build_translation_scene import atom
 
@@ -27,7 +28,7 @@ def main():
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     s=bpy.context.scene
     info=json.loads(Path(bpy.data.filepath).with_name('manifest.json').read_text())
-    dna=np.load(a.asset_dir/'chain_T.npz');rna=np.load(a.asset_dir/'chain_P.npz')
+    dna=np.load(chain_file(a.asset_dir, 'T'));rna=np.load(chain_file(a.asset_dir, 'P'))
     ctp=np.load(a.substrate_dir/'ctp.npz');utp=np.load(a.substrate_dir/'utp.npz')
     core1=bpy.data.objects['Incoming CTP core → RNA C20']
     core2=bpy.data.objects['Incoming UTP core → modeled RNA U21']
@@ -48,7 +49,7 @@ def main():
     protein_count=0
     for ob in s.objects:
         if 'source_chain' not in ob:continue
-        d=np.load(a.asset_dir/f'chain_{ob["source_chain"]}.npz')
+        d=np.load(chain_file(a.asset_dir, ob['source_chain']))
         vertices=np.empty(len(ob.data.vertices)*3,dtype=np.float32)
         ob.data.vertices.foreach_get('co',vertices)
         faces=np.empty(len(ob.data.loops),dtype=np.int32);ob.data.loops.foreach_get('vertex_index',faces)

@@ -7,6 +7,9 @@ import sys
 import bpy
 import numpy as np
 from mathutils import Vector
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
+from audit_translation_appearance import audit as audit_appearance
 
 
 def main():
@@ -19,7 +22,7 @@ def main():
     errors = []
     intact = []
     mesh_vertices = {}
-    data = {c: np.load(args.asset_dir/f'chain_{c}.npz') for c in ['At','Pt','Et','Mr']}
+    data = {c: np.load(chain_file(args.asset_dir, c)) for c in ['At','Pt','Et','Mr']}
     # nucleic_atoms creates 62 vertices per atom before its bond geometry.
     # Compare the actual sphere centers to every modeled heavy-atom position.
     radii = {'C':.105,'N':.103,'O':.10,'P':.14,'S':.13}
@@ -41,7 +44,7 @@ def main():
     for obj in scene.objects:
         if obj.type!='MESH' or 'source_chain' not in obj: continue
         chain = obj['source_chain']
-        d = np.load(args.asset_dir/f'chain_{chain}.npz')
+        d = np.load(chain_file(args.asset_dir, chain))
         coords = np.empty(len(obj.data.vertices)*3, dtype=np.float32)
         obj.data.vertices.foreach_get('co',coords)
         loops = np.empty(len(obj.data.loops),dtype=np.int32)
@@ -134,6 +137,7 @@ def main():
             'primary_tRNA_cropped_frames':cropped,'peptide_occlusion':occluded,'errors':errors,
             'entry_tRNA_mRNA_nearest_atom_centers':entry_mrna_nearest,
             'scope':'Source geometry, recorded entities, attachment, three-residue transport and direct visibility. Not biochemical kinetics or complete molecular collision certification.'}
+    result['appearance'] = audit_appearance(scene)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({'frames':scene.frame_end,'errors':errors,'occlusion_count':len(occluded),'cropped_count':len(cropped)}))

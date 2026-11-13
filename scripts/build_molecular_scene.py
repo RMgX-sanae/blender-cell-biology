@@ -15,6 +15,7 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from distributions import patch_points
 from detail_scene import (Parts, collection, duplicate, load_chain, material,
                           path, save_and_render, studio)
@@ -184,7 +185,7 @@ def transcription(args, mats):
     for chain, color, name in [('N', 'dna1', 'DNA non-template chain N'),
                                ('T', 'dna2', 'DNA template chain T'),
                                ('P', 'rna', 'RNA chain P')]:
-        data = np.load(args.asset_dir / f'chain_{chain}.npz', allow_pickle=False)
+        data = np.load(chain_file(args.asset_dir, chain), allow_pickle=False)
         nucleic_atoms(data, name, mats[color], nucleic)
     return {'scene': 'Mammalian transcribing RNA polymerase II',
             'coordinate_units': '1 Blender unit = 1 nm',

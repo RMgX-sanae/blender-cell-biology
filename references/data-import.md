@@ -20,6 +20,22 @@
 
 更换聚合物链或膜蛋白朝向时，可用 [项目资产配置](molecular-asset-config.md) 的 `prepare_molecular_asset.py --config`：记录实际来源哈希、作者链/残基范围和有依据的刚体坐标系，沿用原来的包络与渲染入口。该接口不会自动识别膜侧或补齐反应配体。
 
+### 链身份与文件系统大小写
+
+链名区分大小写，磁盘未必区分。已确认旧 9SPI generic 准备曾将 `LA/La` 等 23 对链写进同一路径：83 条链只留下 60 个 NPZ。旧缓存和新缓存相同、场景与缓存相同，都不能证明它们符合原始来源。受影响的核糖体背景和整复合体画面需要从原始文件重新准备；旧工程保留作历史对照，不能继续引用其来源完整性通过记录。
+
+`prepare_molecular_asset.py` 现在在 manifest 中记录精确的 `chain → file → sha256`，大小写冲突或不适合直接作文件名的 ID 使用 UTF-8 十六进制文件名，NPZ 内另存原始链身份。使用 `molecular_asset_io.chain_file(directory, chain)` 读取，不能自行拼接 `chain_<ID>.npz`。该入口核对文件唯一性、哈希、内嵌身份与清单数量；旧无歧义缓存仍可读取，歧义缓存必须重建。
+
+首次使用 generic 的完整 mmCIF 聚合物集合时，运行独立原始行检查；来源、选择与准备文件哈希未变的重复渲染可复用已通过的记录：
+
+```bash
+"$PYTHON" "$SKILL/scripts/audit_generic_source.py" \
+  --source "$PROJECT/structures/9SPI.cif" --asset-dir "$PROJECT/ribosome" \
+  --output "$PROJECT/ribosome-raw-check.json"
+```
+
+它直接读 `_atom_site` 与 `_entity`，不调用准备器的 `atom_table`/Structure 路径，核对每条选中链的原子行与变换后坐标。当前只接受 `generic` 全聚合物集合；特定 preset 或项目选链须核对各自的选择规则。它不证明缺失区、配体、实验精度或生物学机制。已有 V-ATPase 专用资产用独立十六进制链名；从原始原子表直接构建的整体细胞质背景也不走旧 generic 链文件路径，应分别判断影响。
+
 ## 显微图、分割与表面重建
 
 - 2D 图片通常不能唯一确定 3D；没有断层/Z-stack 时，只能做基于图的近似模型并标明隐含假设。

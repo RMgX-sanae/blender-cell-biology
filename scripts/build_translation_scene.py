@@ -15,9 +15,11 @@ import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from detail_scene import (Parts, collection, linear, load_chain, material,
                           path, save_and_render, studio)
 from build_molecular_scene import nucleic_atoms
+import translation_appearance as appearance
 
 
 def smooth(t, start, end):
@@ -163,6 +165,7 @@ def main():
     p.add_argument('--style-profile', type=Path,
                    default=Path(__file__).resolve().parent.parent/'assets/style-molecular-reference.json')
     p.add_argument('--font', type=Path, help='CJK font for Chinese labels; otherwise use English labels')
+    p.add_argument('--font-latin', type=Path, help='Times New Roman regular; required for role/recipe appearance profiles')
     p.add_argument('--engine', choices=['cycles', 'eevee'], default='cycles')
     p.add_argument('--compositor', choices=['clean', 'reference', 'monochrome'])
     p.add_argument('--width', type=int, default=1920)
@@ -178,11 +181,21 @@ def main():
     source = json.loads((args.asset_dir/'manifest.json').read_text())
     if not source['source_file'].upper().startswith('9SPI'):
         p.error('This chain/sequence map is specific to 9SPI.')
-    profile = json.loads(args.style_profile.read_text())
+    request, modern = appearance.read_profile(args.style_profile)
+    if modern and (not args.font_latin or not args.font_latin.is_file()):
+        p.error('Role/recipe appearance requires --font-latin (Times New Roman regular).')
+    if modern and args.compositor:
+        p.error('Use render_recipe in the appearance profile, without legacy --compositor.')
+    if modern:
+        defaults = json.loads((Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json').read_text())
+        profile = {**defaults, **request, 'palette': {**defaults['palette'], **request.get('palette', {})}, 'camera': {}}
+    else:
+        profile = request
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
-    mats = {k: material(k, v, profile['roughness'], profile['bump'])
-            for k, v in profile['palette'].items()}
+    mats = {k: appearance.shade(profile, k, profile['palette'][k], 'nucleic_acid', profile['roughness'], profile['bump'])
+            for k in ['protein', 'rna', 'accent', 'dna1', 'dna2']} if modern else {
+            k: material(k, v, profile['roughness'], profile['bump']) for k, v in profile['palette'].items()}
     target = np.array((-2.4, -.3, -2.2))
     # View along the exposed tRNA face: the former -X view hid the CCA ends
     # behind the tRNA bodies even when the whole ribosomal subunit was offset.
@@ -202,10 +215,12 @@ def main():
     maximum_context_depth = -float('inf')
     context_mats = {}
     for color in ['alpha', 'beta', 'heads']:
-        mat = material('Depth context '+color, profile['palette'][color], .64, profile['bump'])
+        mat = appearance.shade(profile, 'Depth context '+color, profile['palette'][color],
+                               'protein' if color == 'heads' else 'nucleic_acid', .64, profile['bump']) if modern else material(
+                               'Depth context '+color, profile['palette'][color], .64, profile['bump'])
         shader = mat.node_tree.nodes.get('Principled BSDF')
         rgba = shader.inputs['Base Color'].default_value
-        shader.inputs['Base Color'].default_value = tuple(v*.40 for v in rgba[:3])+(1,)
+        shader.inputs['Base Color'].default_value = tuple(v*(1 if modern else .40) for v in rgba[:3])+(1,)
         context_mats[color] = mat
     for item in source['chains']:
         chain = item['chain']
@@ -220,7 +235,7 @@ def main():
         else:
             obj.hide_render = obj.hide_viewport = True
             hidden.append(chain)
-    data = {c: np.load(args.asset_dir/f'chain_{c}.npz', allow_pickle=False)
+    data = {c: np.load(chain_file(args.asset_dir, c), allow_pickle=False)
             for c in ['At', 'Pt', 'Et', 'Mr']}
     trnas = {}
     for ch, color in [('At', 'protein'), ('Pt', 'rna'), ('Et', 'accent')]:
@@ -244,8 +259,8 @@ def main():
         mr_objects[res] = ob
     bridges = {r: path(f'mRNA phosphodiester {r}-{r+1}', [(0,0,0)]*2, .047,
                        mats['dna1'], rna_group) for r in range(min(residue_frames), max(residue_frames))}
-    peptide_mat = material('Peptide residue symbols', 'F8E8CD', .42, .006)
-    aa_mat = material('Incoming Ile residue symbol', 'FE9E56', .42, .006)
+    peptide_mat = appearance.shade(profile, 'Peptide residue symbols', profile['palette'].get('peptide', 'F8E8CD'), 'peptide_symbol', .42, .006) if modern else material('Peptide residue symbols', 'F8E8CD', .42, .006)
+    aa_mat = appearance.shade(profile, 'Incoming Ile residue symbol', profile['palette'].get('amino_acid', 'FE9E56'), 'peptide_symbol', .42, .006) if modern else material('Incoming Ile residue symbol', 'FE9E56', .42, .006)
     beads = []
     for i, label in enumerate(['Gly', 'Ala', 'Arg', 'Ile']):
         parts = Parts()
@@ -323,14 +338,17 @@ def main():
         if obj['source_chain'].startswith('L'):
             obj.location = context_offset
             obj['presentation_offset_nm'] = context_offset.tolist()
-    profile['lighting'].append({'name':'Active site softbox','position':[-8,-25,10],
-                                'power':13000,'color':'FFE9D4','size':16})
-    camera = studio(profile, args, {'position':position.tolist(), 'target':target.tolist(),
-                                   'scale':26., 'light_scale':1.})
+    if not modern:
+        profile['lighting'].append({'name':'Active site softbox','position':[-8,-25,10],
+                                    'power':13000,'color':'FFE9D4','size':16})
+    pan = request.get('camera', {}).get('center_offset_nm', [0, 0]) if modern else [0, 0]
+    shift = right*pan[0]+up*pan[1]
+    camera = studio(profile, args, {'position':(position+shift).tolist(), 'target':(target+shift).tolist(),
+                                   'scale':26.*(request.get('camera', {}).get('scale_multiplier', 1) if modern else 1), 'light_scale':1.})
     font = bpy.data.fonts.load(str(args.font)) if args.font else None
     light_background = np.dot(linear(profile['background']), (.2126,.7152,.0722)) > .45
-    ink = emission('Readable annotation', '24323A' if light_background else 'E5EFF2')
-    dim = emission('Secondary annotation', '465660' if light_background else 'AFC3CB')
+    ink = emission('Readable annotation', profile['palette'].get('ink', '24323A' if light_background else 'E5EFF2'))
+    dim = emission('Secondary annotation', profile['palette'].get('secondary_ink', '465660' if light_background else 'AFC3CB'))
     zh = bool(font)
     stages = [(0,.34, '氨酰 tRNA 进入 A 位点' if zh else 'Aminoacyl-tRNA enters the A site'),
               (.34,.49, '肽链从 P 位点转移至 A 位点 tRNA' if zh else 'Peptide transfers from P-tRNA to A-tRNA'),
@@ -347,9 +365,10 @@ def main():
             ob.keyframe_insert(data_path='hide_render',frame=frame)
     footer = ('分层观察：40S 隐藏，60S 后移｜运动与短肽为教学示意' if zh else
               'Layered view: 40S hidden, 60S offset | Motion and short peptide are schematic')
-    ob = text_object(footer, 'Presentation scope', .26, dim, annotation, font)
-    ob.parent = camera
-    ob.location = (-11.6, -7.5, -13)
+    if not modern:
+        ob = text_object(footer, 'Presentation scope', .26, dim, annotation, font)
+        ob.parent = camera
+        ob.location = (-11.6, -7.5, -13)
     for ch, name in [('At','A'),('Pt','P'),('Et','E')]:
         center = data[ch]['atoms'].mean(0)
         location = target+right*5.5+up*np.dot(center-target,up)+front*8
@@ -368,7 +387,9 @@ def main():
                 (1-transfer)*(points[2]-points[1])+transfer*(points[3]-points[2]))
             screen_direction = right*np.dot(direction,right)+up*np.dot(direction,up)
             screen_direction /= np.linalg.norm(screen_direction)
-            ob.location = xyz+front*20+screen_direction*.6
+            # The enlarged C label otherwise sits over the tRNA acceptor stem.
+            label_offset = up*.9+right*.35 if modern and terminal == 'C' else screen_direction*.6
+            ob.location = xyz+front*20+label_offset
             ob.keyframe_insert(data_path='location',frame=state['frame'])
     for res, label, dx, dy in [(2,'5′',3.4,-.25),
                                (8,'mRNA 片段 3′' if zh else 'mRNA fragment 3′',-3.4,.25)]:
@@ -383,8 +404,8 @@ def main():
             update_line(guide,[center+front*20, np.array(ob.location)-right*math.copysign(.18,dx)],state['frame'])
     # Local glyph contrast matters: labels may cross a dark molecular surface
     # even in a light-background style. A small opposite-color halo stays legible.
-    outline_mat = emission('Annotation halo', 'F6F8F8' if light_background else '10212B')
-    for original in list(annotation.objects):
+    outline_mat = emission('Annotation halo', 'F6F8F8' if light_background else '10212B') if not modern else None
+    for original in ([] if modern else list(annotation.objects)):
         if original.type != 'FONT': continue
         curve = original.data.copy()
         curve.offset = .018
@@ -401,6 +422,7 @@ def main():
                 t=(frame-1)/(args.frames-1)
                 outline.hide_render = not a<=t<b
                 outline.keyframe_insert(data_path='hide_render',frame=frame)
+    appearance_record = appearance.finish(bpy.context.scene, args, request, profile, context) if modern else None
     bpy.ops.file.pack_all()
     manifest = {'scene':'Human translation elongation substrate cycle', 'source_asset':source,
         'coordinate_units':'1 Blender unit = 1 nm',
@@ -430,7 +452,11 @@ def main():
                        'Source has only modeled residues; unresolved tRNA regions and mRNA flanks remain absent.',
                        'tRNA endpoint rigid fits are approximate; displayed peptide residues are symbols, not atomic chemistry.',
                        '60S is offset as an intact assembly and 40S is hidden for visibility; restore source view with build_complex_scene.py.']}
+    if appearance_record:
+        manifest['appearance'] = appearance_record
     save_and_render(args, manifest)
+    if modern:
+        (args.output/'appearance.json').write_bytes(args.style_profile.read_bytes())
 
 
 if __name__ == '__main__':

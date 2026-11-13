@@ -13,6 +13,7 @@ import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from build_transcription_scene import subset
 from build_molecular_scene import nucleic_atoms
 from build_translation_scene import atom, smooth, text_object, update_line
@@ -65,7 +66,7 @@ def main():
     reaction=bpy.data.collections['03 One-C addition — explicit teaching reconstruction']
     annotation=bpy.data.collections['04 Captions and polarity']
     reaction.name='03 Two successive additions — teaching reconstruction'
-    dna=np.load(args.asset_dir/'chain_T.npz');rna=np.load(args.asset_dir/'chain_P.npz')
+    dna=np.load(chain_file(args.asset_dir, 'T'));rna=np.load(chain_file(args.asset_dir, 'P'))
     utp=np.load(args.substrate_dir/'utp.npz');count=int(utp['product_atom_count'])
     template=bpy.data.objects['Template DNA — all modeled residues']
     dna_mat=template.data.materials[0]

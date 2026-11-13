@@ -40,6 +40,8 @@ python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --format pdb --output "$PROJECT
 
 高斯表面是原子位置的显示包络，不是实验 cryo-EM 密度，也不是精确溶剂排除表面。`surface` 和 `spacefill` 可由风格档案选择；不能把表面平滑或原子半径说成从参考图片测得。
 
+链文件通过 manifest 映射读取；不要直接拼接链名作为路径。含 `LA/La` 等大小写链名的旧 generic 缓存须按 [链身份与原始行检查](data-import.md#链身份与文件系统大小写) 重新准备，避免不同链在不区分大小写的磁盘上相互覆盖。9SPI 应保留 83 份独立文件。
+
 ## 分子镜头
 
 ```bash
@@ -85,7 +87,8 @@ python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --format pdb --output "$PROJECT
 "$BLENDER" -b --factory-startup --python-exit-code 1 \
   --python "$SKILL/scripts/build_translation_scene.py" -- \
   --asset-dir "$PROJECT/ribosome" --output "$PROJECT/translation" \
-  --font /absolute/path/to/a/CJK-font.ttf --width 1920 --samples 64 --render
+  --style-profile "$SKILL/assets/style-translation-reference.json" \
+  --font "$FONT_ZH" --font-latin "$FONT_EN" --width 1600 --samples 32
 
 "$BLENDER" -b "$PROJECT/translation/scene.blend" --python-exit-code 1 \
   --python "$SKILL/scripts/audit_translation.py" -- \
@@ -97,7 +100,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --format pdb --output "$PROJECT
 python3 "$SKILL/scripts/encode_video.py" "$PROJECT/translation" --ffmpeg /actual/path/to/ffmpeg
 ```
 
-提供 CJK 字体时使用中文标注，并将字体打包进本地 `.blend`；未提供时使用英文。按字体自身许可决定工程是否可公开分发。`--style-profile` 仍独立选择风格；浅底自动使用深色标注，合成分支与其他精细入口一致。
+提供 CJK 字体时使用中文标注，并将字体打包进本地 `.blend`；未提供时使用英文。按字体自身许可决定工程是否可公开分发。新的角色/配方配置同时需要 Times New Roman 常规字体，并保护混排标签、独立柔化完整 60S 背景；字段、关键帧命令和保存检查见 [翻译参考外观](translation-appearance.md)。新调用通过 `render_recipe` 选择合成，旧无角色配置仍保留原合成分支。
 
 这是明确标注的分层观察：40S 全链隐藏，完整 60S 沿观察方向移至活性分子之后，源对象留在工程中；不是核糖体生理解离。tRNA 刚体端点由共享 C4′ 坐标拟合，拟合误差保存在 manifest；中间运动为教学编排。源 mRNA 片段为 CGUAUCC，A/P 位点对应 AUC/CGU；示意短肽不是 9SPI 中观测的肽。连接线表达连通关系，不声称动画每帧都有真实化学键长。
 

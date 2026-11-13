@@ -11,6 +11,7 @@ from mathutils import Matrix,Vector
 from bpy_extras.object_utils import world_to_camera_view
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 import detail_scene as ds
 
 
@@ -18,7 +19,7 @@ def load_assets(folder):
     path=folder/'assembly.json';m=json.loads(path.read_text())
     if m['units']!='nm' or not m['grouping_check']['passed'] or not m['grouping_check'].get('trace_check',{}).get('passed'):
         raise ValueError('Reprepare this assembly with verified whole-chain traces; legacy 1XI4 units are not qualified')
-    expected={'source-selection.json','prototypes/manifest.json'}|{'prototypes/chain_'+c+'.npz' for u in m['instances'] for c in u['chains']}
+    expected={'source-selection.json','prototypes/manifest.json'}|{str(chain_file(folder/'prototypes', c).relative_to(folder)) for u in m['instances'] for c in u['chains']}
     if set(m['data_sha256'])!=expected:raise ValueError('Incomplete prepared file inventory')
     for name,sha in m['data_sha256'].items():
         if hashlib.sha256((folder/name).read_bytes()).hexdigest()!=sha:raise ValueError('Prepared file changed: '+name)
@@ -47,7 +48,7 @@ def build(args):
         for c in unit['chains']:
             name=unit['id']+'/'+c
             if c not in prototypes:
-                data=np.load(args.assets/'prototypes'/('chain_'+c+'.npz'))
+                data=np.load(chain_file(args.assets/'prototypes', c))
                 obj=ds.mesh(name,data['vertices'],data['faces'],[mats['background']],group);prototypes[c]=obj
             else:obj=ds.duplicate(prototypes[c],name,group)
             obj.parent=rig;obj.matrix_basis=Matrix.Identity(4)
@@ -85,7 +86,7 @@ def audit():
         if rig is None or rig.get('assembly_unit_id')!=unit['id'] or not np.allclose(np.asarray(rig.matrix_world),unit['matrix_nm'],atol=2e-6,rtol=0):raise ValueError('Source unit transform changed')
         for c in unit['chains']:
             obj=scene.objects[unit['id']+'/'+c]
-            if c not in cache:cache[c]=dict(np.load(folder/'prototypes'/('chain_'+c+'.npz')))
+            if c not in cache:cache[c]=dict(np.load(chain_file(folder/'prototypes', c)))
             data=cache[c]
             if obj.parent!=rig or obj.get('source_chain')!=c or obj.get('assembly_unit_id')!=unit['id'] or obj.get('source_reference_chain')!=unit['reference_chains'][c]:raise ValueError('Source chain ownership changed')
             if obj.hide_render!=(unit['id'] not in visible) or obj.modifiers:raise ValueError('Whole chain hidden or modified')

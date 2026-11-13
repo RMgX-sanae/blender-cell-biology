@@ -16,6 +16,7 @@ import numpy as np
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 import detail_scene as ds
 import style_nodes as sn
 
@@ -102,7 +103,7 @@ def ribbon(data, secondary, chain, profile, group, white=False):
 
 
 def molecule(asset_dir, chain, profile, group):
-    data = np.load(asset_dir / f'chain_{chain}.npz', allow_pickle=False)
+    data = np.load(chain_file(asset_dir, chain), allow_pickle=False)
     rep = profile['representation']
     mat = sn.material('Main molecular material', profile)
     if rep in {'surface', 'crowded_surface', 'shell_ribbon'}:

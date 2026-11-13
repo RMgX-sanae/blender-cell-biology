@@ -13,6 +13,7 @@ import numpy as np
 from mathutils import Matrix, Vector, Euler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 import detail_scene as ds
 import style_nodes as sn
 import cellular_environment as environment
@@ -138,7 +139,7 @@ def main():
     assets = Path(record['asset_dir'])
     if digest(assets/'manifest.json') != record['source_manifest_sha256']: p.error('Source manifest changed after preparation')
     for chain, expected in record['chain_hashes'].items():
-        if digest(assets/f'chain_{chain}.npz') != expected: p.error('Source chain changed: '+chain)
+        if digest(chain_file(assets, chain)) != expected: p.error('Source chain changed: '+chain)
     data = dict(np.load(a.distribution_dir/'distribution.npz'))
     source_manifest=json.loads((assets/'manifest.json').read_text())
     source_roles={item['chain']:'nucleic_acid' if item['nucleic_acid'] else 'protein' for item in source_manifest['chains']}

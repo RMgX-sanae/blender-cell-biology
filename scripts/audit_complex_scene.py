@@ -6,6 +6,7 @@ import numpy as np
 from mathutils import Quaternion,Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+from molecular_asset_io import chain_file
 from audit_surface_materials import check_materials
 from detail_scene import linear
 
@@ -22,7 +23,7 @@ def audit(assets,profile):
     check_materials(profile,{'protein','nucleic_acid'})
     bounds=[];rows=[]
     for chain,row in components.items():
-        obj=scene.objects[row['object']];data=np.load(assets/f'chain_{chain}.npz')
+        obj=scene.objects[row['object']];data=np.load(chain_file(assets, chain))
         if not np.allclose(np.array(obj.matrix_world),np.eye(4),atol=1e-7,rtol=0):
             raise ValueError('Source component moved or stretched: '+chain)
         role='nucleic_acid' if expected[chain]['nucleic_acid'] else 'protein'
