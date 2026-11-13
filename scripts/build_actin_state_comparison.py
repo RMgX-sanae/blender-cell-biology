@@ -103,12 +103,11 @@ def main():
         text(['ADP + BeF3 + Mg2+', 'ADP + Pi + Mg2+', 'ADP + Mg2+'][i], x, -7.8, .35)
     text('核苷酸状态：保留真实配体，区分水解与磷酸释放', 0, 9.25, .52)
     text('上：完整的 F-actin 结构亚基（兔骨骼肌 α-actin）   下：配体单独放大 ×3', 0, 8.65, .31)
-    text('结构状态对照；不是反应轨迹。8A2R 含 ADP–BeF3，并非真实 ATP。', 0, -8.6, .31)
-    text('来源：Oosterheert et al., Nature 2022 / PDB 8A2R · 8A2S · 8A2T', 0, -9.15, .28)
     studio(profile, args, {'position': (0,-55,0), 'target': (0,0,0), 'scale': 32, 'light_scale': .9})
     save_and_render(args, {'purpose': 'Static molecular-state asset validation for full-cycle planning',
                            'source_assets': assets, 'full_cycle_rendered': False,
                            'ligand_inset_magnification': 3,
+                           'display_notes': 'Static source states, not a reaction trajectory. 8A2R contains ADP–BeF3, not ATP. Oosterheert et al., Nature 2022; PDB8A2R/8A2S/8A2T.',
                            'no_molecular_cut': True})
 
 

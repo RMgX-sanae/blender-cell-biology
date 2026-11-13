@@ -282,8 +282,7 @@ class SceneBuilder:
         width = camera.data.ortho_scale
         height = width*args.height/args.width
         entries = [(config['title'], -.44*width, .405*height, .026*width),
-                   (config['subtitle'], -.44*width, .34*height, .017*width),
-                   (config['footer'], -.44*width, (-.43 if dark else -.48)*height, .014*width)]
+                   (config['subtitle'], -.44*width, .34*height, .017*width)]
         if config['asset_family'] in ('actin', 'tubulin'):
             left, right = ('尖端（−）', '倒钩端（+）') if config['asset_family']=='actin' else ('负端方向', '正端方向')
             label_y = -.35 if config['operation']=='bundle' else -.23

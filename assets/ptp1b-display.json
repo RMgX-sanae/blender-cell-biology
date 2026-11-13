@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "title": "PTP1B · 两步去磷酸化",
+  "title": "PTP1B 的两步去磷酸化",
   "views": [
     {
       "id": "overview",
@@ -610,7 +610,7 @@
     [
       0.92,
       1.0,
-      "Pi 已形成 · Cys215 恢复"
+      "Pi 已形成，Cys215 恢复"
     ]
   ],
   "key_fractions": [

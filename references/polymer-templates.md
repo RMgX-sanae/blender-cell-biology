@@ -2,6 +2,8 @@
 
 入口是 `build_polymer_scene.py` 与 [polymer-templates](../assets/polymer-templates/actin-polymerization.json) 中的 JSON。使用公开结构提取的完整分子表面、共享网格和可编辑关键帧。默认 24 fps，普通示例 12 秒，微管缩短示例 14 秒、恢复示例 24 秒；这都是讲解时长，不是生物学速率。Blender 5.x 原生 `bpy`，无需付费模型库或专用插件。
 
+画面使用自然表达的标题、主要过程说明和必要的极性标签。`scope_note` 与 `limitations` 随 manifest 保存，不画成边角小字；旧模板的 `footer` 字段也不再绘制。
+
 这些是局部动作模块。用户要求肌动蛋白从上游到下游的全过程时，转到 [actin-full-cycle.md](actin-full-cycle.md)：分别实现 Rac1–WAVE–Arp2/3 和 RhoA–mDia1 路线，加上化学状态、调控及回收。旧 12 秒延伸视频不能作为全过程验收证据。
 
 ## 模板选择

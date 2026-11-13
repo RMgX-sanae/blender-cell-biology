@@ -217,10 +217,11 @@ def main():
         ink=bpy.data.objects['RNA growing 3′ end'].data.materials[0]
         halo=None
     else:
-        footer=bpy.data.objects['Presentation scope'];font=footer.data.font
-        ink=footer.data.materials[0];halo=bpy.data.materials['Annotation halo']
-        footer.data.body='完整分子分层展示｜第一轮 C20 来自 5FLM；转位与第二轮 U21 为教学重构'
-        bpy.data.objects['Outline Presentation scope'].data.body=footer.data.body
+        label=bpy.data.objects['Polarity DNA 模板链 3′']
+        font=label.data.font;ink=label.data.materials[0]
+        halo=bpy.data.materials['Annotation halo']
+        for name in ['Outline Presentation scope','Presentation scope']:
+            if name in bpy.data.objects:bpy.data.objects.remove(bpy.data.objects[name],do_unlink=True)
     stages=[(0,1,'第一轮：RNA 的 3′端等待 CTP'),(1,5,'第一轮：CTP 对准模板 G'),
         (5,6.5,'第一轮：连接变化示意，加入 C'),(6.5,9.5,'第一轮：焦磷酸 PPi 离开'),
         (9.5,11,'第一轮完成：C20 产物坐标来自 5FLM'),

@@ -6,7 +6,7 @@
   "surface": {"kind": "ellipsoid", "semiaxes_nm": [60, 46, 42]},
   "local_positive_z": "inward",
   "display": {
-    "context_label": "内体膜 · Gs 位于胞质侧",
+    "context_label": "Gs 位于内体膜的胞质侧",
     "camera_position_nm": [0, -240, 100],
     "camera_target_nm": [0, 0, 0],
     "camera_scale_nm": 235,

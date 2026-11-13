@@ -86,7 +86,7 @@ def main():
         curve.align_x='CENTER';curve.size=size
         if a.style=='light':curve.offset=size*.018
         obj=bpy.data.objects.new(body,curve);labels.objects.link(obj);obj.location=(x,y,12);return obj
-    text('AMSH-LP · K63 链水解',0,5.1,.80);text('整体复合物',-5.5,4.1,.64);text('完整泛素与水氧',5.5,4.1,.64)
+    text('AMSH-LP 催化 K63 链水解',0,5.1,.80);text('整体复合物',-5.5,4.1,.64);text('完整泛素与水氧',5.5,4.1,.64)
     text('水氧',7.9,-2.2,.49)
     water_position=np.einsum('nij,nj->ni',transforms['detail'][:,:3,:3],data['water'][:,0])+transforms['detail'][:,:3,3]
     line=np.broadcast_to([[0.,0.,12.],[7.2,-1.6,12.],[8.7,-1.6,12.]],(count+1,3,3)).copy();line[:,0,:2]=water_position[:,:2]

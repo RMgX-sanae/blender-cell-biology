@@ -8,12 +8,12 @@
   "local_positive_z": "outward",
   "orientation_evidence": "aqp1-asset.json defines inferred +Z extracellular using source-matched P47865 topology. Here +Z faces the exterior of a hypothetical closed plasma-membrane-like surface; the interior is cytoplasmic. The ellipsoid is not a whole-cell size or observed vesicle localization.",
   "display": {
-    "context_label": "AQP1 四聚体 · 胞外面朝外",
+    "context_label": "AQP1 四聚体的胞外面朝外",
     "camera_position_nm": [0,-160,80],
     "camera_target_nm": [0,0,0],
     "camera_scale_nm": 145,
     "membrane_palette": {"dark": {"heads":"768081", "core":"566569"}, "light": {"heads":"D0D4C9", "core":"BFC3B8"}},
-    "legend": [{"chain":"A", "label":"AQP1 · 1"}, {"chain":"A-2", "label":"AQP1 · 2"}, {"chain":"A-3", "label":"AQP1 · 3"}, {"chain":"A-4", "label":"AQP1 · 4"}]
+    "legend": [{"chain":"A", "label":"AQP1 1"}, {"chain":"A-2", "label":"AQP1 2"}, {"chain":"A-3", "label":"AQP1 3"}, {"chain":"A-4", "label":"AQP1 4"}]
   },
   "count": 24,
   "seed": 43,

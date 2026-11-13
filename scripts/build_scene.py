@@ -257,11 +257,11 @@ def make_cell():
         mito["detail"] = "overview proxy; cristae and membrane topology omitted"
     for i, pos in enumerate([(3.8,.3,.2),(.6,-.2,-1.8),(-.2,.3,2.5)]):
         ball(f"Endolysosome_proxy_{i}", pos, .28, "motor")
-    text_label("Animal cell | cutaway schematic", (0,0,4.8), .34)
+    text_label("Animal cell interior", (0,0,4.8), .34)
     text_label("Nucleus", (-2.8,-1.6,1.9))
     text_label("Golgi", (2.2,-1.4,1.9))
-    text_label("Organelle abundance and sizes are illustrative",(0,-1.2,-3.8),.24)
     NOTES.extend(["Generic animal interphase overview; not a particular cell reconstruction.",
+                  "Organelle abundance and sizes are illustrative.",
                   "ER/Golgi are overview proxies. No claim of continuous lumen in this low-detail starter."])
 
 
@@ -281,10 +281,10 @@ def make_receptors():
         line(f"TM_{i}",[(0,0,-.35),(0,0,.45)],.10,"protein",root)
         ball(f"Ectodomain_{i}",(0,0,.65),(.23,.19,.31),"protein",root)
         line(f"Cytosolic_tail_{i}",[(0,0,-.36),(.1,0,-.65)],.055,"protein",root)
-    text_label(f"{ARGS.distribution.capitalize()} receptor positions | hypothesis",(0,0,4.2),.32)
+    text_label(f"{ARGS.distribution.capitalize()} receptor distribution",(0,0,4.2),.32)
     text_label("Extracellular +Z",(-3.8,1.2,1.8),.25)
-    text_label("Receptor shape, count and density are schematic",(0,-4,-.6),.24)
     NOTES.append("Single-pass generic receptors, not GPCRs. Exact count and footprint exclusion are preserved.")
+    NOTES.append("Receptor shape, count and density are schematic; the distribution is a hypothesis.")
 
 
 def make_vesicle():
@@ -308,7 +308,7 @@ def make_vesicle():
     text_label("-",(-5.8,0,.6),.5)
     text_label("+",(5.8,0,.6),.5)
     text_label("Plus-end-directed motor transport",(0,0,4.0),.32)
-    text_label("Cargo remains inside the vesicle | time not to scale",(0,-1,-1.2),.25)
+    text_label("Cargo remains inside the vesicle",(0,-1,-1.2),.25)
     NOTES.extend(["Generic plus-end-directed kinesin-like transport; kinesin-family direction is not universal.",
                   "Microtubule is a schematic track, not its 13-protofilament structure. No motor stepping, budding or fusion."])
 
@@ -352,7 +352,7 @@ def make_mitosis():
             visibility(mt,1,cut-1)
         ball(f"Spindle_pole_{side}",(side*4.4,.12,0),.20,"motor")
     text_label("Metaphase > anaphase > cytokinesis",(0,-.8,4.1),.33)
-    text_label("2n = 4 teaching model | sister chromatids separate",(0,-.8,-3.8),.26)
+    text_label("Sister chromatids separate",(0,-.8,-3.8),.26)
     NOTES.extend(["Starts after DNA replication and nuclear-envelope breakdown; not the full cell cycle.",
                   "Four replicated chromosomes at metaphase; four single-chromatid chromosomes per daughter.",
                   "Furrow uses a cutaway deformation; final abscission is a labeled topology switch, not a membrane simulation."])
@@ -381,7 +381,7 @@ def make_replication():
     text_label("Leading: 5' > 3'",(-2.4,-.2,2.1),.30)
     text_label("Lagging fragments: 3' < 5'",(-2.4,-.2,-2.1),.30)
     text_label("Parental DNA",(3.2,-.2,1),.28)
-    text_label("Fork-local schematic | both new strands grow 5' to 3'",(0,-1,3.6),.29)
+    text_label("Both new strands grow 5' to 3'",(0,-1,3.6),.29)
     text_label("Blue: parental   Orange: new DNA   Rose: primers",(0,-.8,-3),.24)
     NOTES.extend(["Fork-local stationary schematic, not moving replication-fork kinematics.",
                   "Leading strand grows +X, lagging fragments -X. No polymerase stoichiometry, primer removal or ligation animation."])
@@ -451,8 +451,7 @@ def make_structure():
     camera((0,-15,8),scale=10)
     bpy.context.scene["scale_mode"]="uniform atom-center scale; illustrative atom radii"
     bpy.context.scene["meters_per_blender_unit"]=1e-10/.13
-    text_label("B-DNA | PDB 1BNA",(0,-.5,3.8),.34)
-    text_label("Experimental coordinates; illustrative atom radii",(0,-1,-3.6),.24)
+    text_label("B-DNA double helix",(0,-.5,3.8),.34)
     NOTES.append("1 Blender unit = 1/0.13 angstrom for atom centers; atom radii are illustrative, no bonds inferred.")
 
 

@@ -142,10 +142,6 @@ def main():
     label('亲代 DNA' if zh else 'Parental DNA','Parent legend',.34,5,9)
     path('Parent color key',[right*3.8+up*9.2+front*20,right*4.7+up*9.2+front*20],.055,guide_mats['parent'],annotation)
     path('Primer color key',[right*1.3+up*7.5+front*20,right*2.2+up*7.5+front*20],.055,guide_mats['primer'],annotation)
-    if not modern:
-        label('分层示意：CMG 后移；复制叉与运动为构造｜未显示引物去除和连接' if zh else
-              'Layered CMG reference; authored fork and motion | Primer removal and ligation omitted',
-              'Presentation scope',.24,-14.8,-9.3)
     for body,x,y in [('5′',-13.4,4.6),('3′',-13.4,-4.9),('3′',12.6,.7),('5′',12.6,-1.4)]:
         label(body,f'Parent polarity {body} {x} {y}',.32,x,y)
     label('5′','Leading new 5′',.31,-12.1,-5.5)

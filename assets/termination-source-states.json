@@ -166,7 +166,7 @@
       "sha256": "2fefe3427c151cfcbc32e30efbfd3f95135b9519e6e7809770e8bb39e227a6a2",
       "assembly_id": "1",
       "title": "识别终止密码子",
-      "state_label": "GMPPCP · 水解受阻",
+      "state_label": "GMPPCP（水解受阻）",
       "chains": [
         {
           "chain": "ii",
@@ -354,7 +354,7 @@
       "sha256": "ffa910d8ec692012af945147081ee2feb9add53e67a9274ae19d40a300c494a9",
       "assembly_id": "1",
       "title": "ABCE1 结合状态",
-      "state_label": "AAQ 突变 · 释放受阻",
+      "state_label": "AAQ 突变（释放受阻）",
       "chains": [
         {
           "chain": "ii",

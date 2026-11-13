@@ -182,11 +182,6 @@ def main():
             t=(frame-1)/(args.frames-1)
             ob.hide_render = not a<=t<b
             ob.keyframe_insert(data_path='hide_render',frame=frame)
-    footer = ('分层观察：完整 Pol II 后移，非模板链隐藏｜底物接近与成键为教学重构' if zh else
-              'Layered view: Pol II offset, non-template strand hidden | Authored approach and bond change')
-    if not modern:
-        ob = text_object(footer,'Presentation scope',.145,ink,annotation,font)
-        ob.parent = camera; ob.location = (-6.65,-4.16,-15)
     labels = [
         ('DNA 模板链 3′' if zh else 'Template DNA 3′',atom(data['T'],39,"C4'"),(-.75,-.3) if modern else (.9,.8)),
         ('5′',atom(data['T'],1,"C4'"),(.9,.4)),

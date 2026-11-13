@@ -363,12 +363,6 @@ def main():
             t=(frame-1)/(args.frames-1)
             ob.hide_render = not a <= t < b
             ob.keyframe_insert(data_path='hide_render',frame=frame)
-    footer = ('分层观察：40S 隐藏，60S 后移｜运动与短肽为教学示意' if zh else
-              'Layered view: 40S hidden, 60S offset | Motion and short peptide are schematic')
-    if not modern:
-        ob = text_object(footer, 'Presentation scope', .26, dim, annotation, font)
-        ob.parent = camera
-        ob.location = (-11.6, -7.5, -13)
     for ch, name in [('At','A'),('Pt','P'),('Et','E')]:
         center = data[ch]['atoms'].mean(0)
         location = target+right*5.5+up*np.dot(center-target,up)+front*8
