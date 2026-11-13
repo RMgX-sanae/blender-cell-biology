@@ -100,6 +100,11 @@ def main():
         'substrate_endpoint_error_nm':substrate_error,'product_endpoint_error_nm':product_error,
         'product_bond_length_nm':length,'cropped':cropped,'occluded':occluded,'errors':errors,
         'scope':'Saved geometry, atom bookkeeping, observed endpoint, complete subunits, camera and captions. Authored interpolation is not a validated catalytic trajectory.'}
+    if 'transcription_appearance' in s:
+        from audit_transcription_appearance import audit
+        from audit_transcription_annotations import check_growing_end
+        result['appearance'] = audit(s)
+        result['growing_end_annotation'] = check_growing_end(s,source_point(19,"O3'"),source_point(20,"O3'"))
     a.output.parent.mkdir(parents=True,exist_ok=True)
     a.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:result[k] for k in ['frames','CTP_to_residue_plus_PPi_atoms','product_endpoint_error_nm','errors']}))

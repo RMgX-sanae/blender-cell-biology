@@ -33,7 +33,7 @@
 | Arp2/3 或 formin 的上游到回收 | [完整 actin 案例](portable-actin-films.md)：`build_actin_films.py` 按 prepare/build/render/encode/audit 执行 | **独立重建**：两条指定教学路线、21 个独立章节 | 新细胞/调控情境；来源未解析的成核中间态仍是教学构造 |
 | 局部丝端增长、拆解、封端或微管变化 | [骨架模板](polymer-templates.md)：`prepare_filament_assets.py` → `build_polymer_scene.py` | **既有片段/模型**：11 个可执行模板；逐项状态以具体项目为准 | 不能将 actin 完整案例的验收外推到全部模板或微管过程 |
 | V 型 ATPase 的连续泵送 | [V-ATPase](vatpase-loop.md)：`prepare_vatpase.py` → `build_vatpase_scene.py` → `audit_vatpase.py` | **独立重建**：16 秒双视图循环；完整低分辨率周期及高分辨率关键帧 | 全部催化构象、质子水链、累积 pH 和膜电位 |
-| 转录中的核苷酸加入 | [精细制作流程](production-workflow.md) 的转录段：`prepare_transcription.py`、`build_transcription_scene.py`；第二轮用 `prepare_transcription_next.py`、`extend_transcription_scene.py` | **既有片段及局部复验**：23 秒 C→U 示例；局部账本及两轮共用的 81 个重原子从独立解包重建，已有 552 帧工程曾用重建输入复核 | 起始、终止和完整天然中间态；第二轮构象是教学重构，新串联检查不扩大原有动画验收范围 |
+| 转录中的核苷酸加入 | [精细制作流程](production-workflow.md) 的转录段：`prepare_transcription.py`、`build_transcription_scene.py`；第二轮用 `prepare_transcription_next.py`、`extend_transcription_scene.py`；[参考外观](transcription-appearance.md) | **既有片段及局部复验**：23 秒 C→U、81 个所选重原子的跨阶段账本；角色材质、完整 Pol II 背景、两轮颜色衔接与保护双语标签 | 起始、终止和完整天然中间态；第二轮构象是教学重构，外观迁移不扩大机制范围 |
 | 翻译的 tRNA 进入、肽转移和转位 | [精细制作流程](production-workflow.md) 的翻译段：`build_translation_scene.py` → `audit_translation.py`；[参考外观](translation-appearance.md) | **既有片段**：9SPI 衍生的局部底物运动，角色材质、完整 60S 背景与受保护双语标签 | 起始、终止、eEF1A/eEF2、GTP 水解和完整催化循环 |
 | DNA 复制叉与新链方向 | [精细制作流程](production-workflow.md) 的复制段：`prepare_replication.py` → `build_replication_scene.py` | **既有片段**：连续/分段延伸示意，完整 CMG 位于结构参考层 | 起始、引物处理、连接与终止；不能当作完整复制机制 |
 | 中期后的染色体分离与胞质分裂 | [精细制作流程](production-workflow.md) 的分裂段：`prepare_division.py` → `build_division_scene.py` | **既有片段**：四条已复制染色体、连续收缩和整体分开 | 前期、核膜重建、中体、ESCRT 与分子级切断 |

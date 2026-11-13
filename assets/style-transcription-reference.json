@@ -1,0 +1,111 @@
+{
+  "reference": "https://www.wehi.edu.au/wp-content/uploads/2023/11/p53-animation-still.jpg",
+  "reference_page": "https://www.wehi.edu.au/wehi-tv/",
+  "usage": "Visual analysis only; reference image not redistributed with the skill",
+  "observations": [
+    "Dark blue-black environment",
+    "Golden foreground protein",
+    "Magenta and cream nucleic acid",
+    "Teal distant macromolecules",
+    "Fine molecular shape dominates silhouettes",
+    "Depth separation rather than strong glow"
+  ],
+  "name": "Reference-lit nucleotide additions over intact Pol II context",
+  "background": "091A24",
+  "world": "839BAA",
+  "view_transform": "AgX",
+  "exposure": 0,
+  "render_recipe": "neutral",
+  "camera": {
+    "scale_multiplier": 1,
+    "center_offset_nm": [
+      0,
+      0
+    ]
+  },
+  "context_blur_pixels_1280": 2.5,
+  "palette": {
+    "heads": "305460",
+    "dna1": "B6479A",
+    "dna2": "E4D8C5",
+    "rna": "EB754C",
+    "protein": "F1C764",
+    "accent": "B9D58D",
+    "ink": "EBF1F1"
+  },
+  "surface_roles": {
+    "protein": {
+      "roughness": 0.56,
+      "specular": 0.26,
+      "bump": 0.004,
+      "subsurface_weight": 0.025
+    },
+    "nucleic_acid": {
+      "roughness": 0.46,
+      "specular": 0.27,
+      "bump": 0.002,
+      "texture_scale": 12,
+      "bump_strength": 0.14,
+      "subsurface_weight": 0.035
+    },
+    "phosphate": {
+      "roughness": 0.42,
+      "specular": 0.24,
+      "bump": 0,
+      "subsurface_weight": 0.02
+    }
+  },
+  "lighting": [
+    {
+      "name": "Warm upper-left key",
+      "position": [
+        17.329222898704536,
+        -3.4055266379755214,
+        9.2
+      ],
+      "power": 2200,
+      "size": 7,
+      "color": "FFE7B8"
+    },
+    {
+      "name": "Cool face fill",
+      "position": [
+        4.937032573025169,
+        10.175107328527616,
+        3.1999999999999997
+      ],
+      "power": 1100,
+      "size": 9,
+      "color": "C9E6F1"
+    },
+    {
+      "name": "Pol II rim",
+      "position": [
+        -9.66966172872377,
+        0.6019948996853115,
+        14.199999999999998
+      ],
+      "power": 1800,
+      "size": 8,
+      "color": "B8DEEF"
+    },
+    {
+      "name": "Active-site fill",
+      "position": [
+        8.101581281729365,
+        -1.4432243705692294,
+        2.1999999999999997
+      ],
+      "power": 1300,
+      "size": 7,
+      "color": "FFE9D4"
+    }
+  ],
+  "implementation_assumptions": [
+    "The reference supplies warm detailed foreground, cool molecular context and restrained depth; it is not evidence for this transcription mechanism.",
+    "All12modeled Pol II chains remain intact and shifted behind the reaction for a layered teaching view. The complete non-template strand remains hidden.",
+    "Template DNA, primer RNA, incoming nucleotide and leaving PPi keep their semantic colors across both additions. C20 adopts the RNA color after incorporation.",
+    "First-cycle C20 is source-derived; CCD CTP and the second UTP/U21 cycle retain the documented teaching reconstruction and chemistry limits.",
+    "The authored view supports orthographic scale/pan; alternate viewing directions require reauthoring visibility and labels."
+  ]
+}

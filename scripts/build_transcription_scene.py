@@ -14,9 +14,10 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from molecular_asset_io import chain_file
-from detail_scene import collection, load_chain, material, path, save_and_render, studio
+from detail_scene import collection, linear, load_chain, material, path, save_and_render, studio
 from build_molecular_scene import nucleic_atoms
 from build_translation_scene import atom, emission, smooth, text_object, update_line
+import transcription_appearance as appearance
 
 
 def subset(data, mask):
@@ -33,6 +34,7 @@ def main():
     p.add_argument('--substrate-dir',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--font',type=Path)
+    p.add_argument('--font-latin',type=Path,help='Times New Roman; required for role/recipe appearance')
     p.add_argument('--style-profile',type=Path,
                    default=Path(__file__).resolve().parent.parent/'assets/style-molecular-reference.json')
     p.add_argument('--engine',choices=['cycles','eevee'],default='cycles')
@@ -52,10 +54,22 @@ def main():
     if (not source['source_file'].upper().startswith('5FLM') or
         source['source_sha256'] != substrate_info['source_asset']['source_sha256']):
         p.error('Use the matching 5FLM asset and its prepared CTP reconstruction.')
-    profile = json.loads(args.style_profile.read_text())
+    request, modern = appearance.read_profile(args.style_profile)
+    if modern and (not args.font_latin or not args.font_latin.is_file()):
+        p.error('Role/recipe appearance requires --font-latin (Times New Roman regular).')
+    if modern and args.compositor:
+        p.error('Use render_recipe in the appearance profile, without legacy --compositor.')
+    if modern:
+        defaults = json.loads((Path(__file__).resolve().parents[1]/'assets/style-molecular-reference.json').read_text())
+        profile = {**defaults, **request, 'palette': {**defaults['palette'], **request.get('palette', {})}, 'camera': {}}
+    else:
+        profile = request
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
-    mats = {k:material(k,v,profile['roughness'],profile['bump']) for k,v in profile['palette'].items()}
+    mats = {k:appearance.shade(profile,k,profile['palette'][k],
+            'phosphate' if k=='accent' else 'nucleic_acid',profile['roughness'],profile['bump'])
+            for k in ['protein','rna','accent','dna1','dna2']} if modern else {
+            k:material(k,v,profile['roughness'],profile['bump']) for k,v in profile['palette'].items()}
     target = np.array((-.1,-2.3,1.2))
     front = np.array((.9396926,.3420201,0)); front /= np.linalg.norm(front)
     right = np.cross((0,0,1),front); right /= np.linalg.norm(right)
@@ -64,10 +78,11 @@ def main():
     scaffold = collection('02 Native modeled DNA and RNA')
     reaction = collection('03 One-C addition — explicit teaching reconstruction')
     annotation = collection('04 Captions and polarity')
-    pol_mat = material('Pol II contextual surface','276E78',.64,.006)
+    pol_mat = appearance.shade(profile,'Pol II contextual surface',profile['palette']['heads'],
+                               'protein',.64,.006) if modern else material('Pol II contextual surface','276E78',.64,.006)
     shader = pol_mat.node_tree.nodes.get('Principled BSDF')
     color = shader.inputs['Base Color'].default_value
-    shader.inputs['Base Color'].default_value = tuple(v*.38 for v in color[:3])+(1,)
+    shader.inputs['Base Color'].default_value = tuple(v*(1 if modern else .38) for v in color[:3])+(1,)
     pol_objects, maximum_depth = [], -float('inf')
     for ch in 'ABCDEFGHIJKL':
         ob, d = load_chain(args.asset_dir,ch,pol_mat,context,'Intact Pol II chain '+ch)
@@ -136,18 +151,25 @@ def main():
     actor_points = np.concatenate([data['T']['atoms'],data['P']['atoms'],ctp['atoms']])
     offset = -front*max(0.,maximum_depth-float((actor_points@front).min())+1.8)
     for ob in pol_objects: ob.location = offset
-    camera = studio(profile,args,{'position':target+front*50,'target':target,'scale':14.5,'light_scale':.55})
-    light = bpy.data.lights.new('Readable active-site fill','AREA')
-    light.energy,light.size = 4200,10
-    lob = bpy.data.objects.new(light.name,light)
-    bpy.data.collections['90 Camera and lighting'].objects.link(lob)
-    lob.location = target+front*14+up*6
-    lob.rotation_euler = (Vector(target)-lob.location).to_track_quat('-Z','Y').to_euler()
+    settings = request.get('camera',{}) if modern else {}
+    pan = settings.get('center_offset_nm',[0,0]); shift = right*pan[0]+up*pan[1]
+    camera = studio(profile,args,{'position':target+shift+front*50,'target':target+shift,
+        'scale':14.5*settings.get('scale_multiplier',1),'light_scale':1 if modern else .55})
+    if not modern:
+        light = bpy.data.lights.new('Readable active-site fill','AREA')
+        light.energy,light.size = 4200,10
+        lob = bpy.data.objects.new(light.name,light)
+        bpy.data.collections['90 Camera and lighting'].objects.link(lob)
+        lob.location = target+front*14+up*6
+        lob.rotation_euler = (Vector(target)-lob.location).to_track_quat('-Z','Y').to_euler()
     font = bpy.data.fonts.load(str(args.font)) if args.font else None
     zh = bool(font)
     bg = profile['background'].lstrip('#')
     light_background = sum(int(bg[i:i+2],16) for i in (0,2,4))>480
-    ink = emission('Annotation ink','15252C' if light_background else 'E4EAEC')
+    if modern:
+        light_background = np.dot(linear(profile['background']),[.2126,.7152,.0722])>.45
+    ink = emission('Annotation ink',profile['palette'].get('ink','24323A' if light_background else 'E5EFF2')
+                   if modern else ('15252C' if light_background else 'E4EAEC'))
     stages = [(0,.12,'RNA 在 3′端延长' if zh else 'RNA extends at its 3′ end'),
               (.12,.43,'CTP 接近 RNA 末端' if zh else 'CTP approaches the RNA end'),
               (.43,.58,'连接变化示意：增加一个 C 残基' if zh else 'Illustrative bond change: one C residue added'),
@@ -162,10 +184,11 @@ def main():
             ob.keyframe_insert(data_path='hide_render',frame=frame)
     footer = ('分层观察：完整 Pol II 后移，非模板链隐藏｜底物接近与成键为教学重构' if zh else
               'Layered view: Pol II offset, non-template strand hidden | Authored approach and bond change')
-    ob = text_object(footer,'Presentation scope',.145,ink,annotation,font)
-    ob.parent = camera; ob.location = (-6.65,-4.16,-15)
+    if not modern:
+        ob = text_object(footer,'Presentation scope',.145,ink,annotation,font)
+        ob.parent = camera; ob.location = (-6.65,-4.16,-15)
     labels = [
-        ('DNA 模板链 3′' if zh else 'Template DNA 3′',atom(data['T'],39,"C4'"),(.9,.8)),
+        ('DNA 模板链 3′' if zh else 'Template DNA 3′',atom(data['T'],39,"C4'"),(-.75,-.3) if modern else (.9,.8)),
         ('5′',atom(data['T'],1,"C4'"),(.9,.4)),
         ('RNA 片段 5′' if zh else 'RNA fragment 5′',atom(data['P'],7,"C4'"),(.7,.7)),
     ]
@@ -177,6 +200,9 @@ def main():
         path('Leader '+body,[point+front*20,np.array(ob.location)-right*np.sign(dx)*.1],.007,ink,annotation)
     terminal = text_object('3′','RNA growing 3′ end',.22,ink,annotation)
     terminal.rotation_euler = camera.rotation_euler
+    if modern:
+        terminal.data.align_x = 'RIGHT'
+        terminal_guide = path('Leader RNA growing 3′',[(0,0,0)]*2,.007,ink,annotation)
     substrate_label = text_object('RNA + CTP → 延长的 RNA + PPi' if zh else 'RNA + CTP → extended RNA + PPi',
                                   'Substrate accounting',.23,ink,annotation,font)
     substrate_label.rotation_euler = camera.rotation_euler
@@ -184,19 +210,22 @@ def main():
     for state in poses:
         t=state['joining']
         location=(1-t)*primer_o3+t*product_o3
-        terminal.location=location+right*.7-up*.75+front*20
+        terminal.location=location+front*20+(-right*.85-up*.45 if modern else right*.7-up*.75)
         terminal.keyframe_insert(data_path='location',frame=state['frame'])
+        if modern:
+            update_line(terminal_guide,[location+front*20,np.array(terminal.location)+right*.1],state['frame'])
     for name,obj,points,phase in [('CTP',core,ctp['atoms'],'substrate'),
                                  ('PPi',extra,ctp['atoms'][count:],'product')]:
         label=text_object(name,name+' label',.20,ink,annotation)
         label.rotation_euler=camera.rotation_euler
         label.parent=obj
-        label.location=points.mean(0)+right*.5+up*.4+front*20
+        label.location=points.mean(0)+front*20+(
+            right*.8-up*.25 if modern and phase=='product' else right*.5+up*.4)
         for state in poses:
             label.hide_render=state['joining']>.05 if phase=='substrate' else state['joining']<.95
             label.keyframe_insert(data_path='hide_render',frame=state['frame'])
-    halo = emission('Annotation halo','F7F8F9' if light_background else '10212B')
-    for original in list(annotation.objects):
+    halo = emission('Annotation halo','F7F8F9' if light_background else '10212B') if not modern else None
+    for original in ([] if modern else list(annotation.objects)):
         if original.type!='FONT':continue
         d=original.data.copy();d.offset=.010;d.materials.clear();d.materials.append(halo)
         ob=bpy.data.objects.new('Outline '+original.name,d);annotation.objects.link(ob)
@@ -210,6 +239,7 @@ def main():
             for state in poses:
                 ob.hide_render=state['joining']>.05 if original.name=='CTP label' else state['joining']<.95
                 ob.keyframe_insert(data_path='hide_render',frame=state['frame'])
+    appearance_record = appearance.finish(bpy.context.scene,args,request,profile,context) if modern else None
     bpy.ops.file.pack_all()
     manifest={'scene':'One-C RNA extension — product-based teaching reconstruction',
         'source_asset':source,'substrate_reconstruction':substrate_info,
@@ -227,7 +257,11 @@ def main():
             'Product-based interpolation is not an atomistic transition-state or reaction-energy calculation.',
             'The non-template source gap is neither filled nor joined; that entire chain is hidden.',
             'Representations use artistic atom radii and single cylinders for bonds; bond orders remain in CCD data.']}
+    if appearance_record:
+        manifest['appearance'] = appearance_record
     save_and_render(args,manifest)
+    if modern:
+        (args.output/'appearance.json').write_bytes(args.style_profile.read_bytes())
 
 
 if __name__=='__main__': main()

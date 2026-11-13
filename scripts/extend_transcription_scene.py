@@ -18,6 +18,7 @@ from build_transcription_scene import subset
 from build_molecular_scene import nucleic_atoms
 from build_translation_scene import atom, smooth, text_object, update_line
 from detail_scene import path, save_and_render
+import transcription_appearance as appearance
 
 
 def curves(action):
@@ -50,6 +51,16 @@ def main():
     if old['source_asset']['source_sha256']!=info['source_asset']['source_sha256']:
         p.error('The saved first cycle and new substrate must use the same source.')
     s=bpy.context.scene
+    appearance_record=json.loads(s['transcription_appearance']) if 'transcription_appearance' in s else None
+    modern=appearance_record is not None
+    zh=appearance_record['language']=='zh' if modern else True
+    if modern:
+        request_path=Path(appearance_record['profile_path'])
+        if appearance.digest(request_path)!=appearance_record['profile_sha256']:
+            p.error('The saved appearance request changed; rebuild the first cycle.')
+        request_bytes=request_path.read_bytes()
+        original_text=bpy.data.objects['RNA growing 3′ end'].data
+        font,latin=original_text.font,original_text.font_bold
     args.frames,args.fps,args.width,args.samples=552,24,old['width'],old['samples']
     s.frame_start,s.frame_end,s.render.fps=1,args.frames,args.fps
     if not 1<=args.frame<=args.frames:p.error('Preview frame outside animation.')
@@ -64,7 +75,7 @@ def main():
             fc.update()
     scaffold=bpy.data.collections['02 Native modeled DNA and RNA']
     reaction=bpy.data.collections['03 One-C addition — explicit teaching reconstruction']
-    annotation=bpy.data.collections['04 Captions and polarity']
+    annotation=bpy.data.collections[s['compositor_label_collection'] if modern else '04 Captions and polarity']
     reaction.name='03 Two successive additions — teaching reconstruction'
     dna=np.load(chain_file(args.asset_dir, 'T'));rna=np.load(chain_file(args.asset_dir, 'P'))
     utp=np.load(args.substrate_dir/'utp.npz');count=int(utp['product_atom_count'])
@@ -83,9 +94,9 @@ def main():
                bpy.data.objects['New RNA O3′–P bond']]:ob.parent=parent
     # Recalculate anchors in world space; rotating a label's foreground offset
     # with the molecule would tilt its text and displace it far from the anchor.
-    polarity=[('DNA 模板链 3′',atom(dna,39,"C4'"),(.9,.8)),
+    polarity=[('DNA 模板链 3′' if zh else 'Template DNA 3′',atom(dna,39,"C4'"),(-.75,-.3) if modern else (.9,.8)),
               ('5′',atom(dna,1,"C4'"),(.9,.4)),
-              ('RNA 片段 5′',atom(rna,7,"C4'"),(.7,.7))]
+              ('RNA 片段 5′' if zh else 'RNA fragment 5′',atom(rna,7,"C4'"),(.7,.7))]
     link1=path('Template T15 O3′ to T16 P',[(0,0,0)]*2,.047,dna_mat,scaffold)
     link2=path('Template T16 O3′ to T17 P',[(0,0,0)]*2,.047,dna_mat,scaffold)
     link1.parent=link2.parent=parent
@@ -108,9 +119,9 @@ def main():
         'UTP beta/gamma phosphates → second PPi',ppi1.data.materials[0],reaction)
     core2['evidence']='Modeled U21; not deposited in 5FLM.'
     ppi2['evidence']='CCD UTP beta/gamma phosphate atoms; charge/protonation omitted.'
-    # Once the first addition is complete, C20 takes the existing RNA color.
-    # Gold then continues to identify the nucleotide currently being added.
-    incorporated=core1.data.materials[0].copy();incorporated.name='Incorporated C20 becomes RNA orange'
+    # C20 adopts the RNA color; the incoming color identifies the next addition.
+    incorporated=core1.data.materials[0].copy()
+    incorporated.name='Incorporated C20 adopts RNA color' if modern else 'Incorporated C20 becomes RNA orange'
     core1.data.materials[0]=incorporated
     base_color=incorporated.node_tree.nodes.get('Principled BSDF').inputs['Base Color']
     gold=np.array(base_color.default_value)
@@ -127,10 +138,18 @@ def main():
         bpy.data.objects['New RNA O3′–P bond'].data.materials[0],reaction)
     cleavage2=path('Second alpha–beta phosphate connection',[(0,0,0)]*2,.035,ppi2.data.materials[0],reaction)
     terminal=bpy.data.objects['RNA growing 3′ end']
+    terminal_offset=-right*.85-up*.45 if modern else right*.7-up*.75
+    terminal_guide=bpy.data.objects['Leader RNA growing 3′'] if modern else None
     # Retain the first-cycle 3′ tracking until it reaches C20.
     original_terminal=[]
+    original_layer=bpy.context.window.view_layer
+    if modern:
+        bpy.context.window.view_layer=s.view_layers[s['compositor_label_layer']]
     for frame in range(1,266):
-        s.frame_set(frame);original_terminal.append(tuple(terminal.location))
+        s.frame_set(frame);bpy.context.view_layer.update()
+        evaluated=terminal.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        original_terminal.append(tuple(evaluated.location))
+    bpy.context.window.view_layer=original_layer
     terminal.animation_data_clear()
     ppi1_extra=np.array(right*3.2-up*.9+front*1.8)
     poses=[]
@@ -153,7 +172,7 @@ def main():
             label.location=anchor+right*dx+up*dy+front*20
             label.keyframe_insert(data_path='location',frame=frame)
             update_line(bpy.data.objects['Leader '+body],
-                [anchor+front*20,np.array(label.location)-right*.1],frame)
+                [anchor+front*20,np.array(label.location)-right*np.sign(dx)*.1],frame)
         aq=identity.slerp(local_q,advance);ar=np.array(aq.to_matrix());ashift=origin-ar @ origin+delta*advance
         a16.rotation_quaternion=aq;a16.location=ashift
         a16.keyframe_insert(data_path='rotation_quaternion',frame=frame)
@@ -174,9 +193,12 @@ def main():
             ob.data.bevel_depth=.035*value;ob.data.keyframe_insert(data_path='bevel_depth',frame=frame)
             visibility(ob,time>=13.5,frame)
         if time<11:terminal.location=original_terminal[frame-1]
-        elif time<17.5:terminal.location=r @ c20_o3+shift+right*.7-up*.75+front*20
-        else:terminal.location=(1-joining)*c20_final+joining*u21_o3+right*.7-up*.75+front*20
+        elif time<17.5:terminal.location=r @ c20_o3+shift+terminal_offset+front*20
+        else:terminal.location=(1-joining)*c20_final+joining*u21_o3+terminal_offset+front*20
         terminal.keyframe_insert(data_path='location',frame=frame)
+        if modern:
+            update_line(terminal_guide,[np.array(terminal.location)-terminal_offset,
+                np.array(terminal.location)+right*.1],frame)
         # The first PPi leaves the view before the next substrate arrives.
         if time>=9.5:
             ppi1.location=ppi1_extra+right*10*smooth(time,9.5,11)
@@ -191,10 +213,14 @@ def main():
     old_stage=[ob for ob in list(annotation.objects) if ob.name.startswith('Stage ') or
                ob.name.startswith('Outline Stage ') or ob.name in ['Substrate accounting','Outline Substrate accounting']]
     for ob in old_stage:bpy.data.objects.remove(ob,do_unlink=True)
-    footer=bpy.data.objects['Presentation scope'];font=footer.data.font
-    ink=footer.data.materials[0];halo=bpy.data.materials['Annotation halo']
-    footer.data.body='完整分子分层展示｜第一轮 C20 来自 5FLM；转位与第二轮 U21 为教学重构'
-    bpy.data.objects['Outline Presentation scope'].data.body=footer.data.body
+    if modern:
+        ink=bpy.data.objects['RNA growing 3′ end'].data.materials[0]
+        halo=None
+    else:
+        footer=bpy.data.objects['Presentation scope'];font=footer.data.font
+        ink=footer.data.materials[0];halo=bpy.data.materials['Annotation halo']
+        footer.data.body='完整分子分层展示｜第一轮 C20 来自 5FLM；转位与第二轮 U21 为教学重构'
+        bpy.data.objects['Outline Presentation scope'].data.body=footer.data.body
     stages=[(0,1,'第一轮：RNA 的 3′端等待 CTP'),(1,5,'第一轮：CTP 对准模板 G'),
         (5,6.5,'第一轮：连接变化示意，加入 C'),(6.5,9.5,'第一轮：焦磷酸 PPi 离开'),
         (9.5,11,'第一轮完成：C20 产物坐标来自 5FLM'),
@@ -203,27 +229,37 @@ def main():
         (17.5,19,'第二轮：加入 U，RNA 继续在 3′端延长'),
         (19,21.5,'第二轮：焦磷酸 PPi 离开'),
         (21.5,23.1,'已连续加入 C 和 U；第二轮构象为教学重构')]
+    if not zh:
+        english=['First addition: RNA 3′ end awaits CTP','CTP aligns with template G',
+                 'Illustrative bond change: add C','First PPi departs',
+                 'First addition complete: observed C20 endpoint',
+                 'Authored translocation: advance one position',
+                 'UTP aligns with the next template A','Second addition: add U at the RNA 3′ end',
+                 'Second PPi departs','C then U added; second conformation is modeled']
+        stages=[(a,b,body) for (a,b,_),body in zip(stages,english)]
     new_labels=[]
     for i,(start,end,body) in enumerate(stages):
         ob=text_object(body,f'Cycle stage {i+1}',.25,ink,annotation,font)
         ob.parent=s.camera;ob.location=(-6.65,3.99,-15)
         for state in poses:visibility(ob,start<=state['seconds']<end,state['frame'])
         new_labels.append(ob)
-    formula=text_object('RNA + CTP + UTP → RNA 增加 C、U + 2 PPi','Two-cycle accounting',.23,ink,annotation,font)
+    formula=text_object('RNA + CTP + UTP → RNA 增加 C、U + 2 PPi' if zh else
+        'RNA + CTP + UTP → extended RNA + 2 PPi','Two-cycle accounting',.23,ink,annotation,font)
     formula.parent=s.camera;formula.location=(-3,-3.3,-15);new_labels.append(formula)
     for name,obj,points,kind in [('UTP',core2,world_atoms,'substrate'),('PPi',ppi2,world_atoms[count:],'product')]:
         label=text_object(name,'Second '+name+' label',.20,ink,annotation,font)
         label.rotation_euler=s.camera.rotation_euler;label.parent=obj
-        label.location=points.mean(0)+right*.5+up*.4+front*20
+        label.location=points.mean(0)+front*20+(
+            right*.8-up*.25 if modern and kind=='product' else right*.5+up*.4)
         for state in poses:
             show=state['seconds']>=15.25 and (state['second_joining']<=.05 if kind=='substrate' else state['second_joining']>=.95)
             visibility(label,show,state['frame'])
         new_labels.append(label)
-    for name in ['PPi label','Outline PPi label']:
+    for name in (['PPi label'] if modern else ['PPi label','Outline PPi label']):
         ob=bpy.data.objects[name]
         for state in poses:
             if state['seconds']>=9.5:visibility(ob,False,state['frame'])
-    for original in new_labels:
+    for original in ([] if modern else new_labels):
         d=original.data.copy();d.offset=.010;d.materials.clear();d.materials.append(halo)
         ob=bpy.data.objects.new('Outline '+original.name,d);annotation.objects.link(ob)
         ob.parent=original;ob.location=(0,0,-.02);ob.visible_shadow=False
@@ -251,8 +287,13 @@ def main():
     # The first-cycle substrate limitation describes that asset, not this new authored motion.
     manifest['limitations']=[x for x in manifest['limitations'] if 'No hydrogen, protonation' not in x]
     manifest['limitations'].append('No hydrogen, protonation, metal chemistry or trigger-loop closure is simulated.')
+    if modern:
+        manifest['appearance']=appearance.extend(s,args,appearance_record,font if zh else None,latin)
+        manifest['color_semantics']='The incoming-nucleotide color marks the current addition; incorporated C20 adopts the RNA color during translocation.'
     bpy.ops.file.pack_all()
     save_and_render(args,manifest)
+    if modern:
+        (args.output/'appearance.json').write_bytes(request_bytes)
 
 
 if __name__=='__main__':main()

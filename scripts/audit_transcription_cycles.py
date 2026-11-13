@@ -137,6 +137,11 @@ def main():
         'minimum_nonbonded_core_distance_nm_and_frame':min_nonbond,
         'cropped':cropped,'scaffold_cropped':scaffold_cropped,'occluded':occluded,'errors':errors,
         'scope':'Saved geometry and teaching-animation checks only; U21/loading/translocation are modeled, not validated catalytic dynamics.'}
+    if 'transcription_appearance' in s:
+        from audit_transcription_appearance import audit
+        from audit_transcription_annotations import check_growing_end
+        result['appearance'] = audit(s)
+        result['growing_end_annotation'] = check_growing_end(s,atom(rna,19,"O3'"),atom(rna,20,"O3'"),expected[names.index("O3'")])
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps(result,ensure_ascii=False))
     if errors:raise RuntimeError('Two-cycle audit failed; inspect report.')

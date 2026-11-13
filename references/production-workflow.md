@@ -112,6 +112,8 @@ python3 "$SKILL/scripts/encode_video.py" "$PROJECT/translation" --ffmpeg /actual
 
 用已准备的 5FLM 资产和公开 [CCD CTP.cif](https://files.rcsb.org/ligands/download/CTP.cif)。把后者下载到项目的结构目录，先检查是否已存在，保留来源链接/哈希；不要把理想化学组分坐标称为 Pol II 中观测到的底物。
 
+参考外观和可选风格使用 [转录外观迁移](transcription-appearance.md)：角色材质、完整 Pol II 背景层、保护文字及宋体/Times 混排由两轮共同继承。
+
 ```bash
 "$PROJECT/.venv/bin/python" "$SKILL/scripts/prepare_transcription.py" \
   --asset-dir "$PROJECT/transcription_asset" --ccd "$PROJECT/structures/CTP.cif" \
@@ -119,7 +121,9 @@ python3 "$SKILL/scripts/encode_video.py" "$PROJECT/translation" --ffmpeg /actual
 "$BLENDER" -b --factory-startup --python-exit-code 1 \
   --python "$SKILL/scripts/build_transcription_scene.py" -- \
   --asset-dir "$PROJECT/transcription_asset" --substrate-dir "$PROJECT/transcription_substrate" \
-  --output "$PROJECT/transcription" --font /absolute/path/to/a/CJK-font.ttf --render
+  --style-profile "$SKILL/assets/style-transcription-reference.json" \
+  --output "$PROJECT/transcription" --font /absolute/path/to/Songti-Regular.ttf \
+  --font-latin /absolute/path/to/Times-New-Roman.ttf --render
 "$BLENDER" -b "$PROJECT/transcription/scene.blend" --python-exit-code 1 \
   --python "$SKILL/scripts/audit_transcription.py" -- \
   --asset-dir "$PROJECT/transcription_asset" --substrate-dir "$PROJECT/transcription_substrate" \
@@ -128,7 +132,7 @@ python3 "$SKILL/scripts/encode_video.py" "$PROJECT/translation" --ffmpeg /actual
 
 RNA 的 P:19 G 残基为初始 3′端，增加的 P:20 C 最终采用 5FLM 原始坐标，与模板 T:17 G 配对。CTP 的 29 个重原子分成新增 C 残基的 20 个和 PPi 的 9 个；α 磷酸保留在 RNA 中。预处理以碱基对齐，再拟合四个可转动键的扭转，保留 CCD 起始键长；中间构象插值与接近/离场路径是教学重构。不能把这一过程当作过渡态、金属配位、反应能量或真实动力学的演示。
 
-完整 Pol II 后移，非模板 N 链整条隐藏；该链的 14–25 残基缺口没有被填补或连接。核酸其他已建模原子保留。初末端点、29→20+9 的计量、12 个完整蛋白亚基、画内边界和新增碱基的可见性由 `audit_transcription.py` 检查。仍须查看关键帧和最终视频。
+完整 Pol II 后移，非模板 N 链整条隐藏；该链的 14–25 残基缺口没有被填补或连接。核酸其他已建模原子保留。初末端点、29→20+9 的计量、12 个完整蛋白亚基、画内边界和新增碱基的可见性由 `audit_transcription.py` 检查。仍须查看实际关键帧；改变运动时检查相应短预览，交付成片时检查完整视频。
 
 准备阶段同时写出 `reaction-ledger-ctp.json`，复用 `reaction_ledger.validate` 核对所列重原子映射与净键变化：链端 P19 的 O3′ 与进入底物的 PA 成键，PA–O3A 断开，O3A 随 β/γ 磷酸进入 PPi。P19 的 23 个解析重原子和 CTP 的 29 个重原子均纳入这个局部账本；没有声称包含全部 RNA、蛋白、DNA、溶剂或质子/金属催化。已观测 C20 的内部键图及 P19→C20 连接从 5FLM 准备数组独立取得。链端缺少 O3′、产物原子不匹配或净键变化不符会在输出前失败。来源分工与迁移方法见 [转录的身份检查](workflow-transfer.md#把身份检查用于核苷酸加入)。
 
@@ -138,7 +142,7 @@ RNA 的 P:19 G 残基为初始 3′端，增加的 P:20 C 最终采用 5FLM 原�
 
 用户对单轮视频要求“节奏放慢并增加下一个循环”。应延长可读的事件阶段，在对接与连接变化之间、两轮之间留出停顿，再按模板选择下一个底物；不能只重复同一个 CTP。此 5FLM 支架下一位是 T:16 A，因此下一轮用 [CCD UTP](https://www.rcsb.org/ligand/UTP)，新增 U21。它不在实验条目中。
 
-下载 [UTP.cif](https://files.rcsb.org/ligands/download/UTP.cif) 到结构目录，记录来源和哈希。下面的扩展入口针对上面脚本生成、使用中文字体的单轮工程，继承它的材质、灯光、引擎和全部合成分支。每个输出使用新目录：
+下载 [UTP.cif](https://files.rcsb.org/ligands/download/UTP.cif) 到结构目录，记录来源和哈希。扩展入口继承上面单轮工程的材质、灯光、引擎和合成；新外观同时继承已经打包的中英文字体和标签语言，旧入口保留中文工程的兼容路径。每个输出使用新目录：
 
 ```bash
 "$PROJECT/.venv/bin/python" "$SKILL/scripts/prepare_transcription_next.py" \
@@ -162,7 +166,7 @@ UTP 以 CCD 化学连接为基础，借用源结构 A–T 配对的空间朝向�
 
 同一准备步骤另写 `reaction-sequence.json`，显式保留等待的 UTP、第一份 PPi 和先前形成的 P19–P20 连接；两轮均使用同一套 81 个所选重原子，并与独立构造的净反应核对。可运行 `"$PYTHON" "$SKILL/scripts/reaction_ledger.py" "$PROJECT/transcription_two_cycle_substrate/reaction-sequence.json" --sequence --output "$PROJECT/two-cycle-sequence-audit.json"`。这扩大的是所选图的持续追踪范围，不是完整细胞物质池或新动画验证；迁移时如何选择边界见 [转录的身份检查](workflow-transfer.md#把身份检查用于核苷酸加入)。
 
-`audit_transcription_cycles.py` 检查每轮 29→20+9 重原子计量、保留的完整核酸和 12 条 Pol II 链、552 帧中的 DNA 连接长度、U 的进入/成键附近距离、主体和标签边界以及 U 碱基遮挡。第一轮 PPi 的离场和第二轮 UTP 的入场允许完整对象跨越画框；反应停顿阶段须完整可见。数值通过之后仍需查看实际关键帧，并在编码后检查最终 MP4。
+`audit_transcription_cycles.py` 检查每轮 29→20+9 重原子计量、保留的完整核酸和 12 条 Pol II 链、552 帧中的 DNA 连接长度、U 的进入/成键附近距离、主体和标签边界以及 U 碱基遮挡。第一轮 PPi 的离场和第二轮 UTP 的入场允许完整对象跨越画框；反应停顿阶段须完整可见。数值通过之后仍需查看实际关键帧；交付完整视频时再检查编码后的 MP4。
 
 ## 复制：连续与分段延伸
 
