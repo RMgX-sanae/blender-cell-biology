@@ -125,5 +125,85 @@ class PreparedSequence(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Bond-order changes'):
             self.load()
 
+    def pose_inputs(self):
+        initial = [['body:C', 'C'], ['body:O', 'O']]
+        middle = [['mid:C', 'C'], ['mid:O', 'O']]
+        final = [['released:C', 'C'], ['released:O', 'O']]
+
+        def stage(before, after, old, new):
+            a, b = [row[0] for row in before]
+            x, y = [row[0] for row in after]
+            return dict(version=2, scope='technical', bond_scope='one edge', reactant_atoms=before, product_atoms=after,
+                        atom_map=[[a, x], [b, y]], reactant_bonds=[[a, b, old]], product_bonds=[[y, x, new]],
+                        change_order=[[a, b, old, new]] if old != new else [], form=[], **{'break': []})
+
+        ledger = {'version': 2, 'stages': [stage(initial, middle, 'doub', 'sing'), stage(middle, final, 'sing', 'doub')],
+                  'net': stage(initial, final, 'doub', 'doub')}
+        name = 'reaction-sequence.json'
+        (self.root/name).write_text(json.dumps(ledger))
+        self.hash_file(name)
+        xyz = np.zeros((3, 2, 3))
+        xyz[:, 1, 0] = [.122, .14, .124]
+        np.savez(self.root/'motion.npz', body=xyz)
+        self.hash_file('motion.npz')
+        poses = []
+        for i, (atoms, order, window) in enumerate([(initial, 'doub', [1.21, 1.23]), (middle, 'sing', [1.39, 1.41]),
+                                                    (final, 'doub', [1.23, 1.25])]):
+            rule = dict(atoms=[atom for atom, _ in atoms], order=order, length_A=window, basis='fixed technical fixture')
+            poses.append(dict(state=i, sample=i, bonds=[rule]))
+        return dict(version=1, ledger=name, ledger_sha256=self.source['data_sha256'][name],
+                    motion_sha256=self.source['data_sha256']['motion.npz'], poses=poses)
+
+    def save_pose_review(self, review):
+        path = self.root/'reaction-geometry.json'
+        path.write_text(json.dumps(review))
+        self.hash_file(path.name)
+
+    def test_pose_checks_follow_product_aliases_and_use_angstrom(self):
+        review = self.pose_inputs()
+        review['poses'].reverse()
+        self.save_pose_review(review)
+        rows = self.load()[2]['reaction_geometry']['poses']
+        self.assertEqual([row['bonds'][0]['length_A'] for row in rows], [1.22, 1.40, 1.24])
+        self.assertEqual(rows[-1]['bonds'][0]['atoms'], ['released:C', 'released:O'])
+        self.assertEqual(rows[-1]['bonds'][0]['physical_atoms'], ['body:C', 'body:O'])
+
+    def test_pose_checks_bind_the_ledger_and_motion_revisions(self):
+        review = self.pose_inputs()
+        for key in ('ledger_sha256', 'motion_sha256', 'ledger'):
+            self.save_pose_review(dict(review, **{key: 'stale'}))
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'ledger|revision'):
+                self.load()
+        self.save_pose_review(review)
+        del self.source['data_sha256']['reaction-geometry.json']
+        with self.assertRaisesRegex(ValueError, 'Missing prepared file hashes'):
+            self.load()
+
+    def test_pose_checks_refuse_wrong_sites_states_windows_or_order(self):
+        original = self.pose_inputs()
+        for target, key, value, error in [
+                ('pose', 'state', True, 'Select state'), ('pose', 'state', 3, 'Select state'),
+                ('pose', 'sample', 3, 'in-range'), ('pose', 'sample', 0, 'unique'),
+                ('pose', 'bonds', [], 'at least one bond'),
+                ('bond', 'order', 'doub', 'absent'), ('bond', 'atoms', ['body:C', 'body:O'], 'absent'),
+                ('bond', 'length_A', [1.2, 1.3], 'outside'), ('bond', 'length_A', [1.6, 1.2], 'interval'),
+                ('bond', 'length_A', [True, 2], 'interval'), ('bond', 'basis', '', 'basis')]:
+            review = copy.deepcopy(original)
+            pose = review['poses'][1]
+            (pose if target == 'pose' else pose['bonds'][0])[key] = value
+            self.save_pose_review(review)
+            with self.subTest(key=key, value=value), self.assertRaisesRegex(ValueError, error):
+                self.load()
+        review = copy.deepcopy(original)
+        review['poses'][0]['sample'], review['poses'][1]['sample'] = 1, 0
+        self.save_pose_review(review)
+        with self.assertRaisesRegex(ValueError, 'backwards'):
+            self.load()
+        rule = original['poses'][1]['bonds'][0]
+        original['poses'][1]['bonds'].append(dict(rule, atoms=rule['atoms'][::-1]))
+        self.save_pose_review(original)
+        with self.assertRaisesRegex(ValueError, 'Repeated bond'):
+            self.load()
+
 
 if __name__=='__main__':unittest.main()

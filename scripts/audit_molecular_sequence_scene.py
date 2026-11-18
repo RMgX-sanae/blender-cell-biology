@@ -117,6 +117,8 @@ def main():
     root=Path(bpy.data.filepath).parent;record=json.loads((root/'manifest.json').read_text())
     scene=bpy.context.scene;assets=Path(record['asset_directory']);display=record['display']
     source,data,input_checks=load_assets(assets,display);source_count=source['frames'];frames=record['frames']
+    if input_checks.get('reaction_geometry') != record.get('input_checks', {}).get('reaction_geometry'):
+        raise ValueError('Saved scene and source reaction-geometry checks differ')
     timing=record.get('timing_profile')
     if timing is not None:
         assert timing==json.loads((root/'timing-profile.json').read_text()),'Saved presentation profile differs'
@@ -142,6 +144,10 @@ def main():
     for name in undrawn:check_undrawn_coordinates(scene.objects[name])
     appearance_check=check_appearance(scene,record,root,undrawn)
     physical_ids=[identity for values in source['atom_ids'].values() for identity in values]
+    poses = {p['sample']: p for p in input_checks.get('reaction_geometry', {}).get('poses', [])}
+    pose_frames = {float(frame): poses[s] for s, frame in zip(samples, sample_frames) if s in poses}
+    locations = {atom: (key, i) for key, ids in source['atom_ids'].items() for i, atom in enumerate(ids)} if poses else {}
+    saved_lengths = []
     expected_actors={key+' '+view['id'] for view in display['views'] for key in view['actors']}
     assert set(record['actors'])==expected_actors and len(record['actors'])==len(expected_actors)
     # Coordinate checks read the saved source meshes; generated display geometry
@@ -163,8 +169,12 @@ def main():
         matrix=np.asarray(record['transforms'][view['id']]);offset=-5.5 if view['id']==display['views'][0]['id'] else 5.5
         for frame,position in zip(check_frames,positions):
             scene.frame_set(int(frame),subframe=float(frame%1));graph=bpy.context.evaluated_depsgraph_get()
+            pose = pose_frames.get(frame)
+            pose_points = {}
             for obj in objects:
                 observed=vertices(obj);expected=coordinates_at(data[obj['component']],[position])[0];evaluated=obj.evaluated_get(graph)
+                if pose is not None:
+                    pose_points[obj['component']] = observed
                 assert observed.shape==expected.shape and np.isfinite(observed).all()
                 difference=float(np.max(abs(observed-expected)));error=max(error,difference);assert difference<2e-4,(frame,obj.name,difference)
                 actual=np.asarray(evaluated.matrix_world)
@@ -174,6 +184,19 @@ def main():
                     projected=observed@actual[:3,:3].T+actual[:3,3]
                     assert abs(projected[:,0]-offset).max()<4.3 and abs(projected[:,1]).max()<3.45,'Main source construct clipped'
                 checked+=1
+            if pose is not None:
+                for bond in pose['bonds']:
+                    pair = [locations[atom] for atom in bond['physical_atoms']]
+                    if any(key not in pose_points for key, _ in pair):
+                        continue
+                    a, b = (pose_points[key][i].astype(float) for key, i in pair)
+                    length = 10 * float(np.linalg.norm(a - b))
+                    low, high = bond['interval_A']
+                    if not low <= length <= high:
+                        raise ValueError(f"Saved {view['id']} frame {frame:g}: {bond['atoms']} at {length:.8f} Å outside {bond['interval_A']}")
+                    saved_lengths.append(dict(view=view['id'], frame=float(frame), sample=pose['sample'],
+                                              state=pose['state'], atoms=bond['atoms'], physical_atoms=bond['physical_atoms'],
+                                              order=bond['order'], length_A=length))
             if frame%200==0:print(view['id'],frame,'coordinate samples checked',flush=True)
     bpy.context.window.view_layer=scene.view_layers['Sequence annotations']
     marker_specs={settings['id']+' '+view['id']:(settings,view) for view in display['views']
@@ -226,6 +249,14 @@ def main():
             'packed_fonts_and_caption_timing_checked':True,'scope':source['scope'],
             'appearance_check':appearance_check,
             'limits':'Saved coordinate/identity/display checks; reaction-source qualification and rendered clarity remain separate.'}
+    if 'reaction_geometry' in input_checks:
+        overview = display['views'][0]['id']
+        measured = {(r['sample'], tuple(r['physical_atoms'])) for r in saved_lengths if r['view'] == overview}
+        required = {(s, tuple(b['physical_atoms'])) for s, pose in poses.items() for b in pose['bonds']}
+        if measured != required:
+            raise ValueError('Saved overview omitted a reviewed bond or source sample')
+        result['reaction_geometry'] = input_checks['reaction_geometry']
+        result['saved_bond_lengths'] = saved_lengths
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='ledger_checks'},ensure_ascii=False))
 

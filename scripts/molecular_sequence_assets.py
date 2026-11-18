@@ -3,6 +3,7 @@ import hashlib,json
 from pathlib import Path
 import numpy as np
 from reaction_ledger import validate,validate_sequence
+from reaction_pose_geometry import check_pose_distances
 
 
 def _indices(values,count,label,pairs=False):
@@ -59,6 +60,9 @@ def load_assets(folder,display):
     ledgers=[('reaction-sequence.json','reaction_sequence',validate_sequence),('reaction-ledger.json','reaction_ledger',validate)]
     for name,field,_ in ledgers:
         if field in source or (folder/name).exists():required.add(name)
+    geometry_file = 'reaction-geometry.json'
+    if 'reaction_geometry' in source or (folder/geometry_file).exists():
+        required.add(geometry_file)
     hashes=source.get('data_sha256',{})
     if not required<=set(hashes):raise ValueError('Missing prepared file hashes: '+', '.join(sorted(required-set(hashes))))
     for name,expected in hashes.items():
@@ -81,12 +85,25 @@ def load_assets(folder,display):
         if len(marker['atoms'])!=2:raise ValueError('A bond annotation requires two atoms')
         for key,index in marker['atoms']:_indices([index],len(ids[key]),marker['id'])
     ledger_checks={}
+    ledger_specs={}
     for name,_,check in ledgers:
         if name not in hashes:continue
         spec=json.loads((folder/name).read_text());ledger_checks[name]=check(spec)
+        ledger_specs[name]=spec
         first=spec['stages'][0] if name=='reaction-sequence.json' else spec
         # Coordinate IDs stay in the initial reactant basis. The checked atom_map
         # carries product aliases (for example a water oxygen becoming OXT).
         if {identity for identity,_ in first['reactant_atoms']}!=set(physical_ids):
             raise ValueError('Ledger and display initial physical atom IDs differ')
-    return source,data,{'verified_files':sorted(hashes),'required_files':sorted(required),'ledger_checks':ledger_checks}
+    receipt = {'verified_files':sorted(hashes),'required_files':sorted(required),'ledger_checks':ledger_checks}
+    if geometry_file in hashes:
+        review = json.loads((folder/geometry_file).read_text())
+        name = review['ledger']
+        if name not in ledger_specs:
+            raise ValueError('Reaction geometry must name a verified reaction ledger or sequence')
+        if review['ledger_sha256'] != hashes[name] or review['motion_sha256'] != hashes['motion.npz']:
+            raise ValueError('Reaction geometry names a different ledger or motion revision')
+        poses = check_pose_distances(review, ledger_specs[name], ids, data, source['frames'])
+        receipt['reaction_geometry'] = dict(ledger=name, ledger_sha256=hashes[name],
+                                            motion_sha256=hashes['motion.npz'], poses=poses)
+    return source,data,receipt
