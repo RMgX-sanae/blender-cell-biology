@@ -55,6 +55,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 多链伙伴、重复链拷贝和非恒等装配操作 | [source-assembly-instances.md](references/source-assembly-instances.md)：独立装配对照、作者/label/实例身份、必要伴随组分，以及状态对照与候选整体变换 |
 | 局部补建、移动少数原子或比较改动前后的构型 | [局部坐标与同视角对照](references/coordinate-edits.md)，核对完整装配、可移动位点、化学方向和保存工程 |
 | 从核定构型接入下一段分子动画 | [坐标运动交接](references/coordinate-motion.md)，核对跨阶段位置、帧间接触、连续或分步节奏和保存后的关键帧 |
+| 反应成键、断键、单双键转换与中间体交接 | [反应前后的键级](references/workflow-transfer.md#反应前后的键级)，核对同一批原子的端态、相邻阶段和独立总反应 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
 | GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
 | 泛素的共价连接、链型识别与产物释放 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移，可选连续释放；完整原子、工程突变恢复与双视图，不包含 E1 装载或全通路 |

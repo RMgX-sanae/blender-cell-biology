@@ -35,7 +35,7 @@
 | 结合/释放弧线 | `interaction_motion.py` 的 `plan`、`matrices`、`contacts` | `plan` 面向给定源结合态的刚体伙伴；`matrices` 只给位姿，不自动保证无穿插或催化正确 |
 | 单体起步的结合候选 | `prepare_binding_candidates.py` → 共用结合场景，见 [单体候选](monomer-binding.md) | 明确 CA 映射或界面约束；候选端态及路径不允许来源接触豁免。保留未满足的侧链诊断，几何筛查不是结合预测准确率 |
 | 准备数据与工程的对应关系 | `interaction_assets.py` 的 `verify_assets`，由局部结合构建器/检查器调用 | 核对全部实体和运动文件，再将 manifest 指纹绑定到新工程；改过坐标后必须重新准备和检查路径。接口采用局部结合 manifest，其他机制应适配其实际文件清单 |
-| 反应端态身份与净键变化 | `reaction_ledger.py` 的 `validate` 或命令行 | PKA、Ras 水解、K63、AMSH-LP 及两轮转录准备共用；各自定义反应，只检查输入原子和键子图，不代替几何检查 |
+| 反应端态身份、成断键与键级变化 | `reaction_ledger.py` 的 `validate` 或命令行 | 版本 1 核对连接。需要区分单键、双键等状态时使用[版本 2](#反应前后的键级)，并为各阶段独立定义预期变化 |
 | 同一批原子的连续反应 | `reaction_ledger.py` 的 `validate_sequence` 或 `--sequence` | 核对阶段交接和独立定义的总反应；固定所选原子集合，不自动处理开放物质池或坐标交接 |
 | 已检查坐标进入 Blender | `coordinate_animation.py` 的 `keyed_points`、`verify_point_animation` | 共用绝对形态键与线性时间映射；保留全部点和采样时点，拒绝 Blender 合并时间键，不推断路径或生物学速率 |
 | 原子/网格动画、阶段可见性与视图层 | `build_phosphotransfer_scene.py` 的 `animated_mesh`、`visibility`、`view_layer` | Ras 场景已直接调用这些函数；它们不包含通用反应化学或通用坐标文件格式 |
@@ -99,17 +99,29 @@ PY
 
 | 字段 | 内容 |
 |---|---|
-| `version`、`scope`、`bond_scope` | 版本 `1`、本账本包括/省略的对象、检查哪些键；明确重原子或含氢范围 |
+| `version`、`scope`、`bond_scope` | 版本 `1`（连接）或 `2`（含键级）、本账本包括的对象及键。写明重原子或含氢范围 |
 | `reactant_atoms`、`product_atoms` | 分别从端态资产提取的 `[唯一原子ID, 元素]` 列表；产物中离开的分子和离子也要列入所选物质范围 |
 | `atom_map` | `[反应物ID, 产物ID]` 一一映射；允许产物名称改变，元素必须相同，两个端态的所列原子都必须覆盖 |
 | `reactant_bonds`、`product_bonds` | 各自端态 ID 下的无向共价键列表；只列经过判断的子图，写明它不是完整分子图 |
 | `break`、`form` | 预期净断键/成键，**均用反应物 ID**；由机制依据独立确定，与端态键差核对，不能直接复制计算出的键差作为预期值 |
 
-这个检查能发现“总数相同但原子重复”、映射遗漏、元素被换成另一种元素、错误反应位点和未声明的额外键变化。它不能发现两个端态同时遗漏了同一批必要原子，也不能判断一个自洽但生物学错误的声明。PKA 与 Ras 仅覆盖反应物/产物重原子及金属；K63 覆盖所选结构的重原子；三者都只提供反应中心键子图。源结构适用性、质子/电荷、键级、全分子价态、中间姿态和实际画面仍需各自检查。
+这个检查能发现“总数相同但原子重复”、映射遗漏、元素被替换、错误反应位点和未声明的额外键变化。两个端态同时遗漏的原子或一个自洽但错误的机制，需要回到来源核对。现有 PKA、Ras、K63 配方使用版本 1，保留各自的反应中心连接检查。
+
+### 反应前后的键级
+
+需要展示羰基加成、消除或其他保留原子对而改变键级的过程时，使用 `version: 2`。准备端态时记录组分内的 CCD 键级、跨残基连接的来源，以及论文提出的中间态。若沉积文件给出连接但键级为 `?`，可凭已核定的化学结构另行赋值，并在项目中记下依据。仅知道两原子相距很近时，保留这项未知。采用共振表示的端态要先统一表示约定，避免把等价画法误作反应。[wwPDB 键级词表](https://mmcif.wwpdb.org/dictionaries/mmcif_pdbx_v50.dic/Items/_chem_comp_bond.value_order.html)
+
+| 字段 | 版本 2 的行格式及身份 |
+|---|---|
+| `reactant_bonds`、`product_bonds` | `[A, B, order]`，分别使用该端态的原子 ID |
+| `break`、`form` | `[A, B, order]`，均用反应物 ID。断键写原键级，成键写新键级 |
+| `change_order` | `[A, B, old_order, new_order]`，只列两端都存在的键，使用反应物 ID。没有变化时写 `[]` |
+
+键级接受 `sing`、`doub`、`trip`、`quad`、`arom`、`delo`、`pi`、`poly`，大小写等价。例如羰基转为单键写作 `["acyl:C", "acyl:O", "doub", "sing"]`。同一条保留的键只在 `change_order` 中登记一次。检查报告列出实际变化，并给出两端带键级子图的 SHA-256，便于复核重新导出的数据。质子、形式电荷、全分子价态和构象各需独立证据。
 
 ## 将同一批原子交给下一反应阶段
 
-单个阶段通过检查，不能证明下一阶段沿用了它的产物。`validate_sequence` 接受 `{"version": 1, "stages": [第一阶段账本, 第二阶段账本], "net": 总反应账本}`；每份账本均使用上表格式，可有更多阶段。总反应的预期映射和断键/成键须由目标机制独立定义，不能从阶段结果复制出来充当验证。
+用 `validate_sequence` 连接两个或更多阶段。序列包含 `version`、`stages` 和 `net`，每个阶段和总反应使用相同版本。由目标机制独立定义总反应的原子映射、成断键和适用的键级变化。版本 2 还核对交接时每条保留键的键级，能识别中间态曾经改变、在净反应中又恢复的键。
 
 ```bash
 "$PYTHON" "$SKILL/scripts/reaction_ledger.py" "$PROJECT/reaction-sequence.json" \

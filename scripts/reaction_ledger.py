@@ -1,7 +1,7 @@
 """Check endpoint atom correspondence and declared covalent graph changes.
 
-The caller supplies scientifically qualified endpoints and the expected reaction.
-This checks bookkeeping, not coordinates, bond order, protonation or mechanism.
+The caller supplies the endpoint graphs and independently expected changes.
+Version 1 checks connectivity. Version 2 also checks explicit wwPDB bond orders.
 """
 import argparse
 from collections import Counter
@@ -21,20 +21,55 @@ def atoms(rows, label):
     return result
 
 
-def bonds(rows, identities, label):
-    result = set()
-    for first, second in rows:
-        if first not in identities or second not in identities:
+CCD_ORDERS = frozenset({'arom', 'delo', 'doub', 'pi', 'poly', 'quad', 'sing', 'trip'})
+
+
+def _bond_table(rows, identities, label, order_fields):
+    result = {}
+    if isinstance(rows, (str, bytes, dict)):
+        raise ValueError(f'{label}: supply a list of bond rows')
+    for row in rows:
+        if isinstance(row, (str, bytes, dict)):
+            raise ValueError(f'{label}: supply a row of atom IDs and bond orders')
+        first, second, *orders = row
+        if len(orders) != order_fields:
+            raise ValueError(f'{label}: expected two atom IDs and {order_fields} bond-order fields')
+        if not isinstance(first, str) or not isinstance(second, str) or first not in identities or second not in identities:
             raise ValueError(label+': bond refers to an absent atom')
         if first == second: raise ValueError(label+': self bond')
         edge = tuple(sorted((first, second)))
         if edge in result: raise ValueError(label+': repeated bond')
-        result.add(edge)
+        if any(not isinstance(order, str) or order.lower() not in CCD_ORDERS for order in orders):
+            raise ValueError(f'{label}: unsupported or unknown bond order on {edge}: {orders}')
+        result[edge] = tuple(order.lower() for order in orders)
     return result
 
 
+def bonds(rows, identities, label):
+    return set(_bond_table(rows, identities, label, 0))
+
+
+def _rows(table):
+    return sorted((*edge, *orders) for edge, orders in table.items())
+
+
+def _match(actual, declared, message, ordered):
+    if actual == declared:
+        return
+    if ordered:
+        edge = min(edge for edge in actual.keys() | declared.keys()
+                   if actual.get(edge) != declared.get(edge))
+        message += f': {edge}, endpoint graph {actual.get(edge)}, declared {declared.get(edge)}'
+    raise ValueError(message)
+
+
 def validate(spec):
-    if spec['version'] != 1: raise ValueError('Unsupported reaction ledger version')
+    version = spec['version']
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError('Unsupported reaction ledger version')
+    ordered = version == 2
+    if not ordered and 'change_order' in spec:
+        raise ValueError('change_order requires a version-2 reaction ledger')
     before = atoms(spec['reactant_atoms'], 'reactant')
     after = atoms(spec['product_atoms'], 'product')
     mapping, reverse = {}, {}
@@ -46,45 +81,67 @@ def validate(spec):
     for first, second in mapping.items():
         if before[first] != after[second]:
             raise ValueError('Element changed across atom map: '+first+' -> '+second)
-    initial = bonds(spec['reactant_bonds'], before, 'reactant')
-    product = bonds(spec['product_bonds'], after, 'product')
-    final = {tuple(sorted((reverse[a], reverse[b]))) for a, b in product}
-    broken = bonds(spec['break'], before, 'expected break')
-    formed = bonds(spec['form'], before, 'expected form')
-    if broken & formed: raise ValueError('A net bond change cannot both break and form the same edge')
-    if initial-final != broken:
-        raise ValueError('Broken bonds do not match the declared reaction')
-    if final-initial != formed:
-        raise ValueError('Formed bonds do not match the declared reaction')
-    return {'passed': True, 'scope': spec['scope'], 'bond_scope': spec['bond_scope'],
+    fields = 1 if ordered else 0
+    initial = _bond_table(spec['reactant_bonds'], before, 'reactant', fields)
+    product = _bond_table(spec['product_bonds'], after, 'product', fields)
+    final = {tuple(sorted((reverse[a], reverse[b]))): order for (a, b), order in product.items()}
+    broken = _bond_table(spec['break'], before, 'expected break', fields)
+    formed = _bond_table(spec['form'], before, 'expected form', fields)
+    if broken.keys() & formed.keys():
+        raise ValueError('A net bond change cannot both break and form the same edge')
+    _match({edge: initial[edge] for edge in initial.keys() - final.keys()}, broken,
+           'Broken bonds do not match the declared reaction', ordered)
+    _match({edge: final[edge] for edge in final.keys() - initial.keys()}, formed,
+           'Formed bonds do not match the declared reaction', ordered)
+    retained = initial.keys() & final.keys()
+    changed = {edge: initial[edge] + final[edge] for edge in retained if initial[edge] != final[edge]}
+    if ordered:
+        if 'change_order' not in spec:
+            raise ValueError('Version 2 requires change_order, including an empty list for no order changes')
+        declared = _bond_table(spec['change_order'], before, 'expected order change', 2)
+        _match(changed, declared, 'Bond-order changes do not match the declared reaction', ordered)
+    result = {'passed': True, 'scope': spec['scope'], 'bond_scope': spec['bond_scope'],
             'reactant_atoms': len(before), 'product_atoms': len(after), 'mapped_atoms': len(mapping),
             'element_counts': dict(sorted(Counter(before.values()).items())),
             'atom_map_sha256': hashlib.sha256(json.dumps(sorted(mapping.items())).encode()).hexdigest(),
-            'broken_bonds_in_reactant_ids': sorted(broken), 'formed_bonds_in_reactant_ids': sorted(formed),
-            'unchanged_declared_bonds': len(initial & final),
+            'broken_bonds_in_reactant_ids': _rows(broken), 'formed_bonds_in_reactant_ids': _rows(formed),
+            'unchanged_declared_bonds': len(retained) - len(changed),
             'limits': 'Only the supplied atoms and bond subgraph are checked. A consistent declaration can still be biologically wrong; source suitability, omitted atoms, bond order/charge, geometry, intermediate motion and rendered visibility need separate checks.'}
+    if ordered:
+        result.update(version=2, changed_bond_orders_in_reactant_ids=_rows(changed))
+        for side, table in [('reactant', initial), ('product', product)]:
+            payload = json.dumps(_rows(table), separators=(',', ':')).encode()
+            result[side + '_bonds_sha256'] = hashlib.sha256(payload).hexdigest()
+        result['limits'] = ('Checks the supplied atom map, covalent subgraph and categorical bond orders. '
+                            'Source assignments, protonation, charge, full valence, coordinates and motion require separate evidence.')
+    return result
 
 
 def _endpoint(spec, side):
     identities = atoms(spec[side+'_atoms'], side)
-    return identities, bonds(spec[side+'_bonds'], identities, side)
+    fields = 1 if spec['version'] == 2 else 0
+    return identities, _bond_table(spec[side+'_bonds'], identities, side, fields)
 
 
 def validate_sequence(spec):
     """Check a fixed atom inventory through stages against an independent net ledger."""
-    if spec['version'] != 1: raise ValueError('Unsupported reaction sequence version')
+    version = spec['version']
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError('Unsupported reaction sequence version')
     stages = spec['stages']
     if len(stages) < 2: raise ValueError('A reaction sequence needs at least two stages')
+    net = spec['net']
+    if any(stage['version'] != version for stage in [*stages, net]):
+        raise ValueError('Stages and net ledger must use the same version as the reaction sequence')
     checks = [validate(stage) for stage in stages]
-    net = spec['net']; net_check = validate(net)
+    net_check = validate(net)
     mapping = dict(stages[0]['atom_map'])
     for index, (first, second) in enumerate(zip(stages, stages[1:]), 1):
         before, before_bonds = _endpoint(first, 'product')
         after, after_bonds = _endpoint(second, 'reactant')
         if before != after:
             raise ValueError(f'Handoff {index}: atom identities/elements differ')
-        if before_bonds != after_bonds:
-            raise ValueError(f'Handoff {index}: intermediate bond graph differs')
+        _match(before_bonds, after_bonds, f'Handoff {index}: intermediate bond graph differs', version == 2)
         next_map = dict(second['atom_map'])
         mapping = {start: next_map[current] for start, current in mapping.items()}
     if _endpoint(stages[0], 'reactant') != _endpoint(net, 'reactant'):

@@ -109,5 +109,21 @@ class PreparedSequence(unittest.TestCase):
         path.write_text(json.dumps(ledger));self.hash_file(path.name)
         with self.assertRaisesRegex(ValueError,'initial physical atom IDs differ'):self.load()
 
+    def test_display_rechecks_order_changes_in_hashed_assets(self):
+        atoms = [['body:C', 'C'], ['body:O', 'O']]
+        ledger = {'version': 2, 'scope': 'technical sites', 'bond_scope': 'one edge',
+                  'reactant_atoms': atoms, 'product_atoms': atoms, 'atom_map': [[i, i] for i, _ in atoms],
+                  'reactant_bonds': [['body:C', 'body:O', 'doub']], 'product_bonds': [['body:C', 'body:O', 'sing']],
+                  'break': [], 'form': [], 'change_order': [['body:O', 'body:C', 'doub', 'sing']]}
+        path = self.root/'reaction-ledger.json'
+        path.write_text(json.dumps(ledger))
+        self.hash_file(path.name)
+        self.assertTrue(self.load()[2]['ledger_checks'][path.name]['passed'])
+        ledger['product_bonds'][0][2] = 'doub'
+        path.write_text(json.dumps(ledger))
+        self.hash_file(path.name)
+        with self.assertRaisesRegex(ValueError, 'Bond-order changes'):
+            self.load()
+
 
 if __name__=='__main__':unittest.main()
