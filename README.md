@@ -2,6 +2,10 @@
 
 用于指导 agent 制作可编辑的 Blender 细胞生物学模型与机制动画。以公开结构和文献为依据，支持教学示意、细胞环境、参考图片风格复现及可选合成器。
 
+[**打开微形互动展厅**](https://rmgx-sanae.github.io/blender-cell-biology-gallery/)，旋转和拆解血蓝蛋白的十个亚基，或移开超净工作台的前窗，查看内部部件。
+
+[![微形互动展厅与血蓝蛋白模型](https://rmgx-sanae.github.io/blender-cell-biology-gallery/assets/exhibition.jpg)](https://rmgx-sanae.github.io/blender-cell-biology-gallery/)
+
 从 [SKILL.md](SKILL.md) 开始，按交付类型在[入口与验证范围](references/workflow-entrypoints.md)选用已核对的流程。具体构建命令见 [精细制作工作流](references/production-workflow.md)。源码当前以 Blender 5.x 为主要运行目标，已在 Blender 5.2.3 LTS 上运行代表性案例。
 
 ## 使用
