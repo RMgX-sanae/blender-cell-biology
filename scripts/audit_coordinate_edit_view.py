@@ -14,6 +14,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from detail_scene import linear
+import coordinate_edit_animation as animation
 
 
 def check(condition, message):
@@ -65,6 +66,27 @@ def audit(scene, args):
         if k not in edits or edits[k]["source_A"] is not None
     }
     bonds = [(ids[a], ids[b]) for a, b in view["bonds"]]
+    motion_plan = getattr(args, "motion_plan", None)
+    motion_audit = getattr(args, "motion_audit", None)
+    is_animated = "coordinate_motion_plan_sha256" in scene
+    check(
+        bool(motion_plan) == bool(motion_audit) == is_animated,
+        "Supply the saved motion plan and review for animated views",
+    )
+    track = None
+    if is_animated:
+        check(
+            scene["coordinate_motion_plan_sha256"] == sha256(motion_plan.read_bytes()).hexdigest()
+            and scene["coordinate_motion_audit_sha256"] == sha256(motion_audit.read_bytes()).hexdigest(),
+            "Saved motion fingerprints differ",
+        )
+        site_ids = list(ids.values())
+        frames, track = animation.read_track(motion_plan, motion_audit, args.audit, site_ids, model)
+        check(
+            scene.frame_start == int(np.floor(frames[0])) and scene.frame_end == int(np.ceil(frames[-1])),
+            "Saved frame range differs from the checked stages",
+        )
+        animation.set_frame(scene, frames[0])
     toward = np.asarray(view["toward_camera"], float)
     toward /= np.linalg.norm(toward)
     up = np.asarray(view["up"], float)
@@ -218,7 +240,7 @@ def audit(scene, args):
         )
         corners = [world_to_camera_view(scene, camera, o.matrix_world @ Vector(p)) for p in o.bound_box]
         check(all(p.z > 0 and 0 < p.x < 1 and 0 < p.y < 1 for p in corners), "Clipped panel label")
-    return dict(
+    report = dict(
         panels=counts,
         roles=sorted(materials),
         matched_fonts=True,
@@ -227,6 +249,9 @@ def audit(scene, args):
         fingerprints=inputs,
         scope="Saved local geometry, framing, role shading and labels. Inspect the actual rendered image separately.",
     )
+    if track is not None:
+        report["motion"] = animation.verify(scene, site_ids, source, frames, track)
+    return report
 
 
 def main():
@@ -238,6 +263,8 @@ def main():
         type=Path,
         default=Path(__file__).resolve().parents[1] / "assets/style-structure-materials.json",
     )
+    p.add_argument("--motion-plan", type=Path)
+    p.add_argument("--motion-audit", type=Path)
     a = p.parse_args(sys.argv[sys.argv.index("--") + 1 :])
     r = audit(bpy.context.scene, a)
     a.output.parent.mkdir(parents=True, exist_ok=True)

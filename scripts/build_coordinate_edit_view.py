@@ -3,6 +3,7 @@
 import argparse
 from hashlib import sha256
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -13,6 +14,7 @@ from mathutils import Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from detail_scene import collection, linear, material, path, save_and_render, studio
 from layered_molecular_appearance import apply_fonts, shade
+import coordinate_edit_animation as animation
 
 
 def read_selection(candidate, receipt, view):
@@ -75,6 +77,9 @@ def main():
     p.add_argument("--width", type=int, default=1600)
     p.add_argument("--samples", type=int, default=32)
     p.add_argument("--render", action="store_true")
+    p.add_argument("--motion-plan", type=Path)
+    p.add_argument("--motion-audit", type=Path)
+    p.add_argument("--snapshot-frame", type=int)
     a = p.parse_args(sys.argv[sys.argv.index("--") + 1 :])
     if a.output.exists():
         p.error("Choose a fresh output directory")
@@ -82,6 +87,19 @@ def main():
     view = json.loads(a.view.read_text())
     receipt = json.loads(a.audit.read_text())
     panels = read_selection(a.candidate, receipt, view)
+    if bool(a.motion_plan) != bool(a.motion_audit):
+        p.error("Supply both the motion plan and its audit")
+    if a.snapshot_frame is not None and not a.motion_plan:
+        p.error("Choose a snapshot frame for a motion input")
+    model = {tuple(view["sites"][name]["id"]): coord for name, coord in panels[1].items()}
+    site_ids = list(model)
+    track = None
+    if a.motion_plan:
+        frames, track = animation.read_track(a.motion_plan, a.motion_audit, a.audit, site_ids, model)
+        a.frames = math.ceil(frames[-1])
+        a.frame = a.snapshot_frame if a.snapshot_frame is not None else a.frames
+        if not math.floor(frames[0]) <= a.frame <= a.frames:
+            p.error("Snapshot outside the checked motion")
     basis = projection(view)
     sites, roles = view["sites"], view["roles"]
     if len(view["titles"]) != 2 or len(set(view["titles"])) != 2 or not all(view["titles"]):
@@ -98,6 +116,11 @@ def main():
     radii = np.array([roles[sites[k]["role"]]["radius_A"] for panel in panels for k in panel])[:, None]
     low = (points - radii).min(axis=0)
     high = (points + radii).max(axis=0)
+    if track is not None:
+        vr = np.array([roles[sites[n]["role"]]["radius_A"] for n in panels[1]])[:, None]
+        projected = track @ basis.T
+        low = np.minimum(low, (projected - vr).min(axis=(0, 1)))
+        high = np.maximum(high, (projected + vr).max(axis=(0, 1)))
     middle = (high + low) / 2
     w, h, d = high - low
     aspect = 16 / 9
@@ -208,6 +231,11 @@ def main():
     scene["appearance_profile_sha256"] = sha256(a.profile.read_bytes()).hexdigest()
     scene["display_length_unit"] = "angstrom"
     scene["display_site_count"] = json.dumps([len(panel) for panel in panels])
+    if track is not None:
+        scene.frame_start = math.floor(frames[0])
+        scene["coordinate_motion_plan_sha256"] = sha256(a.motion_plan.read_bytes()).hexdigest()
+        scene["coordinate_motion_audit_sha256"] = sha256(a.motion_audit.read_bytes()).hexdigest()
+        animation.bind(scene, site_ids, frames, track)
     save_and_render(
         a,
         dict(
