@@ -16,6 +16,16 @@
 
 ## 已保存工程的关键帧与短预览
 
+一个项目有多个景别时，先为每个镜头挑需要判断的画面。全细胞看极性、主体轮廓与标记的相对位置；细胞器看膜与腔的连接；膜面看受体朝向、疏密与遮挡；分子特写看接触或成键位置和邻近结构的区分。根据实际镜头填写[场景说明](../assets/scene-brief.json)里的 `review_frames`。每项给出整数帧号或 `"saved"` 以及具体的 `look_for` 问题。`"saved"` 取当前所选 Blender 场景保存时的整数帧。同一帧可有多个问题，只渲染一次。
+
+```bash
+"$BLENDER" -b "$PROJECT/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/review" --review-brief "$PROJECT/scene-brief.json"
+```
+
+查看生成的 PNG，并逐项判断问题。`render-report.json` 记录实际帧号、对应的问题、说明文件指纹和重用的缓存。静帧对照阶段留一张合适的图即可。动画按接触、遮挡或交接各选相应帧；检查移动的节奏和接缝时用下面的连续短区间。
+
 沿用 `render_saved.py`，`--frames` 可混合整数与包含两端的 `START:END[:STEP]` 范围，按时间排序并去重。例如 `1,193:195,613` 检查首态、中间切换及终态；`201:264:3` 实际输出 201、204、…、264。帧号必须依据项目事件选取，下列 PTP1B 帧号不适用于所有机制。
 
 ```bash

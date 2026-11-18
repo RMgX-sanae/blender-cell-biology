@@ -27,6 +27,29 @@ def selected_frames(spec, first, last):
     return sorted(selected)
 
 
+def brief_frames(path, scene):
+    raw = path.read_bytes()
+    brief = json.loads(raw)
+    rows = brief.get('review_frames') if isinstance(brief, dict) else None
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('Give the project brief a nonempty review_frames list')
+    questions = {}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('look_for'), str) or not row['look_for'].strip():
+            raise ValueError('Each review frame needs a look_for question')
+        frame = row.get('frame')
+        if frame == 'saved':
+            if scene.frame_subframe:
+                raise ValueError('Saved pose is at a subframe; specify an integer review frame')
+            frame = scene.frame_current
+        if type(frame) is not int or not scene.frame_start <= frame <= scene.frame_end:
+            raise ValueError('Review frame must be saved or an integer inside the scene range')
+        questions.setdefault(frame, []).append(row['look_for'].strip())
+    frames = sorted(questions)
+    return frames, {'sha256': hashlib.sha256(raw).hexdigest(),
+                    'frames': [{'frame': f, 'look_for': questions[f]} for f in frames]}
+
+
 def saved_compositor(scene, suffix):
     group = scene.get('detail_compositor_branches', {}).get(suffix)
     if group is not None:
@@ -41,7 +64,9 @@ def saved_compositor(scene, suffix):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True)
-    p.add_argument('--frames',default='all',help='all, integer frames or inclusive START:END[:STEP] ranges, comma-separated')
+    choice=p.add_mutually_exclusive_group()
+    choice.add_argument('--frames',default='all',help='all, integer frames or inclusive START:END[:STEP] ranges, comma-separated')
+    choice.add_argument('--review-brief',type=Path,help='Render only the poses and visual questions in a project brief')
     p.add_argument('--width',type=int)
     p.add_argument('--samples',type=int,help='Temporary Eevee/Cycles sample count for review; does not resave the scene')
     p.add_argument('--compositor',help='Exact saved COMP_, COMP_STYLE_ or COMP_STACK_ suffix; does not change the .blend')
@@ -54,8 +79,14 @@ def main():
         if group is None:raise SystemExit('Requested compositor branch is missing from this saved scene.')
         scene.compositing_node_group=group
         scene['selected_compositor']=args.compositor
-    try:frames=selected_frames(args.frames,scene.frame_start,scene.frame_end)
-    except ValueError as error:p.error(str(error))
+    review = None
+    try:
+        if args.review_brief:
+            frames, review = brief_frames(args.review_brief, scene)
+        else:
+            frames = selected_frames(args.frames, scene.frame_start, scene.frame_end)
+    except (ValueError, OSError) as error:
+        p.error(str(error))
     if args.width is not None and args.width<=0:p.error('Width must be positive')
     if args.samples is not None:
         if args.samples<=0:p.error('Samples must be positive')
@@ -131,6 +162,7 @@ def main():
         'resolution':[scene.render.resolution_x,scene.render.resolution_y],
         'seconds':time.monotonic()-started,'blender':bpy.app.version_string,
         'rendered_this_run':rendered,'validated_cached_frames':skipped,
+        **({'review_brief':review} if review is not None else {}),
         'linear_multilayer_exr':args.exr,'external_compositor_executed':False,
         'compositor':scene.get('selected_compositor'),
         'exr_storage':'legacy interleaved for external compatibility' if args.exr else None,

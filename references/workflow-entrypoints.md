@@ -2,12 +2,6 @@
 
 先确定交付是静态结构、局部动作还是完整过程，再选下面的入口。默认联网，新蛋白/位点/状态主动走 [结合与组装研究](online-binding-research.md)，然后读 [workflow-transfer.md](workflow-transfer.md)，只替换必要的数据和科学规则；已有源构象、反应位点或路径不会因更换名称而自动适用。
 
-需要制作跨尺度的独立静态作品时，可以查阅[三个工程的可重建源码](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/three-scale-studies)。实验装配按源链和配体保留共同坐标，采用完整亚基显隐或带状表示来显露内部。显微形态依据图像确定层序，在宏观轮廓和真实开孔的细节视图间切换。仪器以公开零件图核对套合顺序，在装配和拆解镜头中共享同一套网格。三种入口的证据分别是实验坐标、参照显微观察的参数模型、参照说明书的机械示意。三个工程使用 Blender 5.3.0 的 Cycles 静帧。
-
-选更复杂的展示题材时，先指出观众从外形进入局部以后能认出什么关系。鱿鱼血蓝蛋白的外壁有重复结构，内圈却破坏对称，两个镜头可共用同一套源坐标。耳蜗的组织分层与单根静纤毛需要不同分辨率，真实毛束标注可另设场景，保留原始比例、实例编号和样本身份。光学仪器则要确认光线通过真实孔口，并在二向色镜上转向。相应的[三个独立工程和重建入口](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/structure-and-function)包含按保存网格核对完整亚基、毛束附着和孔镜配准的方法。
-
-需要从不对称大复合体进入单键、从 CT 壳体回看原始灰度、或在仪器特写中验证接触时，可复用这些[工程源码](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/biological-form-studies)。分子模型把原始原子编号保存在隐藏坐标网格上，局部镜头根据原始坐标单独取景。CT 视图用同一标本和坐标系保留未经分割的原始层，以便判断阈值对表面外观的影响。薄片落在透明液面上的场景可以重开后向液面网格投射射线，检查各个顶点的实际间距。
-
 ## 怎样读验证状态
 
 - **独立重建**：指定案例曾从解压后的 skill 和原始输入重建，并检查所列工程、图片或视频；只覆盖该案例、版本和输出条件。
@@ -39,7 +33,7 @@
 | Arp2/3 或 formin 的上游到回收 | [完整 actin 案例](portable-actin-films.md)：`build_actin_films.py` 按 prepare/build/render/encode/audit 执行 | **独立重建**：两条指定教学路线、21 个独立章节 | 新细胞/调控情境；来源未解析的成核中间态仍是教学构造 |
 | 局部丝端增长、拆解、封端或微管变化 | [骨架模板](polymer-templates.md)：`prepare_filament_assets.py` → `build_polymer_scene.py` | **既有片段/模型**：11 个可执行模板；逐项状态以具体项目为准 | 不能将 actin 完整案例的验收外推到全部模板或微管过程 |
 | V 型 ATPase 的连续泵送 | [V-ATPase](vatpase-loop.md)：`prepare_vatpase.py` → `build_vatpase_scene.py` → `audit_vatpase.py` | **独立重建**：16 秒双视图循环；完整低分辨率周期及高分辨率关键帧 | 全部催化构象、质子水链、累积 pH 和膜电位 |
-| 翻译终止时局部底物构型与反应前接近 | [局部底物](coordinate-edits.md) 与[运动交接](coordinate-motion.md) | 9NO7/9MTP 核对后的静态补建，30 个肽原子的有限扭转与补偿，两种教学节奏 | 未形成新酯键，四面体中间体、水解与后续释放待验证 |
+| 生成局部反应端态，或衔接已核定的分子运动 | [局部拟合与同视角比较](coordinate-edits.md)　[运动交接](coordinate-motion.md) | 9NO7/9MTP 的底物补建、反应前的有限接近和单独拟合的环状候选通过指定几何检查。相同拟合入口在 3I7Z 已知手性中心做过恢复对照 | 候选的立体构型属模型假设。预反应姿态到环状候选之间的化学路径、水解与后续释放尚待验证 |
 | 转录中的核苷酸加入 | [精细制作流程](production-workflow.md) 的转录段：`prepare_transcription.py`、`build_transcription_scene.py`；第二轮用 `prepare_transcription_next.py`、`extend_transcription_scene.py`；[参考外观](transcription-appearance.md) | **既有片段及局部复验**：23 秒 C→U、81 个所选重原子的跨阶段账本；角色材质、完整 Pol II 背景、两轮颜色衔接与保护双语标签 | 起始、终止和完整天然中间态；第二轮构象是教学重构，外观迁移不扩大机制范围 |
 | 翻译的 tRNA 进入、肽转移和转位 | [精细制作流程](production-workflow.md) 的翻译段：`build_translation_scene.py` → `audit_translation.py`；[参考外观](translation-appearance.md) | **既有片段**：9SPI 衍生的局部底物运动，角色材质、完整 60S 背景与受保护双语标签 | 起始、终止、eEF1A/eEF2、GTP 水解和完整催化循环 |
 | DNA 复制叉与新链方向 | [精细制作流程](production-workflow.md) 的复制段：`prepare_replication.py` → `build_replication_scene.py`；[参考外观与对象材质槽](replication-appearance.md) | **既有片段**：连续/分段延伸示意，完整 CMG 位于独立背景层；支持角色材质及保护文字 | 起始、引物处理、连接与终止；不能当作完整复制机制 |
@@ -76,6 +70,14 @@
 | 为已经检查的另一反应复用双视图 | [分子序列显示](molecular-sequence-display.md)：坐标/身份/哈希清单 + 显示 JSON → 共用生成器/保存检查器 | PTP1B 和 AMSH-LP 的全部两图坐标、标记及字幕已检查；PTP1B 另完成独立重建和成片。接口不生成新机制的化学或运动 |
 | 换机器或 Python 环境 | [运行检查](production-workflow.md)：`check_runtime.py` | Eevee/Cycles 的资产、双字体、几何、合成、三帧编码/解码已检查；不认证新机制或全部质量档位 |
 | 重开、续渲染、编码和检查 | `render_saved.py`、`encode_video.py`、`audit_video.py`；机制检查器见对应案例 | 共用运行步骤已使用；视频可解码不代表机制或视觉合格。外部合成必须实际执行后才能声明完成 |
+
+## 可查阅的既有工程
+
+需要制作跨尺度的独立静态作品时，可以查阅[三个工程的可重建源码](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/three-scale-studies)。实验装配按源链和配体保留共同坐标，采用完整亚基显隐或带状表示来显露内部。显微形态依据图像确定层序，在宏观轮廓和真实开孔的细节视图间切换。仪器以公开零件图核对套合顺序，在装配和拆解镜头中共享同一套网格。三种入口的证据分别是实验坐标、参照显微观察的参数模型、参照说明书的机械示意。三个工程使用 Blender 5.3.0 的 Cycles 静帧。
+
+选更复杂的展示题材时，先指出观众从外形进入局部以后能认出什么关系。鱿鱼血蓝蛋白的外壁有重复结构，内圈却破坏对称，两个镜头可共用同一套源坐标。耳蜗的组织分层与单根静纤毛需要不同分辨率，真实毛束标注可另设场景，保留原始比例、实例编号和样本身份。光学仪器则要确认光线通过真实孔口，并在二向色镜上转向。相应的[三个独立工程和重建入口](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/structure-and-function)包含按保存网格核对完整亚基、毛束附着和孔镜配准的方法。
+
+需要从不对称大复合体进入单键、从 CT 壳体回看原始灰度、或在仪器特写中验证接触时，可复用这些[工程源码](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/biological-form-studies)。分子模型把原始原子编号保存在隐藏坐标网格上，局部镜头根据原始坐标单独取景。CT 视图用同一标本和坐标系保留未经分割的原始层，以便判断阈值对表面外观的影响。薄片落在透明液面上的场景可以重开后向液面网格投射射线，检查各个顶点的实际间距。
 
 ## 已有验证记录摘要
 

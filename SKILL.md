@@ -5,124 +5,43 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 # Blender 细胞生物学建模与动画
 
-把生物学问题转成有来源、可编辑、可复现的 `.blend` 工程及图片/动画。支持清晰教学示意和写实细胞环境；风格、渲染引擎、合成器分别选择。中文交流为默认，标签按交付语言设置。
+制作有来源、可编辑、可重建的 Blender 模型、静帧或动画。先写清观众在这个镜头里应能辨认的结构或事件，再选建模入口。形体是否可信、画面是否好看和清楚，都是验收条件。
 
-**默认联网：**默认用户使用本 skill 时能够联网。涉及新蛋白、结合位点、构象或组装方式时，agent 主动查询相关结构库和原始研究，核对位点对应、伙伴、状态与化学计量；不要等用户逐个提供 accession，也不要因当前下载只有单体就停止查找。按 [联网核对结合与组装](references/online-binding-research.md) 选择有依据的构型，再接入生成器。仅在用户明确要求离线或实际网络不可用时说明限制并使用已有证据；已核定工程的重复渲染直接复用缓存。
+## 按镜头选择建模方法
 
-**默认背景偏好：**图片和视频优先采用有景深虚化的细胞微结构环境，按所处区室选择有身份的结构，并保留前后层次。主反应区、关键分子与文字保持清楚；项目指定纯色、透明底或其他参考风格时按项目选择。实施与可运行示例见 [cellular-environment.md](references/cellular-environment.md)。
+| 镜头与问题 | 从哪里起步 | 在画面里核对什么 |
+|---|---|---|
+| 全细胞，细胞器在哪里、细胞有何极性 | 有同一标本的膜、核和标记时，共用原始坐标与变换。做教学形态时，用目标细胞的轮廓、区室和极性约束建模。需要把完整对象放入细胞时使用体素掩膜。[同源细胞](references/registered-cell-display.md)　[细胞形态](references/cells-and-organelles.md)　[体积分布](references/volume-distributions.md) | 先看轮廓、极性和相对位置，再看相邻细胞的形态、遮挡与疏密是否符合组织环境。 |
+| 细胞器，内部如何连接 | 从相应区室的显微图、分割或有依据的参数模型重建连续膜、腔与连接处。已有线粒体入口和可调整材质。[形态与拓扑](references/cells-and-organelles.md)　[细胞器材质与灯光](references/material-and-lighting.md#细胞与细胞器的迁移) | 选能看清内外膜和通道的视角，让周围胞质微结构随景深退后。 |
+| 膜，受体朝哪边、如何分布 | 核定膜蛋白的生物装配与膜侧，按网格法线放置完整拷贝。记录密度、富集区和聚集尺度的测量依据或示意假设。[受体分布与建场](references/receptors-and-distributions.md)　[结构资产选择](references/molecular-asset-config.md) | 从正面看分布，从侧面看朝向。观察内部时优先布置前后不同的完整单体，保留膜两侧的区室关系。 |
+| 分子，哪些伙伴、位点或连接发生变化 | 默认联网核对实验复合物、必要配体及状态。只有单体时查同源模板或可靠界面约束。依任务选择刚体结合、局部拟合或已核定的坐标序列。[结合与组装](references/online-binding-research.md)　[单体候选](references/monomer-binding.md)　[局部端态](references/coordinate-edits.md)　[反应双视图](references/molecular-sequence-display.md) | 总览交代伙伴和方向，特写留给观众需要辨认的位点、底物和连接。保留结构比例与配体身份。 |
 
-**默认配色偏好：**主体、关键位点和结构线尽量选择与背景对比高的颜色。深底用较亮前景，浅底用较深前景；同时区分相邻对象，保留各实体在不同镜头中的语义颜色。以最终渲染结果检查亮度和轮廓，不只比较材质色值；背景应衬托主体。机制特写减少无关骨架线，优先让反应物、关键残基和必要连接可辨认，高对比也要有主次。
+跨尺度任务可以用多个镜头。保留同一对象的身份、方向和语义色，为每个镜头单独定单位、取景和背景。放大示意的幅度和省略的结构写入项目说明。[四种尺度的环境](references/cellular-environment.md)
 
-**画面文字偏好：**标题与说明使用简洁自然的句子，不用“某某 · 某某”式标签拼接，也不换成其他装饰分隔符继续拼接。画面边角不加“图片仅为教学模型”等小字声明或来源脚注；来源、建模假设和限制写入配套文档。保留必要的机制标签及 `ADP·Pi` 等有科学含义的记号。
+## 从任务到 Blender 工程
 
-**质量优先：**先读 [quality-standard.md](references/quality-standard.md) 和 [production-workflow.md](references/production-workflow.md)。默认使用精细制作入口。旧 `build_scene.py` 仅作机制白模，不得再当作成品示例；“可运行、方向正确”不能替代精细建模、参考风格复现和连续动画的验收。
+1. **确定来源与交付。** 明确对象、物种、区室、状态、观众和交付形式。默认联网查公共资产、显微数据、结构库和原始研究，有合格缓存则复用。记录来源、许可、装配与尺度，将关键几何或动作标为 `measured`、`inferred` 或 `schematic`。若缺少的信息会改变机制，先澄清。正式科学数据图按实际数据绘制。[公开资产与缓存](references/public-assets-first.md)　[证据与简化](references/sources-and-evidence.md)
+2. **落实美术方向。** 教学示意和写实表现均可选。有参考图时实际看图，将轮廓或表面表示、主次配色、材质、光源、镜头与合成分别落实到所选生成器。渲染引擎与合成器按项目选择。默认用符合尺度与区室的微结构作景深背景，主体、相邻关键结构和分隔线具有清楚的明度差。用同一构图比较正式尺寸像素。[参考图到场景](references/style-from-reference.md)　[材质灯光](references/material-and-lighting.md)　[渲染与合成](references/rendering-and-compositing.md)
+3. **建立可编辑几何。** 按本次镜头选择来源网格、装配实例、参数几何或受约束的候选。保持完整单体、各向同性比例、膜的拓扑和实体身份。固定朝向、单位和坐标后再布光。个体轮廓、微环境和拥挤程度应可解释；分子内部视图优先移开遮挡单体。[精细制作](references/production-workflow.md)　[内部视图](references/section-views.md)
+4. **按需要安排时间。** 静态模型直接选视角。分步教学安排可辨的事件并适当停留。连续片段保持接近、转向、落位与释放的衔接。明确要求循环时，检查首尾位置、运动和物质去向。各视图共享事件时点和方向。声称覆盖全过程时，逐项核对上游、执行、能量、产物与回收。演示时间和推定轨迹的依据写入项目记录。[机制深度](references/mechanistic-depth.md)　[运动交接](references/coordinate-motion.md)　[过程与动画](references/process-atlas.md)
+5. **重开工程看画面。** 检查正式尺寸的代表帧，看观众能否直接认出主体、连接或运动方向。中文默认宋体，英文与数字默认 Times New Roman。标签用简短自然的文字，画面只保留必要标签，来源脚注和模型限制留在工程说明。遇到遮挡、表面拉伸、同色粘连或过度虚化，回到对应几何、取景或灯光修正。动作问题只取变化区间的原速短预览，需要成片时再渲染全片。[视觉质量标准](references/quality-standard.md)　[抽帧与产物清理](references/review-and-retention.md)
 
-**美观是主要验收项：**这是建模 skill。形体、构图、材质灯光、配色与环境层次和科学正确性都应排在前列；改进迁移能力时也须检查代表性模型的实际画面，不能只交付数值测试。不同结构采用合适的纹理、次表面散射和光照，不用杂乱棒线或粗圆柱束代替细胞骨架等真实结构。以少量正式尺寸图判断并修正可见问题，保持共用工作流可生成有完成度的作品；实施见 [材质与灯光迁移](references/material-and-lighting.md)。
+可在项目中复制[场景说明模板](assets/scene-brief.json)，按需填写。静帧可删去时间和事件。在 `entities` 中记录关键对象的 `id`、`compartment`、`evidence` 与 `source_ids`，跨镜头沿用同一身份。每个参考特征写下对应的场景改动，为代表帧写下帧号和要看的现象。`review_frames` 可直接交给保存工程渲染器，`"saved"` 指工程保存时的当前帧。
 
-**验证效率与产物清理：**开发与迁移默认采用必要的数值检查、少量正式尺寸关键帧和变化区间的低成本短预览；需要交付成片时才完整渲染。用户授权持续清理本任务可重建的大型中间产物，保留来源、参数、检查记录和当前交付。具体取样、原速短预览及清理办法见 [review-and-retention.md](references/review-and-retention.md)。
+```bash
+"$BLENDER" -b "$PROJECT/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- \
+  --directory "$PROJECT/review" --review-brief "$PROJECT/scene-brief.json"
+```
 
-**分发边界：**用户要求 skill 包不包含生成的视频、渲染帧和项目输出。保留生成脚本、参数、来源与资产获取方法；下载、建模、渲染和检验结果写入 skill 外的项目目录。用 `scripts/package_skill.py` 打包，并从解压副本实际重建代表性产物；仅指向本机旧成品不能证明工作流可复现。
+## 查找专门入口与验证范围
 
-**扩展优先级：**先用 [入口与验证范围](references/workflow-entrypoints.md) 找到合适起点，再按 [workflow-transfer.md](references/workflow-transfer.md) 选择已验证的工作流，区分可以沿用的步骤、需要替换的项目数据和必须重建的科学规则。优先让 agent 能迁移已有方法，以少量代表性案例验证；不以新增脚本、过程条目或视频数量衡量完善程度。
-
-## 接到任务后
-
-1. 明确物种、细胞类型、状态、要解释的过程、观众和交付形式。缺失信息可用明确标注的教学假设开始；若物种/状态会改变机制，先澄清再构建相应部分。不要将哺乳动物、植物、细菌的结构混搭。
-2. 与用户确认或说明当前选择的 **表现风格 / 渲染引擎 / 合成方案**。用户给参考图片时，实际看图并按 [style-from-reference.md](references/style-from-reference.md) 识别与复现风格，先出可对比的小样。允许 Blender Compositor、可用的 Fusion/Natron/After Effects 等外部合成器；不要把合成器与渲染引擎混为一谈。见 [rendering-and-compositing.md](references/rendering-and-compositing.md)。
-3. **先检索、参考并尽量复用公开资产，再决定哪些部分需要新建。** 按 [public-assets-first.md](references/public-assets-first.md) 检查本地缓存、原始结构/显微数据及可编辑模型；有合适资产时导入、修整、实例化，不从随机团块重新造形。记录物种、状态、装配、尺度、许可与加工过程。用 [sources-and-evidence.md](references/sources-and-evidence.md) 核对机制依据；检索摘要不能替代未读的图例和方法。
-4. 写一个简短场景说明：对象及 compartment、尺度、证据级别、事件顺序、视觉简化和检查标准。可复制 [scene-brief.json](assets/scene-brief.json)，删除本项目用不到的字段。
-   用户要求“全过程/上游到下游”时，按 [mechanistic-depth.md](references/mechanistic-depth.md) 建立因果事件表、化学状态和物质回收闭环；局部动作的改善不能替代缺失的机制。
-   动画形式另行选择：**分步教学**用分段、停顿和同步解释；**连续循环**保持运动、镜头和首尾衔接。它独立于材质风格、渲染引擎和合成器。用户此次选择连续循环时，不自动插入章节卡、停顿或旁白。实现与接缝检查见 [blender-workflow.md](references/blender-workflow.md)。
-5. 先做低分辨率静态白模和关键时点分镜，确认生物学拓扑与画面可读性，再加材质、环境拥挤和动画。可在首个模型、动画分镜、最终视频阶段询问满意度；无必要时不要让每一步都等待批准。
-6. 实际运行 Blender，按本次改动检查关键帧或短运动预览，交付可重建工程、生成脚本、来源和简化说明；任务明确需要完整视频时再完成成片检查。检查办法见 [validation.md](references/validation.md)。未执行的部分如实标注，局部预览不代表整片已逐帧查看。
-
-## 按任务读取
-
-| 任务 | 读取 |
+| 需要进一步解决的问题 | 读取 |
 |---|---|
-| 精细模型、真实结构资产、连续动画、可复现渲染命令 | [production-workflow.md](references/production-workflow.md)，默认入口 |
-| 高效迭代、关键帧/短预览、清理大型中间产物 | [review-and-retention.md](references/review-and-retention.md)：按改动选择检查范围、抽帧保持原速、记录清理范围 |
-| 将已验证流程用于其他蛋白、反应、装配或膜环境 | [workflow-transfer.md](references/workflow-transfer.md)：迁移层级、实际复用入口、项目配置示例及有针对性的验收 |
-| 寻找、选择、缓存和复用网上公开资产 | [public-assets-first.md](references/public-assets-first.md)，所有新对象先走此流程 |
-| 参考图、截图、视频关键帧的风格识别与模仿 | [style-from-reference.md](references/style-from-reference.md) |
-| 扩展参考风格、几何节点、插画/透明/丝带/密度/显微外观小样 | [style-library.md](references/style-library.md)：18 类可执行起点、来源目录、参数与迁移方法；显微外观是示意，不能冒充真实成像 |
-| 组合渲染滤镜、保护文字、主体强调与景深层次 | [render-recipes.md](references/render-recipes.md)：可编辑有序节点链、双视图各自的深度/法线/对象通道、引擎限制与实际画面检查 |
-| 细胞、细胞器、膜和分子的背景风格对照 | [cellular-environment.md](references/cellular-environment.md)：按尺度选择环境，浅/深底、独立景深层与高反差分隔线 |
-| 将结合/释放动作推广到不同蛋白、肽段与抑制剂 | [protein-interactions.md](references/protein-interactions.md)：明确源构象、保留配体、膜侧约束、逐帧路径检查与独立动画模式 |
-| 两个伙伴竞争共享界面、包绕片段交替结合 | [binding-handoff.md](references/binding-handoff.md)：来源配准、完整刚体绕障、全组件共同占位检查及共用双视图；示意交接不等于置换动力学 |
-| 联网查找正确的位点对应、结合构象与亚基组合 | [online-binding-research.md](references/online-binding-research.md)：主动查结构与原始证据、映射编号、核对 assembly/状态/配体，再选择直接复用或候选建模 |
-| 只有单体结构，探索可能的蛋白结合姿态 | [monomer-binding.md](references/monomer-binding.md)：模板迁移或界面约束生成候选、完整单体与严格穿插检查，再接入已有动画；候选不冒充实验复合物 |
-| 多链伙伴、重复链拷贝和非恒等装配操作 | [source-assembly-instances.md](references/source-assembly-instances.md)：独立装配对照、作者/label/实例身份、必要伴随组分，以及状态对照与候选整体变换 |
-| 局部补建、按几何约束拟合反应端态或比较两种构型 | [局部坐标与同视角对照](references/coordinate-edits.md)，选择可移动原子，保留完整装配，独立复核候选并在 Blender 同视角检查 |
-| 从核定构型接入下一段分子动画 | [坐标运动交接](references/coordinate-motion.md)，核对跨阶段位置、帧间接触、连续或分步节奏和保存后的关键帧 |
-| 反应成键、断键、单双键转换与中间体交接 | [反应前后的键级](references/workflow-transfer.md#反应前后的键级)，核对同一批原子的端态、相邻阶段和独立总反应 |
-| 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
-| GEF 核苷酸交换、GAP 水解及连续状态循环 | [ras-switch.md](references/ras-switch.md)：独立与组合入口、完整原子身份、同步双视图、水进入及产物释放；状态循环使用开放底物池 |
-| 泛素的共价连接、链型识别与产物释放 | [ubiquitin-transfer.md](references/ubiquitin-transfer.md)：RNF4/Ubc13/Ube2V2 的 K63 净键转移，可选连续释放；完整原子、工程突变恢复与双视图，不包含 E1 装载或全通路 |
-| 把连接工作流迁移到共价键水解 | [dub-workflow-transfer.md](references/dub-workflow-transfer.md)：AMSH-LP 专属端态与水氧映射，共用运动/双视图/合成；已结合底物到产物离开，未实现底物进入与复位 |
-| 经过共价酶中间体的两步反应，或复用分子双视图 | [ptp1b-workflow-transfer.md](references/ptp1b-workflow-transfer.md)：PTP1B 的固定身份、局部构象和两步去磷酸化；[molecular-sequence-display.md](references/molecular-sequence-display.md) 定义共用显示输入。PTP1B 结束于结合态 Pi，不是完整催化循环 |
-| 独立重建 Arp2/3 与 formin 完整案例 | [portable-actin-films.md](references/portable-actin-films.md)：公开坐标到两条完整视频，不依赖原制作目录；局部接触诊断仍须审核 |
-| 分子剖面、遮挡与内部观察窗口 | [section-views.md](references/section-views.md)：用完整单体和前后层次表达 |
-| 不同细胞类型、组织极性与基本形态 | [cells-and-organelles.md](references/cells-and-organelles.md) 的细胞表 |
-| 细胞器、膜层、骨架与内部连接关系 | 同文件的细胞器表和拓扑检查 |
-| 保留同一来源细胞的膜、DNA 与细胞器标记位置 | [同源细胞展示](references/registered-cell-display.md)：共同变换、高对比配色与源网格复核；不把显示表面当封闭区室 |
-| 在细胞内部按体积边界和排除掩膜放置完整对象 | [体积分布](references/volume-distributions.md)：源体素区域、完整评估网格、刚体矩阵、保存场景及独立包含检查；当前为静态布局 |
-| 受体、通道、糖链及空间分布 | [receptors-and-distributions.md](references/receptors-and-distributions.md) |
-| 分裂、DNA/RNA、翻译、运输等动画 | [process-atlas.md](references/process-atlas.md)，只读相关过程组 |
-| 囊泡出芽、切断、对接和开孔的膜拓扑与货物交接 | [vesicle-topology.md](references/vesicle-topology.md)：数值检查、关键网格和静态 Blender 快照；分子机器及完整连续机制仍待实现 |
-| 肌动蛋白聚合/解聚、踏车、切断、退火、成束、Arp2/3、封端及微管动态 | [polymer-templates.md](references/polymer-templates.md)：11 个可执行模板 |
-| 肌动蛋白上游到下游：Arp2/3 与 formin 两条完整路线 | [actin-full-cycle.md](references/actin-full-cycle.md)：两套各 25 阶段的机制计划、状态闭环、资产选择、配体对照及已渲染的本地完整视频案例；其他情境需按项目制作 |
-| formin、cofilin、中间丝、septin、FtsZ、ESCRT-III、clathrin、COPII 装配 | [assembly-storyboards.md](references/assembly-storyboards.md)：可复制的分镜与资产选择模板，按项目实现 |
-| clathrin 源被覆与单体接纳/释放 | [clathrin-assembly.md](references/clathrin-assembly.md)：核对链的空间连续性、恢复源装配，并以有依据的局部转动生成完整已建模单体运动；限三邻居晶格片段，不是完整内吞 |
-| 从来源端态与约束生成 Cα 候选，或复用已有构象路径 | [ca-conformation.md](references/ca-conformation.md)：明确分区、末端与避让规则，有限求解并核对全部线性路径，再进入角色材质场景；构造候选不等于真实动力学或完整 AP2 激活 |
-| 将机制变成 Blender 动画 | [blender-workflow.md](references/blender-workflow.md) |
-| V 型 ATPase 的整体与 c 环双视图连续循环 | [vatpase-loop.md](references/vatpase-loop.md)：公开结构准备、可移植生成器、同步检查及渲染命令 |
-| PDB/mmCIF、EM/分割网格进入 Blender | [data-import.md](references/data-import.md) |
-| 风格、Eevee/Cycles、合成节点和外部合成 | [rendering-and-compositing.md](references/rendering-and-compositing.md)；[Natron 实际入口](references/natron-compositing.md) 提供线性调色、文字保护、可编辑工程与像素核验 |
+| 已有哪个生成器，覆盖静态、局部动作还是完整机制 | [入口与实际验证范围](references/workflow-entrypoints.md)　[把既有流程迁移到新对象](references/workflow-transfer.md) |
+| 新蛋白的装配拷贝、作者编号、界面交接或化学变化 | [装配身份](references/source-assembly-instances.md)　[结合运动](references/protein-interactions.md)　[多伙伴交接](references/binding-handoff.md)　[反应键级与衔接](references/workflow-transfer.md#反应前后的键级) |
+| 分裂、复制、转录、翻译、囊泡或聚合物装配 | [过程目录](references/process-atlas.md)　[囊泡拓扑](references/vesicle-topology.md)　[聚合物模板](references/polymer-templates.md)　[机制分镜](references/assembly-storyboards.md) |
+| 改变表现方法、保护标签或接外部合成器 | [风格库](references/style-library.md)　[合成配方](references/render-recipes.md)　[Natron](references/natron-compositing.md) |
+| 核查 Blender 构建、复用机制白模或验证视频 | [Blender 工作流](references/blender-workflow.md)　[验证与交付](references/validation.md) |
 
-## 不可被视觉效果改变的约束
-
-- 每个关键对象/运动标为 `measured`（来自指定实验数据）、`inferred`（来源支持的解释）、`schematic`（教学构造）之一。实验结构模型仍受分辨率、缺失区域和构建体限制，不能称为完整活细胞真值。
-- 坐标、单位、物种、膜内外方向、核酸 5′/3′ 和蛋白 N/C 端先确定。全细胞与分子特写通常用不同场景；不要暗中放大蛋白却保留单一精确比例尺。
-- 膜是一道拓扑边界。跨膜必须对应孔道、转位、出芽/融合或膜破裂；糖基化结构域通常处于分泌系统腔面/胞外侧，不能随机翻转。
-- 分子层面的剖面优先展示前后不同的完整单体、选择性隐藏遮挡物；不直接切开蛋白、核酸、脂质或受体。保持原坐标，省略实体有记录；分解图的移位明确标为示意。见 section-views。
-- 受体密度/聚集不是装饰。RNA 表达量、IF 亮度和蛋白结构不直接给出表面拷贝数或纳米簇；无定量依据时用明确标注的假设分布。
-- 动画关键帧不是动力学模拟；播放时长不等于生物学时长。布朗运动需说明扩散模型与步长；路径动画不可冒充实验轨迹或 MD。
-- 科学数据图沿用朴素科研风格；Blender 场景可有不同艺术表现，但不能用生图伪造显微图、结构证据或数据图。
-
-## 选择生成入口
-
-[入口与验证范围](references/workflow-entrypoints.md) 集中列出静态模型、局部动作、完整案例和配方，以及可直接复用的脚本、实际检查范围和缺失阶段。先按交付类型与事件选择，再读取对应的制作命令；不要将一个案例的通过状态外推到其他蛋白或所有风格组合。
-
-## 机制白模与旧兼容入口
-
-以下命令的 `SKILL` 与 `BLENDER` 均指向实际安装位置；在项目新目录输出，避免覆盖已有工程。来源核定和资产下载默认联网；已有合格输入后的 `bpy` 生成与渲染可在本地执行，无需付费插件。默认 seed 固定。
-
-```bash
-BLENDER='/actual/path/to/blender'
-SKILL='/actual/path/to/blender-cell-biology'
-"$BLENDER" -b --factory-startup --python-exit-code 1 \
-  --python "$SKILL/scripts/build_scene.py" -- \
-  --scene receptors --style teaching --engine auto --compositor clean \
-  --output /absolute/project/receptors --preview
-```
-
-`--scene` 支持 `cell`、`receptors`、`mitosis`、`replication`、`transcription`、`translation`、`vesicle`、`structure`。它们是可编辑起点，**不是所有过程的完整自动模型**。`mitosis` 从中期开始；`vesicle` 只展示沿微管运输，不冒充已实现膜融合。`--style realistic` 只是材质与灯光的另一种起点，真实环境的结构和拥挤程度仍需参考数据。
-
-```bash
-# 保存工程并生成全部 PNG 帧；再使用 FFmpeg 编码
-"$BLENDER" -b --factory-startup --python-exit-code 1 \
-  --python "$SKILL/scripts/build_scene.py" -- \
-  --scene vesicle --frames 96 --fps 24 --output /absolute/project/vesicle --animate
-
-python3 "$SKILL/scripts/encode_video.py" /absolute/project/vesicle --fps 24
-
-# 下载实验结构及元数据；不自动假定 asymmetric unit 就是功能装配体
-python3 "$SKILL/scripts/fetch_structure.py" 3SN6 --output /absolute/project/structures
-```
-
-这些旧入口用于快速核对机制，不用于最终视觉交付。运行细节见 [blender-workflow.md](references/blender-workflow.md)。旧结构示例使用随 skill 附带的公开 1BNA 坐标及 [来源记录](assets/1bna-source.json)。
-
-## 完成标准
-
-交付 `.blend`、可重建脚本/参数、预览图或可播放视频，以及简洁的来源/简化/验证记录。科学正确性、画面可读性和软件运行成功分别报告；漂亮画面不能代替前两项检查。报告实际覆盖的内容与尚未执行的配方，不用“全部支持”掩盖尚需实现的过程。
+按用户要求交付工程、图片或视频，保留重建脚本、输入参数、来源与验收记录。发布 skill 时用 `scripts/package_skill.py` 从源码打包，在项目目录复核解包后的入口。字体、准备网格、渲染帧、视频和 `.blend` 留在项目目录。
