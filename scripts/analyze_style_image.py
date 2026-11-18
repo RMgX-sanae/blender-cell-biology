@@ -5,6 +5,7 @@ statistics cannot identify a renderer, material roughness or biological truth.
 """
 import argparse
 import hashlib
+from io import BytesIO
 import json
 from pathlib import Path
 
@@ -12,16 +13,26 @@ import numpy as np
 from PIL import Image
 
 
+def checked_box(box, size):
+    if (not isinstance(box, (list, tuple)) or len(box) != 4 or any(type(n) is not int for n in box)
+            or not 0 <= box[0] < box[2] <= size[0] or not 0 <= box[1] < box[3] <= size[1]):
+        raise ValueError(f"Choose a nonempty pixel rectangle inside {size}: {box}")
+    return box
+
+
 def measure(path, crop=None):
-    image = Image.open(path).convert('RGB')
-    if crop:
-        image = image.crop(crop)
+    with Image.open(path) as src:
+        image = src.convert('RGB')
+    if crop is not None:
+        image = image.crop(checked_box(crop, image.size))
     dimensions = list(image.size)
     image.thumbnail((640, 640))
     a = np.asarray(image, dtype=float)/255
     luma = a @ np.array([.2126, .7152, .0722])
     saturation = (a.max(2)-a.min(2))/np.maximum(a.max(2), .001)
-    gradient = np.hypot(np.gradient(luma, axis=0), np.gradient(luma, axis=1))
+    dy = np.gradient(luma, axis=0) if image.height > 1 else np.zeros_like(luma)
+    dx = np.gradient(luma, axis=1) if image.width > 1 else np.zeros_like(luma)
+    gradient = np.hypot(dy, dx)
     quantized = image.quantize(colors=8)
     palette = quantized.getpalette()
     swatches = []
@@ -37,21 +48,66 @@ def measure(path, crop=None):
             'limitations': 'Image appearance statistics, not recovered shader parameters. UI, labels and highlights can bias these values.'}
 
 
+def local_contrast(path, regions):
+    if not isinstance(regions, dict) or set(regions) != {'subject', 'background'}:
+        raise ValueError('Select both subject and adjacent background rectangles for this image')
+    with Image.open(path) as src:
+        icc = src.info.get('icc_profile')
+        if icc:
+            from PIL import ImageCms
+            profile = ImageCms.ImageCmsProfile(BytesIO(icc))
+            mode = {'RGB': 'RGB', 'GRAY': 'L', 'CMYK': 'CMYK'}.get(profile.profile.xcolor_space.strip())
+            if mode is None:
+                raise ValueError('Convert the source to a displayed sRGB image before selecting regions')
+            transform = ImageCms.buildTransform(profile, ImageCms.createProfile('sRGB'), mode, 'RGB')
+        elif src.mode not in ('1', 'L', 'LA', 'RGB', 'RGBA', 'P') or (
+                'srgb' not in src.info and 'gamma' in src.info and abs(src.info['gamma'] - .45455) > .01):
+            raise ValueError('Supply a final sRGB image or an embedded color profile')
+        samples = {}
+        for label, box in regions.items():
+            patch = src.crop(checked_box(box, src.size))
+            if patch.convert('RGBA').getchannel('A').getextrema() != (255, 255):
+                raise ValueError('Composite the chosen translucent region onto its actual background first')
+            rgb = ImageCms.applyTransform(patch.convert(mode), transform) if icc else patch.convert('RGB')
+            encoded = np.asarray(rgb, dtype=float) / 255
+            linear = np.where(encoded <= .04045, encoded / 12.92, ((encoded + .055) / 1.055) ** 2.4)
+            y = linear @ [.2126, .7152, .0722]
+            low, median, high = np.quantile(y, [.10, .50, .90])
+            samples[label] = dict(box_pixels=box, p10_Y=float(low), median_Y=float(median), p90_Y=float(high))
+    difference = samples['subject']['median_Y'] - samples['background']['median_Y']
+    return dict(regions=samples, subject_minus_background_Y=difference,
+                color_input='embedded ICC converted to sRGB' if icc else 'assumed sRGB')
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('reference',type=Path)
     p.add_argument('--crop',type=int,nargs=4,metavar=('LEFT','TOP','RIGHT','BOTTOM'))
     p.add_argument('--candidate',type=Path)
+    p.add_argument('--candidate-crop',type=int,nargs=4,metavar=('LEFT','TOP','RIGHT','BOTTOM'))
+    p.add_argument('--review-brief',type=Path,help='Read visual_reference.contrast_regions in original image pixel coordinates')
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
     if args.output.exists():p.error('Choose a fresh report filename.')
+    if args.candidate_crop and not args.candidate:p.error('--candidate-crop requires --candidate')
     report={'reference':measure(args.reference,args.crop),
             'visual_review_required':['shape hierarchy and scale','flat versus shaded surfaces','edge treatment',
                                       'light direction and softness','depth layers and occlusion','camera and framing',
                                       'biology versus artistic assumptions'],
             'observations_to_be_filled_after_viewing':{},
             'implementation_hypotheses_to_be_tested':{}}
-    if args.candidate:report['candidate']=measure(args.candidate)
+    if args.candidate:report['candidate']=measure(args.candidate,args.candidate_crop)
+    if args.review_brief:
+        raw=args.review_brief.read_bytes()
+        brief=json.loads(raw)
+        visual=brief.get('visual_reference') if isinstance(brief,dict) else None
+        regions=visual.get('contrast_regions') if isinstance(visual,dict) else None
+        images={'reference':args.reference}
+        if args.candidate:images['candidate']=args.candidate
+        if not isinstance(regions, dict) or set(regions)!=set(images):
+            p.error('Select contrast_regions separately for each supplied image')
+        report['local_contrast']={name:local_contrast(path,regions[name]) for name,path in images.items()}
+        report['review_brief_sha256']=hashlib.sha256(raw).hexdigest()
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     print(args.output)

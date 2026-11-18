@@ -46,6 +46,25 @@
 
 ## 3. 迭代，而不是猜一次就结束
 
+判断主体是否和周围粘在一起时，在参考图和渲染图上各选两块区域。一块取关键结构可辨认的表面，另一块取紧邻它的背景。例如受体的邻近背景通常是所附着的膜，画面远角的深色底不能说明受体在膜面上是否清楚。两图的构图、尺寸和取样矩形可以不同。
+
+把原图像素框写进项目场景说明的 `visual_reference.contrast_regions`。格式如下，每组依次是左、上、右、下，右端与下端不含在内。用实际图像替换坐标。
+
+```json
+{
+  "reference": {"subject": [40, 35, 68, 57], "background": [72, 35, 100, 57]},
+  "candidate": {"subject": [180, 90, 219, 121], "background": [230, 90, 269, 121]}
+}
+```
+
+```bash
+"$PYTHON" "$SKILL/scripts/analyze_style_image.py" "$PROJECT/reference.png" \
+  --candidate "$PROJECT/review/frame_0001.png" --review-brief "$PROJECT/scene-brief.json" \
+  --output "$PROJECT/style-review.json"
+```
+
+报告给出每块区域线性相对亮度的中位数、第 10 和第 90 百分位，以及主体减邻近背景的亮度差。正负号表示主体偏亮或偏暗。选区使用最终显示图，嵌入的 ICC 配置先转换到 sRGB，透明区域须先在实际背景上合成。全图色板另外支持 `--crop` 和 `--candidate-crop` 在各自图里去掉界面或留白。把读数和画面一起看，先判断轮廓、色相和遮挡，再决定调灯光、角色材质、取景还是背景。这里没有统一的合格分数。[sRGB 相对亮度定义](https://www.w3.org/WAI/WCAG22/Understanding/relative-luminance.html)
+
 1. 锁定同一构图、分辨率和几何，先做 512–960 px 的静态测试。
 2. 比较主体尺寸、背景亮度、配色、轮廓软硬和阴影。每次优先修正两三项差异，避免同时更改全部参数。
 3. 若有两种合理解释，给两个小样，例如“较哑光”和“更通透”。询问用户偏好可与其他独立建模并行。

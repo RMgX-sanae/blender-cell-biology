@@ -10,7 +10,7 @@
   "sources": [],
   "distribution": {},
   "style": "",
-  "visual_reference": {"source": "", "observations": [], "scene_changes": []},
+  "visual_reference": {"source": "", "observations": [], "scene_changes": [], "contrast_regions": {}},
   "composition": {"focal_subject": "", "background_compartment": "", "depth_and_contrast": ""},
   "render_engine": "",
   "compositor": "",
