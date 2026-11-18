@@ -53,7 +53,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 联网查找正确的位点对应、结合构象与亚基组合 | [online-binding-research.md](references/online-binding-research.md)：主动查结构与原始证据、映射编号、核对 assembly/状态/配体，再选择直接复用或候选建模 |
 | 只有单体结构，探索可能的蛋白结合姿态 | [monomer-binding.md](references/monomer-binding.md)：模板迁移或界面约束生成候选、完整单体与严格穿插检查，再接入已有动画；候选不冒充实验复合物 |
 | 多链伙伴、重复链拷贝和非恒等装配操作 | [source-assembly-instances.md](references/source-assembly-instances.md)：独立装配对照、作者/label/实例身份、必要伴随组分，以及状态对照与候选整体变换 |
-| 局部补建、移动少数原子或比较改动前后的构型 | [局部坐标与同视角对照](references/coordinate-edits.md)，核对完整装配、可移动位点、化学方向和保存工程 |
+| 局部补建、按几何约束拟合反应端态或比较两种构型 | [局部坐标与同视角对照](references/coordinate-edits.md)，选择可移动原子，保留完整装配，独立复核候选并在 Blender 同视角检查 |
 | 从核定构型接入下一段分子动画 | [坐标运动交接](references/coordinate-motion.md)，核对跨阶段位置、帧间接触、连续或分步节奏和保存后的关键帧 |
 | 反应成键、断键、单双键转换与中间体交接 | [反应前后的键级](references/workflow-transfer.md#反应前后的键级)，核对同一批原子的端态、相邻阶段和独立总反应 |
 | 激酶供体进入、磷酸转移、产物释放及下一轮 | [phosphotransfer.md](references/phosphotransfer.md)：PKAc/SP20 专用实例，原子身份守恒、口袋开合与同步双视图；其他酶需重新建立反应与来源 |
