@@ -2,7 +2,7 @@
 import copy,hashlib,json,tempfile,unittest
 from pathlib import Path
 import numpy as np
-from molecular_sequence_assets import load_assets
+from molecular_sequence_assets import coordinates_only, load_assets
 
 
 class PreparedSequence(unittest.TestCase):
@@ -29,6 +29,20 @@ class PreparedSequence(unittest.TestCase):
         source,data,receipt=self.load()
         self.assertEqual(data['body'].shape,(3,2,3));self.assertEqual(source,self.source)
         self.assertEqual(len(receipt['required_files']),5)
+
+    def test_undrawn_coordinates_keep_the_same_source_atoms(self):
+        self.display['views'][0]['actors']['body']={'representation':'coordinates'}
+        source, data, _=self.load()
+        self.assertEqual(source['atom_ids']['body'],['body:C','body:O'])
+        self.assertEqual(data['body'].shape,(3,2,3))
+        self.assertTrue(coordinates_only({'representation':'spheres','radius_nm':0},[]))
+        self.assertFalse(coordinates_only({'representation':'sticks','radius_nm':0},[[0,1]]))
+
+    def test_coordinates_cannot_declare_visible_geometry(self):
+        for field,value in [('radius_nm',.05),('bond_radius_nm',.02),('bonds',[[0,1]]),('bond_file','bonds.npz')]:
+            self.display['views'][0]['actors']['body']={'representation':'coordinates',field:value}
+            with self.subTest(field=field),self.assertRaisesRegex(ValueError,'coordinates-only'):
+                self.load()
 
     def test_consumed_files_cannot_be_omitted_from_hash_list(self):
         original=self.source['data_sha256'].copy()

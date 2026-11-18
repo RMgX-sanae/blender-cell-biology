@@ -14,7 +14,7 @@ import style_nodes as sn
 from build_ubiquitin_transfer_scene import keyed_points,envelope,annotation_line,background,paired_composite,digest
 from build_phosphotransfer_scene import visibility,animated_mesh
 from compositor_stack import build_stack
-from molecular_sequence_assets import load_assets
+from molecular_sequence_assets import coordinates_only, display_edges, load_assets
 from sequence_presentation import presentation,source_positions,coordinates_at,caption_windows
 
 SKILL=Path(ds.__file__).resolve().parents[1]
@@ -86,16 +86,20 @@ def main():
             return visible.tolist()
         for key,settings in view['actors'].items():
             if key not in source['atom_ids']:parser.error('Display refers to an absent component: '+key)
-            role=appearance['component_roles'][key] if appearance is not None else None
-            material=ds.material(name+' '+key,settings.get('color',colors[settings.get('color_key',key)]),.52,0,
-                                 settings=appearance['surface_roles'][role] if role else None)
-            if role:material['surface_role']=role
+            edges=display_edges(settings,assets)
             representation=settings['representation']
+            if coordinates_only(settings,edges):
+                representation='coordinates'
+            else:
+                role=appearance['component_roles'][key] if appearance is not None else None
+                material=ds.material(name+' '+key,settings.get('color',colors[settings.get('color_key',key)]),.52,0,
+                                     settings=appearance['surface_roles'][role] if role else None)
+                if role:material['surface_role']=role
             if representation=='surface':
                 obj=keyed_points(key+' '+name,data[key],group,frames=sample_frames);envelope(obj,material)
+            elif representation=='coordinates':
+                obj=keyed_points(key+' '+name,data[key],group,frames=sample_frames)
             elif representation in ['sticks','spheres']:
-                edges=settings.get('bonds',[])
-                if representation=='sticks' and 'bond_file' in settings:edges=np.load(assets/settings['bond_file'])['bonds']
                 edges=np.asarray(edges,dtype=np.int32).reshape(-1,2)
                 obj=animated_mesh(key+' '+name,data[key],edges,group,material,settings.get('radius_nm',.065),1,count+1,frames=sample_frames)
                 if 'bond_radius_nm' in settings:
@@ -103,7 +107,7 @@ def main():
                         if modifier.type=='NODES':
                             for node in modifier.node_group.nodes:
                                 if node.bl_idname=='GeometryNodeCurvePrimitiveCircle':node.inputs['Radius'].default_value=settings['bond_radius_nm']
-            else:parser.error('Use surface, sticks or spheres for prepared component display')
+            else:parser.error('Use surface, sticks, spheres or coordinates for prepared component display')
             if appearance is not None and 'atom_subdivisions' in appearance:
                 for modifier in obj.modifiers:
                     for node in modifier.node_group.nodes:
@@ -191,7 +195,7 @@ def main():
             'presentation':schedule,'caption_windows':captions,
             'scope':source['scope'],'limits':'Geometry/chemistry belong to the preparation; window framing and enlarged foreground markers are display choices.'}
     (args.output/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
-    scene.frame_set(round(count*.25));bpy.ops.wm.save_as_mainfile(filepath=str(args.output/'scene.blend'))
+    scene.frame_set(max(scene.frame_start,round(count*.25)));bpy.ops.wm.save_as_mainfile(filepath=str(args.output/'scene.blend'))
     if args.render:
         for fraction in display.get('key_fractions',[0.,.3,.6,.9]):
             frame=min(count,round(count*fraction)+1);scene.frame_set(frame);scene.render.filepath=str(args.output/f'key_{frame:04d}.png');bpy.ops.render.render(write_still=True)

@@ -7,19 +7,34 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 from audit_phosphotransfer_scene import vertices
 from build_ubiquitin_transfer_scene import digest
 from coordinate_animation import verify_point_animation
-from molecular_sequence_assets import load_assets
+from molecular_sequence_assets import coordinates_only, display_edges, load_assets
 from audit_surface_materials import check_materials
 from audit_interaction_scene import displayed_materials
 from detail_scene import linear
 from sequence_presentation import presentation,source_positions,coordinates_at,caption_windows
 
 
-def check_appearance(scene,record,root):
+def check_undrawn_coordinates(obj):
+    assert obj.type=='MESH' and not obj.data.edges and not obj.data.polygons, 'Expected loose source vertices: '+obj.name
+    assert obj.instance_type=='NONE' and not obj.particle_systems, 'Unexpected source-point instances: '+obj.name
+    if not obj.modifiers:return
+    # Older builds sent an empty Join Geometry output, sometimes via Set Material.
+    assert len(obj.modifiers)==1 and obj.modifiers[0].type=='NODES', 'Unexpected geometry on '+obj.name
+    tree=obj.modifiers[0].node_group
+    output=next(n for n in tree.nodes if n.type=='GROUP_OUTPUT' and n.is_active_output)
+    source=output.inputs['Geometry'].links[0].from_node
+    if source.bl_idname=='GeometryNodeSetMaterial':
+        source=source.inputs['Geometry'].links[0].from_node
+    assert source.bl_idname=='GeometryNodeJoinGeometry' and not source.inputs['Geometry'].is_linked, 'Expected empty legacy output: '+obj.name
+
+
+def check_appearance(scene,record,root,undrawn):
     appearance=record.get('appearance')
     if appearance is None:return None
     assert appearance==json.loads((root/'style-profile.json').read_text()),'Saved appearance record differs'
     assert digest(root/'style-profile.json')==record['appearance_sha256']==scene['sequence_style_profile_sha256'],'Appearance fingerprint differs'
-    roles=set(appearance['component_roles'].values())
+    roles={appearance['component_roles'][key] for view in record['display']['views'] for key in view['actors']
+           if key+' '+view['id'] not in undrawn}
     if 'environment' in appearance['surface_roles']:roles.add('environment')
     shaders=check_materials(appearance,roles)
     colors=dict(record['display']['colors'][record['style']]);colors.update(appearance.get('semantic_colors',{}))
@@ -34,6 +49,7 @@ def check_appearance(scene,record,root):
         equal(socket.default_value,color,'Surface color differs: '+obj.name)
     for view in record['display']['views']:
         for key,settings in view['actors'].items():
+            if key+' '+view['id'] in undrawn:continue
             obj=scene.objects[key+' '+view['id']];material=bpy.data.materials[view['id']+' '+key]
             assert material['surface_role']==appearance['component_roles'][key],'Component material role differs'
             color=settings.get('color',colors[settings.get('color_key',key)])
@@ -116,10 +132,15 @@ def main():
     assert record.get('caption_windows',windows)==windows,'Resolved caption windows differ'
     assert source==record['preparation'] and display==json.loads((root/'display.json').read_text()),'Saved input records differ'
     assert record['kind']=='molecular-sequence-scene' and source['passed'] and source['checks']['passed']
-    assert scene.frame_end==frames and scene.render.fps==schedule['fps']
+    assert scene.frame_start==1 and scene.frame_end==frames and scene.render.fps==schedule['fps']
+    opening_frame=scene.frame_current_final
+    assert scene.frame_start<=opening_frame<=scene.frame_end, 'Saved opening frame is outside the presentation interval'
     assert digest(assets/'manifest.json')==record['source_sha256']==scene['sequence_source_sha256']
     assert digest(root/'display.json')==record['display_sha256']==scene['sequence_display_sha256']
-    appearance_check=check_appearance(scene,record,root)
+    undrawn={key+' '+view['id'] for view in display['views'] for key,settings in view['actors'].items()
+             if coordinates_only(settings,display_edges(settings,assets))}
+    for name in undrawn:check_undrawn_coordinates(scene.objects[name])
+    appearance_check=check_appearance(scene,record,root,undrawn)
     physical_ids=[identity for values in source['atom_ids'].values() for identity in values]
     expected_actors={key+' '+view['id'] for view in display['views'] for key in view['actors']}
     assert set(record['actors'])==expected_actors and len(record['actors'])==len(expected_actors)
@@ -136,8 +157,7 @@ def main():
             assert json.loads(obj['atom_ids'])==source['atom_ids'][obj['component']]
             verify_point_animation(obj,data[obj['component']][samples],sample_frames)
             assert not any(mod.type=='BOOLEAN' for mod in obj.modifiers)
-            settings=view['actors'][obj['component']];edges=settings.get('bonds',[])
-            if 'bond_file' in settings:edges=np.load(assets/settings['bond_file'])['bonds']
+            settings=view['actors'][obj['component']];edges=display_edges(settings,assets)
             expected_edges={tuple(sorted(map(int,pair))) for pair in edges}
             assert {tuple(sorted(edge.vertices)) for edge in obj.data.edges}==expected_edges,(obj.name,'display edges differ')
         matrix=np.asarray(record['transforms'][view['id']]);offset=-5.5 if view['id']==display['views'][0]['id'] else 5.5
@@ -198,6 +218,7 @@ def main():
     mask=next(node for node in tree.nodes if node.label=='Select matching premultiplied panel alpha')
     assert mask.inputs['Type'].default_value=='Replace Alpha' and mask.inputs['Alpha'].is_linked
     result={'passed':True,'render_frames':frames,'coordinate_samples_checked_per_view':len(samples),'evaluated_times_per_view':len(check_frames),'actor_frame_checks':checked,
+            'saved_opening_frame':opening_frame,'coordinate_only_actors':sorted(undrawn),
             'presentation_mode':schedule['mode'],'source_samples_retained':source_count+1,'observation_hold_keys':len(samples)-source_count-1,
             'physical_heavy_atom_identities':len(physical_ids),'maximum_coordinate_error_nm':error,'ledger_checks':input_checks['ledger_checks'],
             'required_input_hashes_checked':True,'stored_coordinate_keys_and_linear_timing_checked':True,

@@ -15,6 +15,23 @@ def _indices(values,count,label,pairs=False):
         raise ValueError('Require retained integer atom indices for '+label)
 
 
+def display_edges(settings, folder):
+    if 'bond_file' in settings:
+        with np.load(folder/settings['bond_file']) as archive:
+            return archive['bonds']
+    return settings.get('bonds', [])
+
+
+def coordinates_only(settings, edges):
+    if settings['representation'] == 'coordinates':
+        if {'bonds', 'bond_file', 'bond_radius_nm', 'radius_nm'} & settings.keys():
+            raise ValueError('A coordinates-only display cannot specify drawn atoms or bonds')
+        return True
+    # Older display files used a zero atom radius and no bonds for the same view.
+    return (settings['representation'] in {'sticks', 'spheres'}
+            and settings.get('radius_nm') == 0 and len(edges) == 0)
+
+
 def load_assets(folder,display):
     folder=Path(folder);source=json.loads((folder/'manifest.json').read_text())
     if source.get('passed') is not True or source.get('checks',{}).get('passed') is not True:
@@ -55,10 +72,9 @@ def load_assets(folder,display):
             raise ValueError('Invalid prepared coordinate sequence: '+key)
     for view in views:
         for key,settings in view['actors'].items():
-            edges=settings.get('bonds',[])
-            if 'bond_file' in settings:
-                with np.load(folder/settings['bond_file']) as archive:edges=archive['bonds']
+            edges=display_edges(settings,folder)
             _indices(edges,len(ids[key]),key+' display edges',pairs=True)
+            coordinates_only(settings,edges)
     for marker in display.get('highlights',[]):
         _indices(marker['indices'],len(ids[marker['component']]),marker['id'])
     for marker in display.get('bond_annotations',[]):
