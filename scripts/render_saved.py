@@ -27,6 +27,17 @@ def selected_frames(spec, first, last):
     return sorted(selected)
 
 
+def saved_compositor(scene, suffix):
+    group = scene.get('detail_compositor_branches', {}).get(suffix)
+    if group is not None:
+        return group
+    for prefix in ('COMP_', 'COMP_STYLE_', 'COMP_STACK_'):
+        group = bpy.data.node_groups.get(prefix + suffix)
+        if group is not None:
+            return group
+    return None
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True)
@@ -39,9 +50,7 @@ def main():
     args=p.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     scene=bpy.context.scene
     if args.compositor:
-        group=bpy.data.node_groups.get('COMP_'+args.compositor)
-        if group is None:group=bpy.data.node_groups.get('COMP_STYLE_'+args.compositor)
-        if group is None:group=bpy.data.node_groups.get('COMP_STACK_'+args.compositor)
+        group=saved_compositor(scene,args.compositor)
         if group is None:raise SystemExit('Requested compositor branch is missing from this saved scene.')
         scene.compositing_node_group=group
         scene['selected_compositor']=args.compositor
@@ -91,7 +100,7 @@ def main():
         except (TypeError,RuntimeError):pass
     signature={'scene_sha256':hashlib.sha256(Path(bpy.data.filepath).read_bytes()).hexdigest(),
                'render_script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-               'blender':bpy.app.version_string,'engine':scene.render.engine,
+               'blender':bpy.app.version_string,'engine':scene.render.engine,'scene_name':scene.name,
                'resolution':[scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage],
                'fps':scene.render.fps,'fps_base':scene.render.fps_base,
                'samples':scene.cycles.samples if scene.render.engine=='CYCLES' else scene.eevee.taa_render_samples if scene.render.engine=='BLENDER_EEVEE' else None,

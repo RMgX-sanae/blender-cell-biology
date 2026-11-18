@@ -38,6 +38,8 @@ PBR “真实”指光照模型，不保证分子表面、数量或动力学正�
 
 精细生成器的 `--compositor` 有 `clean`、`reference`、`monochrome`，分别保存为 `COMP_clean`、`COMP_reference`、`COMP_monochrome`。先将 Render Layers 的前景 Alpha Over 到所选背景，再做参考对比或灰度处理，最后输出。对比偏移在背景合成前作用于 premultiplied RGB 会制造负值/黑边，应避免。材质、灯光与镜头由独立 JSON 控制，详见 [production-workflow.md](production-workflow.md)。
 
+同一个工程使用多个 Scene 时，把每个 Render Layers 节点的 Scene 明确设为供图场景。Blender 创建这个节点时会默认选中当前活动场景。精细生成器按场景保存三个预设的节点组引用。重开后用 Blender 的 `-S "场景名"` 选镜头，再用 `render_saved.py --compositor reference` 选该镜头的预设。检查两个轮廓明显不同的观察方向，可发现两个文件实际输出同一镜头的问题。
+
 旧白模 `build_scene.py` 使用另一套 `none/clean/contrast/glow` 参数；不要把它们传给精细生成器。glow 是美术效果，不是荧光成像模型。新建分支应保留现有工程的节点组。
 
 Blender 5.x 可使用 `scene.compositing_node_group` 和 `NodeGroupOutput`；较早版本使用 `scene.use_nodes/scene.node_tree/Composite`。Alpha Over 等节点的输入名称也可能变化。运行时查询 RNA/输入名称，不照抄旧教程后声称兼容。本次主验证环境为 5.2.3；其他版本需小样验证。

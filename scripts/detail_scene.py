@@ -223,6 +223,7 @@ def compositors(scene, profile, selected=None):
         tree.use_fake_user = True  # Preserve unselected alternatives after reopening.
         tree.interface.new_socket(name='Image', in_out='OUTPUT', socket_type='NodeSocketColor')
         render = tree.nodes.new('CompositorNodeRLayers')
+        render.scene = scene
         render.location = (-600, 80)
         output = tree.nodes.new('NodeGroupOutput')
         output.location = (400, 80)
@@ -249,6 +250,7 @@ def compositors(scene, profile, selected=None):
         groups[mode] = tree
     if selected not in groups:
         raise ValueError(f'Unknown compositor {selected}')
+    scene['detail_compositor_branches'] = groups
     scene.compositing_node_group = groups[selected]
     scene['selected_compositor'] = selected
 
