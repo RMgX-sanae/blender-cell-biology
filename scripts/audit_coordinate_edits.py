@@ -14,6 +14,7 @@ from pathlib import Path
 import gemmi
 import numpy as np
 
+from reaction_pose_geometry import signed_height
 from source_assembly import operation_products
 
 FIELDS = ("label_asym_id", "operator", "auth_asym_id", "auth_seq_id", "insertion_code", "component", "atom")
@@ -119,16 +120,6 @@ def matches_source(stored, target, identity_only):
         return stored == expected
     # Independent float64 implementations of a matrix product may round its final sum differently.
     return np.isclose(stored, expected, rtol=0, atol=1e-9)
-
-
-def signed_height(points):
-    origin, a, b, site = points
-    u, v = a - origin, b - origin
-    normal = np.cross(u, v)
-    length = np.linalg.norm(normal)
-    if length <= 1e-6 * np.linalg.norm(u) * np.linalg.norm(v):
-        raise ValueError("Cannot orient a plane from coincident or collinear anchors")
-    return float((site - origin) @ (normal / length))
 
 
 def compare(source, arrays, policy):

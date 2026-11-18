@@ -8,10 +8,27 @@ from audit_phosphotransfer_scene import vertices
 from build_ubiquitin_transfer_scene import digest
 from coordinate_animation import verify_point_animation
 from molecular_sequence_assets import coordinates_only, display_edges, load_assets
+from reaction_pose_geometry import MEASURES, measure_nm
 from audit_surface_materials import check_materials
 from audit_interaction_scene import displayed_materials
 from detail_scene import linear
 from sequence_presentation import presentation,source_positions,coordinates_at,caption_windows
+
+
+def measure_saved_pose(pose, locations, components, view, frame, saved):
+    for kind, measure in MEASURES.items():
+        for rule in pose.get(kind, []):
+            sites = [locations[atom] for atom in rule['physical_atoms']]
+            if any(component not in components for component, _ in sites):
+                continue
+            value = measure_nm(kind, [components[component][i] for component, i in sites])
+            bounds = rule[measure.interval]
+            if not bounds[0] <= value <= bounds[1]:
+                raise ValueError(f"Saved {view} frame {frame:g}: {kind} {rule['atoms']} at {value:.8f} {measure.unit} outside {bounds}")
+            order_field = 'order' if kind == 'bonds' else 'bond_orders'
+            saved[kind].append({'view': view, 'frame': float(frame), 'sample': pose['sample'],
+                                'state': pose['state'], 'atoms': rule['atoms'], 'physical_atoms': rule['physical_atoms'],
+                                order_field: rule[order_field], measure.field: value})
 
 
 def check_undrawn_coordinates(obj):
@@ -147,7 +164,8 @@ def main():
     poses = {p['sample']: p for p in input_checks.get('reaction_geometry', {}).get('poses', [])}
     pose_frames = {float(frame): poses[s] for s, frame in zip(samples, sample_frames) if s in poses}
     locations = {atom: (key, i) for key, ids in source['atom_ids'].items() for i, atom in enumerate(ids)} if poses else {}
-    saved_lengths = []
+    saved_geometry = {kind: [] for kind in MEASURES}
+    needs_handedness = any(p.get('signed_heights') for p in poses.values())
     expected_actors={key+' '+view['id'] for view in display['views'] for key in view['actors']}
     assert set(record['actors'])==expected_actors and len(record['actors'])==len(expected_actors)
     # Coordinate checks read the saved source meshes; generated display geometry
@@ -178,6 +196,8 @@ def main():
                 assert observed.shape==expected.shape and np.isfinite(observed).all()
                 difference=float(np.max(abs(observed-expected)));error=max(error,difference);assert difference<2e-4,(frame,obj.name,difference)
                 actual=np.asarray(evaluated.matrix_world)
+                if needs_handedness and np.linalg.slogdet(actual[:3, :3])[0] != 1:
+                    raise ValueError('The saved molecular view reverses or collapses handedness: ' + view['id'])
                 assert np.allclose(actual,matrix,atol=1e-5) and not evaluated.hide_render,(frame,obj.name,'transform/visibility')
                 assert np.ptp(np.linalg.svd(actual[:3,:3],compute_uv=False))<1e-5,'Stretched molecular view'
                 if obj['component'] in view.get('keep_visible',[]):
@@ -185,18 +205,7 @@ def main():
                     assert abs(projected[:,0]-offset).max()<4.3 and abs(projected[:,1]).max()<3.45,'Main source construct clipped'
                 checked+=1
             if pose is not None:
-                for bond in pose['bonds']:
-                    pair = [locations[atom] for atom in bond['physical_atoms']]
-                    if any(key not in pose_points for key, _ in pair):
-                        continue
-                    a, b = (pose_points[key][i].astype(float) for key, i in pair)
-                    length = 10 * float(np.linalg.norm(a - b))
-                    low, high = bond['interval_A']
-                    if not low <= length <= high:
-                        raise ValueError(f"Saved {view['id']} frame {frame:g}: {bond['atoms']} at {length:.8f} Å outside {bond['interval_A']}")
-                    saved_lengths.append(dict(view=view['id'], frame=float(frame), sample=pose['sample'],
-                                              state=pose['state'], atoms=bond['atoms'], physical_atoms=bond['physical_atoms'],
-                                              order=bond['order'], length_A=length))
+                measure_saved_pose(pose, locations, pose_points, view['id'], frame, saved_geometry)
             if frame%200==0:print(view['id'],frame,'coordinate samples checked',flush=True)
     bpy.context.window.view_layer=scene.view_layers['Sequence annotations']
     marker_specs={settings['id']+' '+view['id']:(settings,view) for view in display['views']
@@ -251,12 +260,15 @@ def main():
             'limits':'Saved coordinate/identity/display checks; reaction-source qualification and rendered clarity remain separate.'}
     if 'reaction_geometry' in input_checks:
         overview = display['views'][0]['id']
-        measured = {(r['sample'], tuple(r['physical_atoms'])) for r in saved_lengths if r['view'] == overview}
-        required = {(s, tuple(b['physical_atoms'])) for s, pose in poses.items() for b in pose['bonds']}
-        if measured != required:
-            raise ValueError('Saved overview omitted a reviewed bond or source sample')
         result['reaction_geometry'] = input_checks['reaction_geometry']
-        result['saved_bond_lengths'] = saved_lengths
+        for kind, rows in saved_geometry.items():
+            required = {(s, tuple(r['physical_atoms'])) for s, pose in poses.items() for r in pose.get(kind, [])}
+            if not required:
+                continue
+            measured = {(r['sample'], tuple(r['physical_atoms'])) for r in rows if r['view'] == overview}
+            if measured != required:
+                raise ValueError('Saved overview omitted reviewed geometry or source samples: ' + kind)
+            result[MEASURES[kind].saved_field] = rows
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='ledger_checks'},ensure_ascii=False))
 

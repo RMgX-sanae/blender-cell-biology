@@ -3,7 +3,7 @@ import hashlib,json
 from pathlib import Path
 import numpy as np
 from reaction_ledger import validate,validate_sequence
-from reaction_pose_geometry import check_pose_distances
+from reaction_pose_geometry import check_pose_geometry
 
 
 def _indices(values,count,label,pairs=False):
@@ -103,7 +103,7 @@ def load_assets(folder,display):
             raise ValueError('Reaction geometry must name a verified reaction ledger or sequence')
         if review['ledger_sha256'] != hashes[name] or review['motion_sha256'] != hashes['motion.npz']:
             raise ValueError('Reaction geometry names a different ledger or motion revision')
-        poses = check_pose_distances(review, ledger_specs[name], ids, data, source['frames'])
+        poses = check_pose_geometry(review, ledger_specs[name], ids, data, source['frames'])
         receipt['reaction_geometry'] = dict(ledger=name, ledger_sha256=hashes[name],
                                             motion_sha256=hashes['motion.npz'], poses=poses)
     return source,data,receipt
