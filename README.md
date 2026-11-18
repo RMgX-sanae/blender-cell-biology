@@ -2,7 +2,7 @@
 
 用于指导 agent 制作可编辑的 Blender 细胞生物学模型与机制动画。以公开结构和文献为依据，支持教学示意、细胞环境、参考图片风格复现及可选合成器。
 
-从 [SKILL.md](SKILL.md) 开始；具体构建命令见 [精细制作工作流](references/production-workflow.md)。源码当前以 Blender 5.x 为主要运行目标，已在 Blender 5.2.3 LTS 上运行代表性案例。
+从 [SKILL.md](SKILL.md) 开始，按交付类型在[入口与验证范围](references/workflow-entrypoints.md)选用已核对的流程。具体构建命令见 [精细制作工作流](references/production-workflow.md)。源码当前以 Blender 5.x 为主要运行目标，已在 Blender 5.2.3 LTS 上运行代表性案例。
 
 ## 使用
 
@@ -16,6 +16,8 @@
 - 来源记录、对象身份与几何检查、保存场景检查、渲染和解码检查。
 
 每个入口的实现范围和未完成部分以对应说明为准。过程目录和分镜不等于全部机制已经实现；Ras 交换与 GAP 水解可独立生成或合并为开放底物池中的状态循环；部分完整肌动蛋白案例仍有接触诊断需要审核。教学路径、插值和示意密度不代表分子动力学或实验轨迹。
+
+[三个独立建模工程的重建脚本](https://github.com/RMgX-sanae/blender-cell-biology/tree/main/examples/three-scale-studies)展示了红藻藻胆体装配、硅藻壳的分级孔隙和空气置换移液器拆解。每个工程包含多个可切换视图。仓库仅提供源码和来源说明，成品由 Blender 在项目目录生成。
 
 ## 仓库内容
 
