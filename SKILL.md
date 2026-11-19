@@ -39,8 +39,9 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 需要进一步解决的问题 | 读取 |
 |---|---|
 | 已有哪个生成器，覆盖静态、局部动作还是完整机制 | [入口与实际验证范围](references/workflow-entrypoints.md)　[把既有流程迁移到新对象](references/workflow-transfer.md) |
+| 细胞器在细胞内哪些区域更常见 | [按共配准掩膜测量区域富集并放置完整片段](references/volume-distributions.md#按实测核距分布放置完整片段) |
 | 新蛋白的装配拷贝、作者编号、界面交接或化学变化 | [装配身份](references/source-assembly-instances.md)　[从结合姿态接下一镜](references/protein-interactions.md#把结合姿态交给下一镜头)　[多伙伴交接](references/binding-handoff.md)　[反应键级与衔接](references/workflow-transfer.md#反应前后的键级) |
-| 分裂、复制、转录、翻译、囊泡或聚合物装配 | [过程目录](references/process-atlas.md)　[从已有片段接下一镜头](references/mechanistic-depth.md#从已有片段接下一镜头)　[囊泡切断与开孔动画](references/vesicle-topology.md#制作可播放的局部动画)　[聚合物模板](references/polymer-templates.md)　[装配分镜](references/assembly-storyboards.md) |
+| 分裂、复制、转录、翻译、囊泡或聚合物装配 | [过程目录](references/process-atlas.md)　[从已有片段接下一镜头](references/mechanistic-depth.md#从已有片段接下一镜头)　[连续翻译路线](references/translation-appearance.md#可播放的哺乳动物翻译路线)　[内吞到早期内体](references/vesicle-topology.md#从配体结合到早期内体货物交接)　[聚合物模板](references/polymer-templates.md)　[装配分镜](references/assembly-storyboards.md) |
 | 改变表现方法、保护标签或接外部合成器 | [风格库](references/style-library.md)　[合成配方](references/render-recipes.md)　[Natron](references/natron-compositing.md) |
 | 核查 Blender 构建、复用机制白模或验证视频 | [Blender 工作流](references/blender-workflow.md)　[验证与交付](references/validation.md) |
 

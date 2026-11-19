@@ -6,7 +6,7 @@
 
 [![微形互动展厅与血蓝蛋白模型](https://rmgx-sanae.github.io/blender-cell-biology-gallery/assets/exhibition.jpg)](https://rmgx-sanae.github.io/blender-cell-biology-gallery/)
 
-从 [SKILL.md](SKILL.md) 开始，按交付类型在[入口与验证范围](references/workflow-entrypoints.md)选用已核对的流程。具体构建命令见 [精细制作工作流](references/production-workflow.md)。源码当前以 Blender 5.x 为主要运行目标，已在 Blender 5.2.3 LTS 上运行代表性案例。
+从 [SKILL.md](SKILL.md) 开始，按交付类型在[入口与验证范围](references/workflow-entrypoints.md)选用已核对的流程。具体构建命令见 [精细制作工作流](references/production-workflow.md)。源码当前以 Blender 5.x 为主要运行目标，代表性工程已在 Blender 5.2.3 LTS 和 5.3.0 上运行。
 
 ## 使用
 
@@ -14,7 +14,8 @@
 
 ## 能力与边界
 
-- 细胞、线粒体、膜受体和分子结构场景，按尺度及区室选择环境。
+- 细胞、线粒体、膜受体和分子结构场景，按尺度及区室选择环境。实测显微掩膜可用于保留原标本，也可用来约束新布局。[按核距分布完整细胞器片段](references/volume-distributions.md#按实测核距分布放置完整片段)
+- 完整教学时间轴可以在已有局部特写前后接入上游、产物和回收。[Pol II 转录](references/pol2-transcription-cycle.md) · [哺乳动物翻译](references/translation-appearance.md#可播放的哺乳动物翻译路线) · [囊泡至早期内体](references/vesicle-topology.md#从配体结合到早期内体货物交接)
 - V 型 ATPase、PKA 磷酸转移、Ras/SOS 核苷酸交换、Ras/p120GAP 水解及若干核酸、骨架与运输案例。
 - 分步教学和连续播放、参考风格分析、可编辑材质、灯光及合成节点。
 - 来源记录、对象身份与几何检查、保存场景检查、渲染和解码检查。

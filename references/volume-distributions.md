@@ -2,6 +2,41 @@
 
 这个入口在明确的三维体素区域内放置完整对象，并把刚体矩阵交给 Blender。它沿用受体分布工作流的来源记录、固定 seed、拒绝采样、完整对象排斥和独立检查；曲面法向改为体积包含约束。数值布局与保存工程检查分开进行，不代表细胞器动力学或实测分布。
 
+## 按实测核距分布放置完整片段
+
+需要展示一个标本中实际出现过的线粒体网络时，直接使用共配准的 `structure` 掩膜。需要让相同的细胞器片段按实测区域偏好重新分布时，可使用核距分层入口。一个 `.blend` 保留原细胞，另一个 `.blend` 显示模型，两者沿用相同的视角、边界、核与尺度。实测掩膜可以在模型的集合中恢复显示。
+
+以 Allen 细胞 230745 的 TOMM20 标记为例。首先在细胞内、核外按物理距离分层。每一层用标记阳性体素数除以该层全部胞质体素数，得到标记体积分数。不同层可占据很不相同的胞质体积，不能只比较阳性体素总数。全局富集倍数是本层体积分数除以全体胞质的体积分数。[Allen 数据集说明](https://allencell.s3.amazonaws.com/aics/hipsc_single_cell_image_dataset/README.md)
+
+```bash
+"$PYTHON" "$SKILL/scripts/prepare_volume_case.py" --fetch --inputs "$PROJECT/inputs" \
+  --output "$PROJECT/region" --component-rank 15
+"$BLENDER" --disable-autoexec -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_region_volume.py" -- --region "$PROJECT/region" \
+  --font-zh "$FONT_ZH" --font-latin "$FONT_EN" --output "$PROJECT/observed-cell.blend"
+"$BLENDER" --disable-autoexec -b "$PROJECT/observed-cell.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/blender_volume.py" -- export --object "Complete marker component" \
+  --micrometers-per-unit 1 --output "$PROJECT/body"
+"$PYTHON" "$SKILL/scripts/prepare_volume_layout.py" --region "$PROJECT/region" \
+  --body "$PROJECT/body" --nuclear-shell-edges-um 1.5 3 6 --count 32 --seed 230745 \
+  --boundary-gap-um .035 --pair-gap-um .09 --output "$PROJECT/layout"
+"$BLENDER" --disable-autoexec -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/build_region_volume.py" -- --region "$PROJECT/region" \
+  --layout "$PROJECT/layout" --font-zh "$FONT_ZH" --font-latin "$FONT_EN" \
+  --output "$PROJECT/regional-layout.blend"
+"$BLENDER" --disable-autoexec -b "$PROJECT/regional-layout.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/blender_volume.py" -- audit \
+  --layout "$PROJECT/layout" --output "$PROJECT/saved-audit.json"
+```
+
+`--component-rank` 从原始标记掩膜中选一个完整的面相连片段。排除接触切图边缘、越出细胞或与 DNA 掩膜重叠的片段后，按体积降序排列。每个片段保留原始等值面与真实比例。照明法线可适度柔化，顶点和统计所用的掩膜保持源坐标。一个连通片段可能属于更大的生物学网络。
+
+`--nuclear-shell-edges-um` 使用到最近核阳性体素中心的距离和左闭右开区间。每层完整复制体数按该层实测阳性体素占全部阳性体素的比例分配，整数取最大余数。这里的 32 是制作者选择的展示数量，角度与层内位置由 seed 决定；每个完整包围球均须避开核、细胞外和其他复制体。指定层若无法容纳，可选更小的真实片段、减少展示数量或根据生物学问题重设分界，并记录原因。程序不会将剩余额度转移到另一层。
+
+在此标本中，0–1.5、1.5–3、3–6 和 ≥6 µm 四层的实测体积分数约为 15.2%、9.5%、8.8% 和 20.5%。最外层局部比例较高，却只含全部阳性体素的一小部分。32 个相同体积的片段按 18、7、5、2 个中心分配。跨层延伸的几何和真实标记网络可能不同。`layout/manifest.json` 分别记录来源体素、分母、倍数、请求及实现的中心数。这个结果反映该细胞的标记，没有给出细胞群体的规律、线粒体个数或动力学。
+
+其他物种、区室或标记先核对通道、轴序、物理标定和共同坐标。如果分布取决于细胞极性或距膜距离，可重建对应的区域标号，连同每区分配数交给 `volume_distribution.sample(..., strata_zyx=..., counts_by_stratum=...)`。需要避开已有细胞器而放置另一种对象时，沿用下面的剩余胞质入口。
+
 ## 输入和范围
 
 `scripts/volume_distribution.py` 提供 `sample`、`validate`、`ball_inside` 和 `enclosing_sphere`。输入包括：

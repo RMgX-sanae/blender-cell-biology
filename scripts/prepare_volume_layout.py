@@ -7,6 +7,7 @@ import shutil
 
 import numpy as np
 from volume_distribution import sample,validate
+from volume_regions import nuclear_shells,regional_counts
 
 
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -19,6 +20,8 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--count',type=int,required=True);p.add_argument('--seed',type=int,default=23)
     p.add_argument('--boundary-gap-um',type=float,default=0.);p.add_argument('--pair-gap-um',type=float,default=0.)
+    p.add_argument('--nuclear-shell-edges-um',type=float,nargs='+',
+                   help='Fit regional target volume fractions, then model replacements in cytoplasm')
     a=p.parse_args()
     if a.output.exists():p.error('Use a fresh output directory')
     region=json.loads((a.region/'manifest.json').read_text());body=json.loads((a.body/'manifest.json').read_text())
@@ -32,12 +35,21 @@ def main():
         p.error('Region data differs from its source manifest')
     if digest(a.body/'body.npz')!=body['data_sha256']:p.error('Body geometry differs from its export manifest')
     with np.load(a.region/'source-masks.npz',allow_pickle=False) as data:
-        mask=data['available'];spacing=data['spacing_xyz_um'];origin=data['origin_xyz_um']
+        spacing=data['spacing_xyz_um'];origin=data['origin_xyz_um'];shell=None;quota=None;regional=None
+        if a.nuclear_shell_edges_um:
+            mask,shell,regional=nuclear_shells(data,a.nuclear_shell_edges_um)
+            quota=regional_counts(a.count,regional['target_voxels'])
+        else:mask=data['available']
     with np.load(a.body/'body.npz',allow_pickle=False) as data:points=data['vertices']
     layout=sample(mask,spacing,origin,points,a.count,seed=a.seed,
-                  boundary_gap=a.boundary_gap_um,pair_gap=a.pair_gap_um)
+                  boundary_gap=a.boundary_gap_um,pair_gap=a.pair_gap_um,strata_zyx=shell,counts_by_stratum=quota)
     check=validate(mask,spacing,origin,points,layout['transforms'],
                    boundary_gap=a.boundary_gap_um,pair_gap=a.pair_gap_um)
+    if regional:
+        indices=np.rint((layout['centers_xyz']-origin)/spacing).astype(int)[:,::-1]
+        regional['realized_body_centers']=np.bincount(shell[tuple(indices.T)],minlength=len(regional['edges_um'])+1).tolist()
+        regional['requested_body_centers']=quota.tolist()
+        if regional['realized_body_centers']!=quota.tolist():raise ValueError('Realized centers missed the declared region counts')
     a.output.mkdir(parents=True)
     shutil.copyfile(a.region/'source-masks.npz',a.output/'source-masks.npz')
     shutil.copyfile(a.body/'body.npz',a.output/'body.npz')
@@ -47,6 +59,8 @@ def main():
             'boundary_gap_um':a.boundary_gap_um,'pair_gap_um':a.pair_gap_um,
             'files':{name:digest(a.output/name) for name in ['source-masks.npz','body.npz','layout.npz']},
             'audit':check,'limits':'Static copies of the exported geometry in the declared voxel union; not measured abundance or dynamics.'}
+    if regional:
+        record.update(placement_policy='replace-measured-structure',regional_measurement=regional)
     (a.output/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({'passed':True,'count':a.count,'body_radius_um':layout['body_radius'],'attempts':layout['attempts']}))
 

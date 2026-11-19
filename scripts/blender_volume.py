@@ -17,6 +17,7 @@ from mathutils import Matrix
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from volume_distribution import ball_inside,enclosing_sphere
+from volume_regions import placement_mask
 
 
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -137,6 +138,7 @@ def audit(path):
     inverse=np.linalg.inv(common);group=scene.collection.children[binding['collection']]
     if group.hide_render or set(o.name for o in group.objects)!=set(binding['objects']):raise ValueError('Layout collection hidden or membership changed')
     body=data['body.npz'];region=data['source-masks.npz'];matrices=data['layout.npz']['transforms'];spheres=[]
+    mask=placement_mask(region,record.get('placement_policy','remaining-cytoplasm'))
     for index,name in enumerate(binding['objects']):
         obj=scene.objects[name]
         if obj.hide_render or not obj.visible_get() or obj.parent!=anchor or obj.get('volume_layout_index')!=index:
@@ -150,7 +152,7 @@ def audit(path):
         local_center,_=enclosing_sphere(body['vertices'])
         center=actual[:3,:3]@local_center+actual[:3,3]
         radius=float(np.linalg.norm((vertices-local_center)@actual[:3,:3].T,axis=1).max())
-        if not ball_inside(region['available'],region['spacing_xyz_um'],region['origin_xyz_um'],
+        if not ball_inside(mask,region['spacing_xyz_um'],region['origin_xyz_um'],
                            center,radius+record['boundary_gap_um']):raise ValueError('Saved body intersects forbidden region')
         if any(np.linalg.norm(center-c)<=radius+r+record['pair_gap_um'] for c,r in spheres):
             raise ValueError('Saved whole-body bounds overlap')

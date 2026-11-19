@@ -9,6 +9,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from urllib.request import Request,urlopen
 
 import numpy as np
@@ -41,6 +42,7 @@ def main():
     parser.add_argument('--inputs',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--config',type=Path,default=Path(__file__).resolve().parents[1]/'assets/volume-cell-230745.json')
     parser.add_argument('--fetch',action='store_true',help='Fetch only missing, size-limited, hash-pinned public inputs')
+    parser.add_argument('--component-rank',type=int,help='Also export measured context and one intact segmented component ranked by volume')
     args=parser.parse_args()
     if args.output.exists():parser.error('Use a fresh output directory')
     config=json.loads(args.config.read_text())
@@ -67,21 +69,27 @@ def main():
                   boundary_gap=config['boundary_gap_um'],pair_gap=config['pair_gap_um'])
     audit=validate(available,spacing,origin,points,layout['transforms'],
                    boundary_gap=config['boundary_gap_um'],pair_gap=config['pair_gap_um'])
-    args.output.mkdir(parents=True)
-    np.savez_compressed(args.output/'source-masks.npz',**masks,available=available,spacing_xyz_um=spacing,origin_xyz_um=origin)
-    np.savez_compressed(args.output/'layout.npz',body_vertices_xyz_um=points,**layout)
-    record={'kind':'voxel-volume-placement-case','passed':audit['passed'],'config':config,
-            'source_sha256':{'image':digest(image),'metadata':digest(metadata)},'selected_metadata':row,
-            'data_sha256':{n:digest(args.output/n) for n in ['source-masks.npz','layout.npz']},
-            'units':'micrometer','coordinate_frame':'ZYX arrays; XYZ positions; local crop voxel0 center at origin0. No global FOV registration.',
-            'mask_policy':'cell AND NOT dna AND NOT structure; original source masks retained without repair',
-            'mask_voxels':{k:int(v.sum()) for k,v in {**masks,'available':available}.items()},
-            'source_conflicts':{'structure_in_dna_voxels':int(np.count_nonzero(masks['structure']&masks['dna'])),
-                               'dna_outside_cell_voxels':int(np.count_nonzero(masks['dna']&~masks['cell'])),
-                               'structure_outside_cell_voxels':int(np.count_nonzero(masks['structure']&~masks['cell']))},
-            'audit':audit,'attempts':layout['attempts'],
-            'limits':'Technical whole-body placement probe; not source segmentation validation, complete cytoplasmic occupancy, measured abundance, motion or a saved Blender scene.'}
-    (args.output/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    with TemporaryDirectory(dir=args.output.parent) as directory:
+        pending=Path(directory)/'region';pending.mkdir()
+        np.savez_compressed(pending/'source-masks.npz',**masks,available=available,spacing_xyz_um=spacing,origin_xyz_um=origin)
+        np.savez_compressed(pending/'layout.npz',body_vertices_xyz_um=points,**layout)
+        record={'kind':'voxel-volume-placement-case','passed':audit['passed'],'config':config,
+                'source_sha256':{'image':digest(image),'metadata':digest(metadata)},'selected_metadata':row,
+                'data_sha256':{n:digest(pending/n) for n in ['source-masks.npz','layout.npz']},
+                'units':'micrometer','coordinate_frame':'ZYX arrays; XYZ positions; local crop voxel0 center at origin0. No global FOV registration.',
+                'mask_policy':'cell AND NOT dna AND NOT structure; original source masks retained without repair',
+                'mask_voxels':{k:int(v.sum()) for k,v in {**masks,'available':available}.items()},
+                'source_conflicts':{'structure_in_dna_voxels':int(np.count_nonzero(masks['structure']&masks['dna'])),
+                                   'dna_outside_cell_voxels':int(np.count_nonzero(masks['dna']&~masks['cell'])),
+                                   'structure_outside_cell_voxels':int(np.count_nonzero(masks['structure']&~masks['cell']))},
+                'audit':audit,'attempts':layout['attempts'],
+                'limits':'Technical whole-body placement probe; not source segmentation validation, complete cytoplasmic occupancy, measured abundance, motion or a saved Blender scene.'}
+        if args.component_rank is not None:
+            from volume_regions import save_component_surfaces
+            save_component_surfaces(masks,spacing,origin,args.component_rank,pending,record['data_sha256']['source-masks.npz'])
+        (pending/'manifest.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n')
+        pending.rename(args.output)
     print(json.dumps({k:record[k] for k in ['passed','mask_voxels','source_conflicts','audit','attempts']}))
 
 

@@ -29,7 +29,7 @@ def enclosing_sphere(points):
 
 
 def sample(mask, spacing_xyz, origin_xyz, points, count, *, seed=23,
-           boundary_gap=0., pair_gap=0., max_attempts=100000):
+           boundary_gap=0., pair_gap=0., max_attempts=100000, strata_zyx=None, counts_by_stratum=None):
     """Place copies of one body; all of its enclosing ball must fit.
 
     EDT measures distances between voxel centers. Subtracting the voxel half
@@ -49,9 +49,24 @@ def sample(mask, spacing_xyz, origin_xyz, points, count, *, seed=23,
     tolerance=1e-12*max(1.,np.linalg.norm(np.asarray(mask.shape)[::-1]*spacing))
     sites=np.argwhere(mask & (lower>radius+boundary_gap+tolerance))
     if not len(sites):raise ValueError('No conservative whole-body placement sites')
+    groups=None;order=None
+    if strata_zyx is not None or counts_by_stratum is not None:
+        strata=np.asarray(strata_zyx);quota=np.asarray(counts_by_stratum)
+        if (strata.shape!=mask.shape or strata.dtype.kind not in 'iu' or quota.ndim!=1 or
+                quota.dtype.kind not in 'iu' or np.any(quota<0) or quota.sum()!=count or
+                strata.min()<0 or strata.max()>=len(quota)):
+            raise ValueError('Use matching integer region labels and nonnegative counts summing to the requested count')
+        labels=strata[tuple(sites.T)]
+        groups={k:sites[labels==k] for k,n in enumerate(quota) if n}
+        if any(not len(pool) for pool in groups.values()):
+            raise ValueError('A requested region has no feasible whole-body centers; review the source body size or regional boundaries')
+        # Fill scarce space first; proposals inside each region stay uniformly random.
+        sequence=sorted(groups,key=lambda k:len(groups[k])/quota[k])
+        order=np.repeat(sequence,quota[sequence])
     rng=np.random.default_rng(seed);centers=[];transforms=[];bounds=[]
     for attempt in range(1,max_attempts+1):
-        index=sites[rng.integers(len(sites))]
+        pool=sites if groups is None else groups[order[len(centers)]]
+        index=pool[rng.integers(len(pool))]
         jitter=rng.uniform(-.5,.5,3)*spacing
         bound=float(lower[tuple(index)]-np.linalg.norm(jitter))
         if bound<=radius+boundary_gap+tolerance:continue
@@ -64,7 +79,8 @@ def sample(mask, spacing_xyz, origin_xyz, points, count, *, seed=23,
             return {'transforms':np.asarray(transforms),'centers_xyz':np.asarray(centers),
                     'body_center_xyz':local_center,'body_radius':radius,
                     'clearance_lower_bounds':np.asarray(bounds),'attempts':attempt}
-    raise ValueError(f'Packing not reached: {len(centers)}/{count}; change the declared count or geometry explicitly')
+    region='' if order is None else f' in region {order[len(centers)]}'
+    raise ValueError(f'Packing not reached: {len(centers)}/{count}{region}; review the declared count, body size and boundaries')
 
 
 def ball_inside(mask, spacing_xyz, origin_xyz, center_xyz, radius):

@@ -57,6 +57,7 @@
 | 线粒体或动物细胞总览 | [细胞与细胞器](cells-and-organelles.md)、[精细制作流程](production-workflow.md)：`build_organelle_scene.py`；或 `prepare_cell_geometry.py` → `build_cell_scene.py` | **既有模型**：连续嵴膜、核膜—ER 关系等示意；20 类细胞与 27 类组件表仍是建模配方，不能当作全部已重建 |
 | 展示同一来源细胞的膜、DNA 和一种细胞器标记 | [同源细胞展示](registered-cell-display.md)：`prepare_allen_environment.py` → `build_registered_cell_scene.py` → `audit_registered_cell_scene.py` | **独立重建的静态展示**：三套不同 Allen 细胞来源、四张 Cycles 明暗渲染；保留全部源顶点、面和相对位置。源边界有实际开边/非流形边，不能当封闭体积或完整膜模型 |
 | 在细胞体积内放置完整对象并避开已知结构 | [体积内放置](volume-distributions.md)：`prepare_volume_case.py` → `blender_volume.py export` → `prepare_volume_layout.py` → `blender_volume.py place/audit` | **静态接入独立重建**：Allen 原始体素、64 个数值探针；另有 40 个完整评估网格副本及保存工程检查，一张 Cycles 静态图。原掩膜及冲突保留；未验证实际细胞器丰度、运输或动态分布 |
+| 用共配准的细胞器分割确定区域富集 | [核距分层的来源、布局和重建](volume-distributions.md#按实测核距分布放置完整片段)。实测分布、完整源片段和加权模型均可打开 | **单标本验证**。Allen hiPSC 230745 的 TOMM20 标记可按胞质体积计算富集，32 个完整源片段按四层分配并独立检查。片段数量、方位和层内位置为模型设定 |
 | 新细胞形态、细胞器定位或组织极性 | [细胞与细胞器](cells-and-organelles.md) → [迁移方法](workflow-transfer.md) | **配方**：改用目标物种/细胞状态的来源与空间约束；受体表面采样不能直接替代细胞器体积分布 |
 
 ## 表现与交付沿用哪些步骤
