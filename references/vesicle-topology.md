@@ -1,16 +1,16 @@
 # 囊泡出芽与融合：把区室交接做成可检查的几何
 
-要拍清囊泡从哪里来、内容物又能进到哪里，可在 Blender 中选两段局部动画。第一段从膜内陷到膜颈收紧、载体切断并离开。第二段从载体靠近受体区室到融合孔张开，货物开始进入受体腔。三份液相货物、一个教学示意跨膜受体和配体各自保持身份。另有静态快照可检查整条教学路径上的特定时点。
+要拍清囊泡从哪里来、内容物又能进到哪里，可在 Blender 中选两段局部动画。第一段从膜内陷到膜颈收紧、载体切断并离开。第二段从载体靠近受体区室到融合孔张开，货物开始进入受体腔。三份液相货物、一个教学示意跨膜受体和配体各自保持身份。也可以制作同一批货物从 AP2 捕获到内体交接的连续路线，或提取静态几何。
 
 ## 先限定生物学情境
 
 [vesicle-uptake-scope.json](../assets/vesicle-uptake-scope.json) 保存事件、原始研究、证据适用范围和未实现阶段。本例是哺乳动物内吞到早期内体的教学综合，不能称作同一细胞中观测到的一条完整轨迹。
 
 - [AP2/网格蛋白重构研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC4333214/)支持膜与货物参与的激活及被覆出芽；不说明细胞中其他因子都可省略。选择一个成功摄取事件来讲解，不把“先捕获货物”升级成所有小窝起始的必需顺序。
-- [Dynamin2 招募](https://pmc.ncbi.nlm.nih.gov/articles/PMC4230619/)和 [Auxilin/GAK–Hsc70 去被覆](https://pmc.ncbi.nlm.nih.gov/articles/PMC7054993/)分别限定切断与释放后的机器步骤；本原型只实现前后几何，没有装配这些蛋白。
+- [Dynamin2 招募](https://pmc.ncbi.nlm.nih.gov/articles/PMC4230619/)和 [Auxilin/GAK–Hsc70 去被覆](https://pmc.ncbi.nlm.nih.gov/articles/PMC7054993/)分别限定切断与释放后的机器步骤；局部膜镜头提供前后几何，整条路线再加入示意膜颈机器和完整被覆单体。
 - [2026 年 Rab5 时序研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC13388671/)在所测人细胞中把 Rab5 招募放在去被覆之后，涉及 GEF 与脂质变化。不能给刚形成的小窝直接加上 EEA1 阳性标签；该结果不提供本例所需的全部融合机器身份。
 - [EEA1 实验](https://pmc.ncbi.nlm.nih.gov/articles/PMC5142606/)支持不对称系留及柔性变化。实现时保留蛋白轮廓长度，用弯曲改变端到端距离。[分离内体实验](https://pmc.ncbi.nlm.nih.gov/articles/PMC2592678/)区分对接与融合，不能把相互靠近直接算成融合。
-- [同型早期内体的 SNARE 研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC1413832/)不能直接确定 SUM159 新摄取载体与内体之间的全部 SNARE 身份；[NSF/α-SNAP 研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC2691687/)也不等于完整回收及 ATP 计量。这里保持未解决状态。旧 P10 是酵母液泡体系，不能把 HOPS 移入本例冒充 EEA1 路线。
+- [同型早期内体的 SNARE 研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC1413832/)不能直接确定 SUM159 新摄取载体与内体之间的全部 SNARE 身份；[NSF/α-SNAP 研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC2691687/)也不等于完整回收及 ATP 计量。整条路线同时注明所用功能实验与结构标本。旧 P10 是酵母液泡体系，不能把 HOPS 移入本例冒充 EEA1 路线。
 
 事件表的 `after` 是本例的讲解顺序，允许生物学招募和脂质变化重叠。`uncoat/rab/recycle` 等时间区间仍是待接入的安排，不代表对应蛋白、核苷酸或回收过程已经实现。
 
@@ -22,6 +22,42 @@
 4. 固定内容物身份，并要求它们处于载体所属的连通腔。仅判断“还在水相”会放过货物提前跳进另一封闭内体。球形探针用 `volume_distribution.ball_inside` 检查整体体积，另用解析场的 Lipschitz 界核对；受体锚点、胞质尾及配体侧别分别检查。
 5. 独立检查导出网格的分量、Euler 特征、边面关联、相邻绕序、整体朝向及场等值偏差。有限视野中的质膜有裁切边界；只允许其开边位于声明的视野边界。这不是任意网格的完整流形/自交证明。
 6. 将选中的完整网格交给 Blender，重开保存工程比较实际评估顶点、三角面、矩阵和探针几何。已有材质、灯光与合成入口可沿用；不把验证中的透明膜外观当作参考风格已经验收。
+
+## 从配体结合到早期内体货物交接
+
+这个入口把膜及其两侧的分子共用一条时间轴。先跟随同一批液相货物和受体，再按机制需要切换取景。来源取自不同的哺乳动物标本与体外体系。视野使用教学尺度，蛋白内部统一等比缩放。完整单体按来源装配，不把晶体中的可溶结构域延长成跨膜片段。
+
+1. 运行[膜侧 AP2 准备器](protein-interactions.md)得到 `$PROJECT/ap2`。运行[网格蛋白准备器](clathrin-assembly.md)得到 `$PROJECT/coat`。已有来源校验相符的准备结果可直接使用。
+2. 下载 3MJH 和 2NPS 原始 mmCIF，得到含 GTP、Mg 和 Zn 的 Rab5A–EEA1 指形域及四条内体 SNARE 基序。软系绳及 SNARE 膜端连接均为示意。EEA1 的两端接近时保持曲线轮廓长度。Rab5 的末端脂锚和 EEA1 全长没有原子坐标。[Rab5–EEA1](https://www.rcsb.org/structure/3MJH) · [四链结构](https://www.rcsb.org/structure/2NPS)
+3. 准备并构建工程。这里的 625 帧为 24 fps 教学编排。中文提供宋体与 Times New Roman 文件。英文可用 `--language en --font-latin "$FONT_EN"`。
+
+```bash
+for code in 3MJH 2NPS; do
+  "$PYTHON" "$SKILL/scripts/fetch_structure.py" "$code" --output "$PROJECT/sources"
+done
+"$PYTHON" "$SKILL/scripts/prepare_vesicle_machinery.py" \
+  --sources "$PROJECT/sources" --output "$PROJECT/machinery"
+"$PYTHON" "$SKILL/scripts/prepare_vesicle_topology.py" \
+  --motion uptake --output "$PROJECT/motion"
+"$BLENDER" --disable-autoexec -b --factory-startup --python-exit-code 1 \
+  --python "$SKILL/scripts/blender_vesicle_topology.py" -- animate \
+  --input "$PROJECT/motion" --ap2 "$PROJECT/ap2" --coat "$PROJECT/coat" \
+  --machinery "$PROJECT/machinery" --font-zh "$FONT_ZH" --font-latin "$FONT_EN" \
+  --width 1600 --samples 24 --output "$PROJECT/uptake.blend"
+"$BLENDER" --disable-autoexec -b "$PROJECT/uptake.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/blender_vesicle_topology.py" -- audit \
+  --input "$PROJECT/motion" --output "$PROJECT/audit.json"
+```
+
+| 可见交接 | 来源限定和能量 |
+|---|---|
+| 配体靠近受体，AP2 招募被覆，完整三脚单体沿胞质侧组成可见的半笼 | 6YAF 核心和短肽保留来源构型，受体与短肽的对应为教学设定。3IYV 提供装配变换，只展示能避开供体膜的完整单位。[AP2](https://www.rcsb.org/structure/6YAF) · [网格蛋白](https://www.rcsb.org/structure/3IYV) |
+| 膜颈收紧并切断，网格蛋白与 AP2 返回胞质池 | Dynamin 的螺旋是功能示意。标题交代 GTP 与助伴侣–Hsc70 的 ATP 边界。切断两侧分别检查膜分量与水相通行。[切断](https://pmc.ncbi.nlm.nih.gov/articles/PMC4230619/) · [去被覆](https://pmc.ncbi.nlm.nih.gov/articles/PMC7054993/) |
+| 去被覆后，Rab5 释放 GDP 并取得另一份 GTP。靶膜上的 EEA1 捕获载体，弯曲并缩短两端间距 | 源标本提供 GTP 配体及相互作用界面，GDP 离开用身份标记示意。GEF 和脂质变化的作用记录在来源表。EEA1 的完整轮廓与运动为示意。[Rab5 招募](https://doi.org/10.1038/s41467-026-70543-8) · [EEA1 系留](https://doi.org/10.1038/nature19326) |
+| 四条 SNARE 基序配对，孔开启，原来的三份液相货物进入内体 | 最近内吞的神经末梢囊泡提供功能证据，2NPS 提供装配端点。VAMP4 位于载体一侧、三份 Q-SNARE 位于靶侧只是本片选用的一种分配。核心按刚体转动示意配对，未解析的连接沿连续膜表面移动。[内吞囊泡融合实验](https://doi.org/10.1111/j.1600-0854.2006.00466.x) · [多种 SNARE 拓扑](https://pmc.ncbi.nlm.nih.gov/articles/PMC1782365/) |
+| 货物留在内体腔，受体保持跨膜侧别，EEA1 留在靶膜，Rab5 留在融合后的膜，cis-SNARE 松开 | α-SNAP/NSF 与 ATP 用标题说明，展示四条实际基序的分离。结束状态代表一次货物交接。之后受体分选和 Rab5 失活需另选实验证据。[内体 SNARE 回收](https://pmc.ncbi.nlm.nih.gov/articles/PMC2691687/) |
+
+换到分泌囊泡或其他靶区室时，沿用货物身份、两侧水相、膜端贴合与开孔检查。重新选择被覆、系留、融合体系和能量来源。这个入口保留膜表面与腔的连通切换，分子切断、脂质半融合以及 ATP 分子计量属于更细一级的问题。
 
 ## 制作可播放的局部动画
 
@@ -76,6 +112,6 @@ BLENDER='/actual/path/to/blender'
 
 可以迁移的是“区室图 → 完整货物身份 → 同一场的膜/腔网格 → 独立检查 → 少量视觉检查”。COPII、分泌或其他融合路线需重写供受体、膜侧别、参与者和证据，不只是换标签。
 
-要将局部镜头接成完整内吞路线，还须交代被覆及切断机器、去被覆及能量消耗、目标路线的融合参与者、系留柔性和回收。迁移到其他膜事件时，先选两侧水相、应该保持身份的货物、跨膜朝向以及可分辨通道的机位。若来源支持另一种形状，可替换几何节点中的距离场，沿用持久货物、连通开关和切换两侧的检查。只有需要交付成片时才完整导出。[高效审阅](review-and-retention.md)
+局部镜头需要完整上下游时，使用上面的连续内吞路线。迁移到其他膜事件时，先选两侧水相、应该保持身份的货物、跨膜朝向以及可分辨通道的机位。若来源支持另一种形状，可替换几何节点中的距离场，沿用持久货物、连通开关和切换两侧的检查。只有需要交付成片时才完整导出。[高效审阅](review-and-retention.md)
 
-[AP2–货物膜侧结合](protein-interactions.md)已开始补分子演员，但仍是独立的平膜局部动作，尚未与本例的出芽、切断及融合进度合并。它使用重构体系的核心/短肽，不能直接替代本例理想化受体的全部结构或声明其已完成整条路径。
+[AP2–货物膜侧结合](protein-interactions.md)也能独立制作平膜特写。连续路线直接沿用这一准备结果，源短肽与示意受体的关联仅供本例演示。

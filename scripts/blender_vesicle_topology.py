@@ -107,11 +107,14 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['build','animate','audit'])
     p.add_argument('--input',type=Path,required=True);p.add_argument('--time',type=float,default=.8)
     p.add_argument('--output',type=Path);p.add_argument('--width',type=int,default=1280);p.add_argument('--samples',type=int,default=24)
+    for option in ('ap2','coat','machinery','font-zh','font-latin'):
+        p.add_argument('--'+option,type=Path)
+    p.add_argument('--language',choices=['zh','en'],default='zh')
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     if a.command=='animate':
         if a.output is None:p.error('animate requires --output')
         from vesicle_motion_scene import build as build_motion
-        build_motion(a.input,a.output,a.width,a.samples)
+        build_motion(a.input,a.output,a.width,a.samples,a)
         return
     if a.command=='build':
         if a.output is None:p.error('build requires --output')

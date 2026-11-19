@@ -151,10 +151,11 @@ def prepare_motion(output,event,frames,fps):
     """Sample the existing field controls and persistent actors at the requested teaching cadence."""
     if frames < 3 or fps < 1:
         raise ValueError('Use at least three playback frames and a positive frame rate')
-    start,end,boundary = (.11,.47,SCISSION) if event=='scission' else (.70,.94,FUSION)
+    windows={'scission':(.11,.47,SCISSION),'fusion':(.70,.94,FUSION),'uptake':(0.,1.,SCISSION)}
+    start,end,boundary=windows[event]
     samples=[]
     for frame,t in enumerate(np.linspace(start,end,frames),1):
-        t=boundary if abs(t-boundary)<1e-12 else float(t)
+        t=next((v for v in (SCISSION,FUSION) if abs(t-v)<1e-12),float(t))
         s=state(t)
         if (np.any(field(s,*s['cargo'].T)+CARGO_RADIUS>=-HALF)
                 or field(s,*s['ligand'])+.08>=-HALF or abs(field(s,*s['receptor']))>1e-8
@@ -172,6 +173,12 @@ def prepare_motion(output,event,frames,fps):
             'cargo_ids':CARGO_IDS,'cargo_radius':CARGO_RADIUS,'preparation_sha256':digest(__file__),
             'source_scope_sha256':digest(scope),
             'limits':'Teaching time. The connected and separated states are authored geometry. The transition does not resolve lipid rearrangement, protein machinery or experimental kinetics.'}
+    if event=='uptake':
+        if frames<97:raise ValueError('Use at least 97 frames to represent the full uptake route')
+        record['boundaries']={name:next(r['frame'] for r in samples if r['time']>=t)
+                              for name,t in [('scission',SCISSION),('fusion',FUSION)]}
+        record['intervals']=INTERVALS
+        record['limits']='One productive mammalian teaching synthesis. Membrane topology and timing are authored; the scoped molecular references come from different experimental systems.'
     output.mkdir(parents=True,exist_ok=False)
     (output/'source-scope.json').write_bytes(scope.read_bytes())
     (output/'motion.json').write_text(json.dumps(record,indent=2)+'\n')
@@ -180,12 +187,12 @@ def prepare_motion(output,event,frames,fps):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--motion',choices=['scission','fusion'],help='Prepare an editable local motion interval instead of the static key set')
-    p.add_argument('--frames',type=int,default=97)
+    p.add_argument('--motion',choices=['scission','fusion','uptake'],help='Prepare a local event or the full uptake route')
+    p.add_argument('--frames',type=int,help='Default: 625 for uptake, 97 for a local event')
     p.add_argument('--fps',type=int,default=24)
     args=p.parse_args();output=args.output
     if args.motion:
-        prepare_motion(output,args.motion,args.frames,args.fps)
+        prepare_motion(output,args.motion,(625 if args.motion=='uptake' else 97) if args.frames is None else args.frames,args.fps)
         return
     output.mkdir(parents=True,exist_ok=False)
     times=np.unique(np.r_[np.linspace(0,1,33),.24,.34,.349,.35,.36,.43,.62,.69,.77,.799,.8,.801,.88,.89,.97])

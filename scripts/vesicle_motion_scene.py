@@ -23,8 +23,12 @@ def read_interval(directory):
     if (len(ids) != 3 or len(set(ids)) != len(ids) or set(ids) & {'ligand','receptor','Membrane'}
             or any(row['frame'] != frame or len(row['cargo']) != len(ids) for frame,row in enumerate(rows,1))):
         raise ValueError('Every playback frame needs the same three identified cargo probes')
-    if record['event'] not in {'scission','fusion'} or not 1 < record['boundary_frame'] <= len(rows):
+    if record['event'] not in {'scission','fusion','uptake'} or not 1 < record['boundary_frame'] <= len(rows):
         raise ValueError('Choose a prepared event with a connection change inside the playback interval')
+    if record['event']=='uptake':
+        for name,key,rises in [('scission','neck_connected',False),('fusion','pore_connected',True)]:
+            changes=[r['frame'] for i,r in enumerate(rows[1:],1) if r[key]!=rows[i-1][key] and r[key]==rises]
+            if changes!=[record['boundaries'][name]]:raise ValueError('Unexpected '+name+' boundary')
     return record
 
 
@@ -48,7 +52,7 @@ def shell_material(name, color):
     return mat
 
 
-def build(directory,output,width,samples):
+def build(directory,output,width,samples,options=None):
     if output.exists():
         raise ValueError('Use a fresh scene output file')
     record = read_interval(directory)
@@ -59,6 +63,11 @@ def build(directory,output,width,samples):
     group = ds.collection('Membrane and tracked cargo')
     scission = record['event']=='scission'
     bounds = ((-4.5,-4.5,-3.75),(4.5,4.5,1.5)) if scission else ((-2.25,-2.5,-8.5),(5.875,2.5,-3.5))
+    full = record['event']=='uptake'
+    if full:
+        if options is None or any(getattr(options,k,None) is None for k in ('coat','ap2','machinery')):
+            raise ValueError('Full uptake needs qualified --coat, --ap2 and --machinery bundles')
+        bounds=((-4.5,-3.25,-8.75),(5.875,3.25,1.5))
     # Skim the donor sheet at fission. Orbit about the fusion axis to separate
     # the two depth-offset tracers without foreshortening the pore.
     view = ({'position':(9.4,-10.1,-1.28),'target':(0,0,-1.23),'scale':6.6} if scission else
@@ -123,8 +132,12 @@ def build(directory,output,width,samples):
                             point.interpolation = mode
     modifier.show_viewport = True
     labels = ('膜内陷','切断','囊泡分离') if scission else ('两腔分离','开孔','货物进入受体腔')
-    for text,frame in zip(labels,[1,record['boundary_frame'],len(rows)]):
-        scene.timeline_markers.new(text,frame=frame)
+    if full:
+        from vesicle_uptake_actors import animate
+        animate(scene,record,options)
+    else:
+        for text,frame in zip(labels,[1,record['boundary_frame'],len(rows)]):
+            scene.timeline_markers.new(text,frame=frame)
     scene['vesicle_motion'] = json.dumps({'motion_sha256':sha256((directory/'motion.json').read_bytes()).hexdigest(),'event':record['event'],
         'units':record['units'],'frame_of_connectivity_change':record['boundary_frame'],'limits':record['limits']})
     for screen in bpy.data.screens:
@@ -189,7 +202,12 @@ def audit(directory):
                 raise ValueError('Tracked probe dimensions changed: '+key)
     checks = []
     scission = record['event']=='scission'
-    for frame in sorted({1,max(1,boundary-1),boundary,len(record['samples'])}):
+    full=record['event']=='uptake'
+    frames={1,max(1,boundary-1),boundary,len(record['samples'])}
+    if full:
+        pore=record['boundaries']['fusion']
+        frames.update((pore-1,pore))
+    for frame in sorted(frames):
         row = record['samples'][frame-1]
         scene.frame_set(frame)
         graph = bpy.context.evaluated_depsgraph_get()
@@ -197,13 +215,15 @@ def audit(directory):
         components = shell_components(mesh)
         # The cropped donor sheet has one closed rim. Each isolated, complete
         # vesicle has two boundary surfaces, one facing each aqueous side.
-        connected = row['neck_connected'] if scission else row['pore_connected']
+        at_neck=scission or (full and frame<=boundary)
+        connected = row['neck_connected'] if at_neck else row['pore_connected']
         wanted = (1 if connected else 3) if scission else (2 if connected else 4)
+        if full:wanted=3 if row['neck_connected'] or row['pore_connected'] else 5
         if len(components)!=wanted:
             raise ValueError(f'At frame {frame} the native membrane has {len(components)} surface components, expected {wanted}')
         tree = BVHTree.FromObject(membrane,graph)
         center = Vector(row['center'])
-        other = Vector(record['neck_end'] if scission else record['target_center'])
+        other = Vector(record['neck_end'] if at_neck else record['target_center'])
         line = other-center
         hit = tree.ray_cast(center,line.normalized(),line.length)[0]
         if (hit is None)!=connected:
@@ -224,6 +244,10 @@ def audit(directory):
             margin = min(margin,gap)
         checks.append({'frame':frame,'time':row['time'],'surface_components':len(components),
                        'aqueous_passage_open':connected,'minimum_probe_clearance':margin})
-    return {'passed':True,'event':record['event'],'playback_frames':scene.frame_end,
+    molecular={}
+    if full:
+        from vesicle_uptake_actors import audit_machinery
+        molecular={'molecular_actors':audit_machinery(scene,record),'boundaries':record['boundaries']}
+    return {**molecular,'passed':True,'event':record['event'],'playback_frames':scene.frame_end,
             'frame_of_connectivity_change':boundary,'cargo_ids':ids,'native_mesh_checks':checks,
             'limits':record['limits']}

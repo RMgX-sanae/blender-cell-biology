@@ -1,10 +1,30 @@
 {
   "version": 1,
-  "status": "source-qualified teaching synthesis; geometry prototype, not a completed molecular mechanism",
+  "status": "Playable bounded mammalian uptake route with independently qualified structural and functional sources",
   "intended_route": "Clathrin-mediated uptake through scission, uncoating, Rab5-dependent targeting and fusion with an early endosomal compartment",
   "cell_context": "Mammalian teaching synthesis. SUM159/HeLa/hRPE-1 evidence informs Rab5 timing; reconstituted and isolated-endosome evidence is kept distinct, not claimed as one observed SUM159 trajectory.",
   "sequence_meaning": "The after fields are authored presentation order for one productive uptake example, not universal biological dependencies. Recruitment and lipid changes can overlap; abortive pits and alternate routes are omitted.",
   "cargo_scope": "Three fluid-space identity tracers plus one idealized single-pass receptor and ligand; not measured transferrin receptor copy numbers, structure or kinetics.",
+  "coordinate_sources": {
+    "3MJH": {
+      "sha256": "72c4fa5baf0da9f7fc3d86ce4fff1627180471b41edf8634c4c7acb6cc24c53a",
+      "chains": {
+        "A": "human Rab5A, GTP and Mg",
+        "B": "EEA1 N-terminal C2H2 zinc finger and Zn"
+      },
+      "url": "https://www.rcsb.org/structure/3MJH"
+    },
+    "2NPS": {
+      "sha256": "af20220dc7d98b89c5dcaaa3ecece83bc6eed7fec9f0e568c0110003bb7a5670",
+      "chains": {
+        "A": "VAMP4 (R)",
+        "B": "syntaxin 13 (Qa)",
+        "C": "vti1a (Qb)",
+        "D": "syntaxin 6 (Qc)"
+      },
+      "url": "https://www.rcsb.org/structure/2NPS"
+    }
+  },
   "sources": [
     {"id":"ap2","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC4333214/","doi":"10.1126/science.1254836","year":2014,"supports":"Membrane/cargo-dependent AP2 activation and clathrin recruitment; reconstitution supports coated budding.","limits":"Not sufficient evidence that all accessory factors are dispensable in cells; not a dynamic atomic trajectory."},
     {"id":"dynamin","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC4230619/","doi":"10.1091/mbc.E14-07-1240","year":2014,"supports":"Dynamin2 recruitment during pit maturation and a terminal neck-fission phase in gene-edited cells.","limits":"Observed counts and phases are study-specific; do not infer an exact universal collar or copy a constriction trajectory."},
@@ -13,25 +33,32 @@
     {"id":"eea1","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC5142606/","doi":"10.1038/nature19326","year":2016,"supports":"Asymmetric EEA1 tethering between PI3P-bearing target membranes and Rab5-bearing partners; increased flexibility reduces end-to-end separation.","limits":"Reconstitution and cellular mutant evidence do not provide the exact trajectory of this authored vesicle. Do not shrink the protein contour to illustrate flexibility."},
     {"id":"docking","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC2592678/","year":2008,"supports":"Isolated early-endosome experiments distinguish docking from fusion; perturbing SNARE function need not abolish docking.","limits":"Do not make functional trans-SNARE assembly an automatic prerequisite for every visually close membrane pair."},
     {"id":"ee-snare","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC1413832/","year":2006,"supports":"Syntaxin13, vti1a, syntaxin6 and VAMP4 in homotypic early-endosome fusion; SNARE pairing alone does not establish organelle targeting specificity.","limits":"This is not direct proof of the exact SNARE set in a newly formed SUM159 uptake carrier. Keep that identity unresolved until specifically qualified."},
+    {"id":"incoming-snare","url":"https://doi.org/10.1111/j.1600-0854.2006.00466.x","year":2006,"supports":"In-vitro fusion of recently endocytosed nerve-terminal vesicles with isolated endosomes was sensitive to endosomal SNARE perturbations.","limits":"Functional reference for incoming early-endosomal fusion, not a measurement of SNARE sidedness or composition in SUM159."},
+    {"id":"snare-structure","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC1782365/","year":2007,"supports":"The 2NPS four-helix core and reconstituted fusion in multiple topologies.","limits":"Transmembrane helices and a continuous trans-to-cis structural trajectory are absent."},
     {"id":"nsf","url":"https://pmc.ncbi.nlm.nih.gov/articles/PMC2691687/","year":2009,"supports":"NSF/alpha-SNAP-mediated SNARE availability and endosomal fusion/sorting perturbation evidence.","limits":"No ATP stoichiometry per full uptake event or complete recycling pathway inferred."},
     {"id":"p10-context","url":"https://www.nature.com/articles/nature24469","doi":"10.1038/nature24469","year":2017,"supports":"Tether participation in the terminal fusion stage in a yeast vacuolar system.","limits":"The skill's earlier P10 citation is not a mammalian early-endosome-specific mechanism or a license to import HOPS into this uptake route."}
   ],
   "events": [
-    {"id":"cargo_capture","after":[],"sources":["ap2"],"required_output":"Persistent cargo/receptor identities and extracellular versus cytosolic domains","implemented":"geometric ligand approach and side checks only"},
-    {"id":"pit_formation","after":["cargo_capture"],"sources":["ap2"],"required_output":"AP2/clathrin selection plus invagination without losing extracellular lumen connectivity","implemented":"authored invagination geometry; protein assembly pending"},
-    {"id":"neck_fission","after":["pit_formation"],"sources":["dynamin"],"required_output":"Separate water spaces AND separate membrane components; preserve contents","implemented":"editable local playback of invagination, narrowing and the switch to a detached carrier; molecular scission intermediates unresolved"},
-    {"id":"uncoat","after":["neck_fission"],"sources":["uncoat"],"required_output":"Clathrin/adaptors returned to explicit pools with Hsc70/GAK roles and ATP boundary","implemented":"presentation interval only; actors and energy ledger pending"},
-    {"id":"rab5_activation","after":["uncoat"],"sources":["rab5"],"required_output":"Lipid/GEF eligibility, GDP departure and distinct incoming GTP; no premature EEA1 carrier label","implemented":"source rule and presentation interval only"},
-    {"id":"tether_dock","after":["rab5_activation"],"sources":["eea1","docking"],"required_output":"Target-side EEA1, retained contour, approaching but still separate membranes/lumens","implemented":"authored carrier positioning and compartment separation; protein mechanics pending"},
-    {"id":"fusion_pore","after":["tether_dock"],"sources":["ee-snare","docking"],"required_output":"Qualified fusion machinery and opened aqueous pore; no leakage to cytosol","implemented":"editable local playback of the two separate lumens, opening pore and subsequent content transfer; heterotypic SNARE identity and leaflet intermediates pending"},
-    {"id":"content_transfer","after":["fusion_pore"],"sources":["ee-snare"],"required_output":"The same contents enter only the now-connected target lumen; receptor domains retain sidedness","implemented":"three persistent geometric cargo probes and one receptor/ligand"},
-    {"id":"machinery_recycling","after":["fusion_pore"],"sources":["nsf","uncoat"],"required_output":"cis-SNARE disassembly and explicit fates of coat/tether/Rab machinery","implemented":"not implemented; do not label the prototype a closed cycle"}
+    {"id":"cargo_capture","after":[],"sources":["ap2"],"required_output":"Persistent cargo/receptor identities and extracellular versus cytosolic domains","implemented":"Ligand approach and intact 6YAF pre-open AP2 core at the cytosolic receptor tail; teaching receptor linkage."},
+    {"id":"pit_formation","after":["cargo_capture"],"sources":["ap2"],"required_output":"AP2/clathrin selection plus invagination without losing extracellular lumen connectivity","implemented":"Invagination and a membrane-clearing source-registered cap of whole 3IYV triskelia."},
+    {"id":"neck_fission","after":["pit_formation"],"sources":["dynamin"],"required_output":"Separate water spaces AND separate membrane components; preserve contents","implemented":"Native changing membrane topology and a schematic dynamin collar, with GTP identified in the stage."},
+    {"id":"uncoat","after":["neck_fission"],"sources":["uncoat"],"required_output":"Clathrin/adaptors returned to explicit pools with Hsc70/GAK roles and ATP boundary","implemented":"Whole triskelia move radially to the cytosolic pool; AP2 departs. Auxilin/GAK and Hsc70 ATP role in stage text."},
+    {"id":"rab5_activation","after":["uncoat"],"sources":["rab5"],"required_output":"Lipid/GEF eligibility, GDP departure and distinct incoming GTP; no premature EEA1 carrier label","implemented":"Post-uncoating incoming Rab5. GDP probe leaves, distinct source GTP/Mg arrives; GEF role in stage text, lipid eligibility documented."},
+    {"id":"tether_dock","after":["rab5_activation"],"sources":["eea1","docking"],"required_output":"Target-side EEA1, retained contour, approaching but still separate membranes/lumens","implemented":"Target-anchored EEA1, fixed contour with changing end separation, 3MJH Rab5-bound zinc finger, docked but separate lumens."},
+    {"id":"fusion_pore","after":["tether_dock"],"sources":["ee-snare","docking"],"required_output":"Qualified fusion machinery and opened aqueous pore; no leakage to cytosol","implemented":"Qualified 2NPS R+3Q motifs and explicit schematic membrane connections, changing pore geometry. Isoform and trans topology are context-bounded."},
+    {"id":"content_transfer","after":["fusion_pore"],"sources":["ee-snare"],"required_output":"The same contents enter only the now-connected target lumen; receptor domains retain sidedness","implemented":"Three conserved tracked cargo bodies enter the target lumen; receptor and ligand retain sidedness."},
+    {"id":"machinery_recycling","after":["fusion_pore"],"sources":["nsf","uncoat"],"required_output":"cis-SNARE disassembly and explicit fates of coat/tether/Rab machinery","implemented":"Coat and adaptor return to cytosol, target-side EEA1 relaxes, Rab5 stays on the resulting membrane. NSF/alpha-SNAP and ATP in stage text; four cis motifs separate with membrane anchors retained."}
   ],
-  "missing_for_complete_mechanism": [
-    "Source-qualified protein geometry and actor-level assembly/disassembly",
-    "Selected-route fusion-machinery identity; do not silently merge homotypic and heterotypic experimental contexts",
-    "Lipid/leaflet material tracking, resolved hemifusion and molecular scission intermediates",
-    "Nucleotide, energy and recycling ledgers for machinery",
-    "A whole-route scene synchronizing molecular actors with membrane events and recycling"
+  "energy_and_fates": {
+    "dynamin": "GTP-dependent neck constriction and release; collar is schematic.",
+    "Hsc70": "Auxilin/GAK-assisted ATP-dependent return of coat to the cytosolic pool.",
+    "Rab5": "Lipid/GEF eligibility after uncoating; GDP departs and a distinct GTP binds. Rab5-GTP remains on the merged membrane at the endpoint.",
+    "EEA1": "PI3P-associated target anchor remains; N-terminal contact with the incoming carrier is released.",
+    "NSF": "NSF and alpha-SNAP use ATP to disassemble cis-SNAREs on the common membrane."
+  },
+  "unresolved": [
+    "Exact native carrier/target SNARE assignments for the SUM159 system",
+    "Resolved lipid hemifusion, single-lipid trajectories and atomistic dynamin scission",
+    "ATP stoichiometry and microscopic rates; downstream cargo sorting or the full Rab5 nucleotide cycle"
   ]
 }

@@ -39,7 +39,7 @@
 | 哺乳动物翻译从扫描到亚基回收 | [连续翻译路线](translation-appearance.md#可播放的哺乳动物翻译路线)，`prepare_translation_route.py` 与 `build_translation_route.py`；仅需延伸时使用原 9SPI 入口 | **单路线验证**。同一可编辑工程含 AUG、延伸特写、终止水解、已解析肽段退出及亚基和 RNA 去向 | 不同标本的结构配准。运动、能量边界和释放路径按教学目的表达，缺少连续实测动力学 |
 | DNA 复制叉与新链方向 | [精细制作流程](production-workflow.md) 的复制段：`prepare_replication.py` → `build_replication_scene.py`；[参考外观与对象材质槽](replication-appearance.md) | **既有片段**：连续/分段延伸示意，完整 CMG 位于独立背景层；支持角色材质及保护文字 | 起始、引物处理、连接与终止；不能当作完整复制机制 |
 | 中期后的染色体分离与胞质分裂 | [精细制作流程](production-workflow.md) 的分裂段：`prepare_division.py` → `build_division_scene.py` | **既有片段**：四条已复制染色体、连续收缩和整体分开 | 前期、核膜重建、中体、ESCRT 与分子级切断 |
-| 囊泡出芽、切断、对接、开孔与内容交接 | [囊泡拓扑](vesicle-topology.md#制作可播放的局部动画) · `prepare_vesicle_topology.py` 选 `--motion scission` 或 `--motion fusion`，再用 `blender_vesicle_topology.py animate` 构建，重开用 `audit` | 同一场的两种局部动画，可编辑膜颈、融合孔和固定身份的货物。原有 `build` 入口保留选定时点的完整网格快照 | 被覆、去被覆、目标路线融合机器、能量和回收仍待接入整条路线 |
+| 囊泡从捕获、切断到早期内体融合及机器回收 | [连续内吞或局部膜动画](vesicle-topology.md#从配体结合到早期内体货物交接)。`prepare_vesicle_topology.py --motion uptake` 接 `blender_vesicle_topology.py animate`，重开用 `audit` | **单路线验证**。保留同一批货物、受体膜侧、完整 AP2 和被覆、Rab5–EEA1、四链 SNARE 与开孔前后连通性 | 跨标本教学综合，能量驱动因素有来源。脂质中间态、真实速度及细胞特异 SNARE 分配需另证 |
 
 要做连续循环时，先确认本例能否闭合对象状态、物质池和运动接缝。教学片段的末帧跳回首帧并不会自动成为合格循环；完整 actin 案例的分章剪辑也不等于无缝循环。
 
