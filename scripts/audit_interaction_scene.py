@@ -11,7 +11,7 @@ from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from interaction_assets import verify_assets
+from interaction_assets import snapshot_handoff, verify_assets
 from interaction_membrane import audit_display,plane_clearance
 from detail_scene import linear
 from audit_interaction_appearance import check_appearance
@@ -51,10 +51,21 @@ def audit():
     integrity['scene_manifest_bound']=bool(fingerprint)
     expected=np.load(folder/'motion.npz')['matrices']
     snapshot=scene.get('interaction_snapshot_frame')
+    visible=set(json.loads(scene.get('interaction_visible_actors',json.dumps([actor['id'] for actor in manifest['actors']]))))
+    handoff=None
+    project_record=Path(bpy.data.filepath).with_name('manifest.json')
+    companion=None
+    if snapshot is not None and project_record.is_file():
+        companion=json.loads(project_record.read_text()).get('pose_handoff')
+    if 'interaction_pose_handoff' in scene or companion is not None:
+        if type(snapshot) is not int:
+            raise ValueError('A pose handoff requires its saved source frame')
+        handoff=snapshot_handoff(manifest,expected,snapshot,visible,integrity.get('manifest_sha256'))
+        if json.loads(scene.get('interaction_pose_handoff','null'))!=handoff or (companion is not None and companion!=handoff):
+            raise ValueError('Saved pose evidence, partner transforms or carried actors changed')
     if snapshot is not None:
         if type(snapshot) is not int or not 1<=snapshot<=len(expected):raise ValueError('Invalid snapshot source frame')
         expected=expected[snapshot-1:snapshot]
-    visible=set(json.loads(scene.get('interaction_visible_actors',json.dumps([actor['id'] for actor in manifest['actors']]))))
     if visible-set(actor['id'] for actor in manifest['actors']) or any(not any(actor['id'] in visible and actor['role']==role for actor in manifest['actors']) for role in ['moving','anchor']):
         raise ValueError('Require known visible actors from both partners')
     errors=[];meshes=[];actor_data={};membrane_report=None;membrane_minimum=None
@@ -141,7 +152,7 @@ def audit():
             'checked_pose_count':len(expected),'virtual_seam_checked':snapshot is None,
             'checked_frames_including_virtual_seam':len(expected) if snapshot is None else None,
             'prepared_contact_screen':manifest['motion'],
-            'snapshot_source_frame':snapshot,
+            'snapshot_source_frame':snapshot,'snapshot_relative_pose_evidence':handoff['relative_pose_evidence'] if handoff else None,
             'errors':errors,'passed':not errors,
             'limits':'Technical and geometric checks only. Inspect readability, source suitability and biological scope separately; inspect timing when delivering animation. A snapshot checks one saved pose only.'}
     result['appearance']=check_appearance(scene,manifest)

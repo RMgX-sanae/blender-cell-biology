@@ -14,7 +14,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import detail_scene as ds
 import style_nodes as sn
 from compositor_stack import isolate_labels, publish_composite_outputs
-from interaction_assets import verify_assets
+from interaction_assets import snapshot_handoff, verify_assets
 from interaction_membrane import build_display
 import interaction_appearance as ia
 import interaction_environment as ie
@@ -39,7 +39,7 @@ def main():
     p.add_argument('--environment-dir',type=Path,help='Native-nm cytosolic sources; requires a reviewed environment section in --style-profile')
     p.add_argument('--representation',choices=('surface','atoms'),help='Override the existing polymer representation')
     p.add_argument('--orbit-degrees',type=float,default=0,help='Orbit camera and lights about the partner axis for an intact internal view')
-    p.add_argument('--snapshot-frame',type=int,help='Build a static review with framing for one prepared pose')
+    p.add_argument('--snapshot-frame',metavar='FRAME|endpoint',help='Build a static review of a numbered pose or the prepared endpoint')
     p.add_argument('--render',action='store_true')
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     if a.output.exists():p.error('Use a fresh output directory')
@@ -64,8 +64,13 @@ def main():
     if not m['motion']['collision_screen_passed']:
         p.error('The prepared path has unresolved deep-overlap frames; inspect and refine it first')
     poses=np.load(a.asset_dir/'motion.npz')['matrices'];n=m['frames']
+    handoff=None
     if a.snapshot_frame is not None:
-        if not 1<=a.snapshot_frame<=len(poses):p.error('Snapshot frame is outside the prepared poses')
+        try:
+            handoff=snapshot_handoff(m,poses,a.snapshot_frame,visible,integrity['manifest_sha256'])
+        except ValueError as exc:
+            p.error(str(exc))
+        a.snapshot_frame=handoff['frame']
         poses=poses[a.snapshot_frame-1:a.snapshot_frame];n=1
     library=json.loads((Path(__file__).resolve().parents[1]/'assets/style-library.json').read_text())
     profile=dict(library['profiles'][a.style])
@@ -269,7 +274,9 @@ def main():
     scene['interaction_resolved_colors']=json.dumps(resolved_colors)
     scene['interaction_orbit_degrees']=a.orbit_degrees
     if surface_profile:scene['interaction_surface_profile']=json.dumps(surface_profile)
-    if a.snapshot_frame is not None:scene['interaction_snapshot_frame']=a.snapshot_frame
+    if handoff is not None:
+        scene['interaction_snapshot_frame']=a.snapshot_frame
+        scene['interaction_pose_handoff']=json.dumps(handoff,ensure_ascii=False)
     scene['animation_evidence']='Static review of one prepared pose; no motion validation' if a.snapshot_frame is not None else m.get('animation_evidence','Illustrative rigid-partner motion with a measured bound-pose anchor; no kinetics')
     if m.get('binding_candidate'):
         scene['binding_pose_kind']=m['binding_candidate']['pose_kind']
@@ -311,7 +318,7 @@ def main():
     (a.output/'manifest.json').write_text(json.dumps({'asset':m,'style':a.style,'engine':a.engine,
         'source_objects':[o.name for o in objects],'visible_actors':sorted(visible),'snapshot_source_frame':a.snapshot_frame,'camera_scale_nm':width,'fps':m['fps'],'frames':n,
         'partner_colors':profile['palette'][:2],'actor_colors':resolved_colors,'surface_profile':surface_profile,
-        'appearance':appearance_record,
+        'appearance':appearance_record,**({'pose_handoff':handoff} if handoff is not None else {}),
         'representation':profile['representation'],'orbit_degrees':a.orbit_degrees,'protected_typography':typography,
         'rendered_keyframes':a.render,'font_en':str(a.font_en),'font_zh':str(a.font_zh) if a.font_zh else None,'environment_illustrative':bool(a.crowder_dir or a.environment_dir),
         'camera_dof':'Art-directed for readability; camera optics are not a microscope simulation'},ensure_ascii=False,indent=2))

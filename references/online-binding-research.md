@@ -25,7 +25,7 @@ python3 "$SKILL/scripts/fetch_structure.py" 2PTC --output "$PROJECT/sources"
 
 这个小工具只检索 RCSB 实验条目，返回数量有限，排序不保证首项最适用；agent 继续用官方网页/序列搜索及原文解决剩余问题。[RCSB 搜索示例](https://www.rcsb.org/docs/search-and-browse/advanced-search/search-examples) 也包含按组装化学计量筛选的方法。检索失败时保留错误并改用官方入口，不把网络错误写成“没有这种结构”。下载 helper 保存检索时间、URL、结构元数据与 SHA256；确认后的缓存供后续建模和重建使用。
 
-- 合适的实验结合态：沿用 [局部相互作用](protein-interactions.md) 的项目选择表、`prepare_interaction.py` 和保存检查。
+- 合适的实验结合态：沿用 [局部相互作用](protein-interactions.md) 的项目选择表、`prepare_interaction.py` 和保存检查。下一镜需要继承姿态时，按[结合姿态交接](protein-interactions.md#把结合姿态交给下一镜头)保留该帧的依据、完整伙伴与朝向。
 - 不同来源单体或同源替代：沿用 [单体候选](monomer-binding.md)，明确被替换的构象/构建体及其推断性质。
 - 涉及化学变化或全过程：转到对应机制工作流；一个结合结构不会自动给出反应顺序、所有过渡态或完整循环。
 - 比较同一蛋白的不同来源状态：使用 [来源状态对照](source-state-comparison.md) 的项目配置，核对链的实际蛋白身份、关键残基、类似物和辅因子后再生成分开的静态模型。翻译终止实例中，同名 `jj` 链可分别代表 eRF3 或 ABCE1，顶层 mutation 字段也没有直接列出 AAQ；不能依赖这两个字段自动拼接机制。

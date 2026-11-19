@@ -39,7 +39,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 需要进一步解决的问题 | 读取 |
 |---|---|
 | 已有哪个生成器，覆盖静态、局部动作还是完整机制 | [入口与实际验证范围](references/workflow-entrypoints.md)　[把既有流程迁移到新对象](references/workflow-transfer.md) |
-| 新蛋白的装配拷贝、作者编号、界面交接或化学变化 | [装配身份](references/source-assembly-instances.md)　[结合运动](references/protein-interactions.md)　[多伙伴交接](references/binding-handoff.md)　[反应键级与衔接](references/workflow-transfer.md#反应前后的键级) |
+| 新蛋白的装配拷贝、作者编号、界面交接或化学变化 | [装配身份](references/source-assembly-instances.md)　[从结合姿态接下一镜](references/protein-interactions.md#把结合姿态交给下一镜头)　[多伙伴交接](references/binding-handoff.md)　[反应键级与衔接](references/workflow-transfer.md#反应前后的键级) |
 | 分裂、复制、转录、翻译、囊泡或聚合物装配 | [过程目录](references/process-atlas.md)　[囊泡拓扑](references/vesicle-topology.md)　[聚合物模板](references/polymer-templates.md)　[机制分镜](references/assembly-storyboards.md) |
 | 改变表现方法、保护标签或接外部合成器 | [风格库](references/style-library.md)　[合成配方](references/render-recipes.md)　[Natron](references/natron-compositing.md) |
 | 核查 Blender 构建、复用机制白模或验证视频 | [Blender 工作流](references/blender-workflow.md)　[验证与交付](references/validation.md) |
