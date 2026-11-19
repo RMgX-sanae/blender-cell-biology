@@ -18,7 +18,30 @@
   --output "$PROJECT/48s-initiation"
 ```
 
-每个条目得到可直接传给聚合物准备器的链选择和刚体坐标系。`registration.json` 还保留相同坐标系下的伴随组分原子，单位为 nm。组装镜头时一并放入对应的核苷酸类似物、Mg 或 ABCE1 铁硫簇。起始或终止标本中的缺失肽段、动力学和水解构象继续以各自证据为准。此入口产出构建输入，镜头运动和产物去向另行编排。[条目、角色和适用边界](../assets/translation-route-sources.json)
+每个条目得到可直接传给聚合物准备器的链选择和刚体坐标系。`registration.json` 还保留相同坐标系下的伴随组分原子，单位为 nm。组装镜头时一并放入对应的核苷酸类似物、Mg 或 ABCE1 铁硫簇。起始或终止标本中的缺失肽段、动力学和水解构象继续以各自证据为准。配准结果供下面的连续时间轴使用。[条目、角色和适用边界](../assets/translation-route-sources.json)
+
+### 可播放的哺乳动物翻译路线
+
+以刚构建的 9SPI 延伸工程为底稿。准备器在共同坐标系下读取以上五个原始条目，保存完整选择、核苷酸与金属，并从 5LZT 的实测末端残基定位出口。运行时把 `$PROJECT/translation/scene.blend` 与其 `manifest.json` 放在同一目录。
+
+```bash
+"$PYTHON" "$SKILL/scripts/prepare_translation_route.py" --sources "$PROJECT/sources" \
+  --elongation-manifest "$PROJECT/translation/manifest.json" --output "$PROJECT/route-prepared"
+"$BLENDER" --disable-autoexec -b "$PROJECT/translation/scene.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/build_translation_route.py" -- --prepared "$PROJECT/route-prepared" \
+  --output "$PROJECT/translation-cycle.blend"
+"$BLENDER" --disable-autoexec -b "$PROJECT/translation-cycle.blend" --python-exit-code 1 \
+  --python "$SKILL/scripts/render_saved.py" -- --directory "$PROJECT/route-keys" --frames 75,501,746
+```
+
+| 帧段（24 fps） | 观众追踪的变化 | 证据与教学处理 |
+|---|---|---|
+| 1–192 | 40S 扫描，起始 tRNA 识别 AUG，起始因子释放，60S 加入 | 6YAL 提供可核对的密码子和 tRNA。扫描、因子进出与亚基就位按功能顺序编排。eIF5B 的 GTP 边界用标题交代。[哺乳动物亚基加入](https://doi.org/10.1038/s41594-024-01378-4) |
+| 193–384 | 氨酰 tRNA 进入、肽转移、转位 | 保留 9SPI 延伸工程的完整动作。eEF1A、eEF2 和 GTP 的功能用标题交代。 |
+| 385–600 | 略过其余延伸，eRF1 辨认 UGA，肽链水解脱离，已解析的 C 端片段经出口离开 | 5LZT 提供肽 54–68 和 P 位 tRNA。O3′ 与末端羰基碳相距 2.53 Å，条目未登记两者的酯键。水氧、键和水解时刻为教学构造。5LZU 提供另一份 eRF1 就位结构。末端路径经过出口邻近 uL23、uL24、uL29，延伸处为几何推算。两个实验标本的肽只在机制角色上连续。[终止复合物研究](https://pubmed.ncbi.nlm.nih.gov/27863242/) · [哺乳动物核糖体出口](https://pmc.ncbi.nlm.nih.gov/articles/PMC4081569/) |
+| 601–768 | ABCE1 利用 ATP 分开亚基，去酰化 tRNA 和 mRNA 先随 40S，再从 40S 释放 | 使用停滞突变体 5LZV 的 ABCE1 形体与铁硫簇。亚基解离与产物去向分别依据野生型回收实验。分开的完整亚基共享原工程几何。[亚基分离](https://pmc.ncbi.nlm.nih.gov/articles/PMC2951834/) · [40S 回收](https://pmc.ncbi.nlm.nih.gov/articles/PMC4038429/) |
+
+换物种或底物时，保留相同的步骤：先按共同聚合物配准，在独立来源中核对起始或终止信号，单独标出中间略去的反应。剪接镜头时跟踪同一教学角色的方向、材质和去向。检查释放前后的连接、保存工程中的相对位移及一小段原速运动。每种因子或新构建体需重新核对结构和功能证据。
 
 ### 延伸特写的外观
 
