@@ -19,11 +19,11 @@
   "events": [
     {"id":"cargo_capture","after":[],"sources":["ap2"],"required_output":"Persistent cargo/receptor identities and extracellular versus cytosolic domains","implemented":"geometric ligand approach and side checks only"},
     {"id":"pit_formation","after":["cargo_capture"],"sources":["ap2"],"required_output":"AP2/clathrin selection plus invagination without losing extracellular lumen connectivity","implemented":"authored invagination geometry; protein assembly pending"},
-    {"id":"neck_fission","after":["pit_formation"],"sources":["dynamin"],"required_output":"Separate water spaces AND separate membrane components; preserve contents","implemented":"resolved before/after geometry, not a molecular fission trajectory"},
+    {"id":"neck_fission","after":["pit_formation"],"sources":["dynamin"],"required_output":"Separate water spaces AND separate membrane components; preserve contents","implemented":"editable local playback of invagination, narrowing and the switch to a detached carrier; molecular scission intermediates unresolved"},
     {"id":"uncoat","after":["neck_fission"],"sources":["uncoat"],"required_output":"Clathrin/adaptors returned to explicit pools with Hsc70/GAK roles and ATP boundary","implemented":"presentation interval only; actors and energy ledger pending"},
     {"id":"rab5_activation","after":["uncoat"],"sources":["rab5"],"required_output":"Lipid/GEF eligibility, GDP departure and distinct incoming GTP; no premature EEA1 carrier label","implemented":"source rule and presentation interval only"},
     {"id":"tether_dock","after":["rab5_activation"],"sources":["eea1","docking"],"required_output":"Target-side EEA1, retained contour, approaching but still separate membranes/lumens","implemented":"authored carrier positioning and compartment separation; protein mechanics pending"},
-    {"id":"fusion_pore","after":["tether_dock"],"sources":["ee-snare","docking"],"required_output":"Qualified fusion machinery and opened aqueous pore; no leakage to cytosol","implemented":"pore topology only; precise heterotypic SNARE identity and leaflet intermediates pending"},
+    {"id":"fusion_pore","after":["tether_dock"],"sources":["ee-snare","docking"],"required_output":"Qualified fusion machinery and opened aqueous pore; no leakage to cytosol","implemented":"editable local playback of the two separate lumens, opening pore and subsequent content transfer; heterotypic SNARE identity and leaflet intermediates pending"},
     {"id":"content_transfer","after":["fusion_pore"],"sources":["ee-snare"],"required_output":"The same contents enter only the now-connected target lumen; receptor domains retain sidedness","implemented":"three persistent geometric cargo probes and one receptor/ligand"},
     {"id":"machinery_recycling","after":["fusion_pore"],"sources":["nsf","uncoat"],"required_output":"cis-SNARE disassembly and explicit fates of coat/tether/Rab machinery","implemented":"not implemented; do not label the prototype a closed cycle"}
   ],
@@ -32,6 +32,6 @@
     "Selected-route fusion-machinery identity; do not silently merge homotypic and heterotypic experimental contexts",
     "Lipid/leaflet material tracking, resolved hemifusion and molecular scission intermediates",
     "Nucleotide, energy and recycling ledgers for machinery",
-    "Continuous saved Blender scene, actual event synchronization and chosen visual review"
+    "A whole-route scene synchronizing molecular actors with membrane events and recycling"
   ]
 }

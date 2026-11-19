@@ -1,4 +1,4 @@
-"""Build or audit one editable topology snapshot in Blender; no continuous film."""
+"""Build or inspect a prepared membrane snapshot or a playable native motion interval."""
 import argparse
 import hashlib
 import json
@@ -104,14 +104,23 @@ def audit(directory):
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['build','audit'])
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('command',choices=['build','animate','audit'])
     p.add_argument('--input',type=Path,required=True);p.add_argument('--time',type=float,default=.8)
     p.add_argument('--output',type=Path);p.add_argument('--width',type=int,default=1280);p.add_argument('--samples',type=int,default=24)
     a=p.parse_args(sys.argv[sys.argv.index('--')+1:])
+    if a.command=='animate':
+        if a.output is None:p.error('animate requires --output')
+        from vesicle_motion_scene import build as build_motion
+        build_motion(a.input,a.output,a.width,a.samples)
+        return
     if a.command=='build':
         if a.output is None:p.error('build requires --output')
         build(a.input,a.time,a.output,a.width,a.samples)
-    result=audit(a.input)
+    if 'vesicle_motion' in bpy.context.scene:
+        from vesicle_motion_scene import audit as audit_motion
+        result=audit_motion(a.input)
+    else:
+        result=audit(a.input)
     if a.command=='audit' and a.output:
         if a.output.exists():raise ValueError('Use a fresh audit output file')
         a.output.write_text(json.dumps(result,indent=2)+'\n')

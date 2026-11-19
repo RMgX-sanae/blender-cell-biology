@@ -20,6 +20,7 @@ INTERVALS={'capture':[0,.06],'invagination':[.08,.24],'neck':[.24,.34],
            'tether':[.62,.69],'dock':[.69,.77],'pore_expand':[.80,.88],
            'mix':[.89,.97],'recycle':[.94,1.]}
 SCISSION=.35;FUSION=.80;HALF=.10;TARGET=np.array([3.35,0.,-6.])
+TARGET_RADIUS=2.;NECK_END=np.array([0.,0.,1.])
 ORIGIN=np.array([-5.6,-3.6,-10.]);STOP=np.array([6.,3.6,3.])
 CARGO_OFFSETS=np.array([[-.18,0,0],[.10,.10,0],[.10,-.10,0]])
 CARGO_RADIUS=.06
@@ -56,9 +57,9 @@ def capsule(x,y,z,start,end,radius):
 def field(s,x,y,z):
     c=s['center'];r=s['radius']
     phi=np.minimum(-z,np.sqrt((x-c[0])**2+(y-c[1])**2+(z-c[2])**2)-r)
-    phi=np.minimum(phi,np.sqrt((x-TARGET[0])**2+(y-TARGET[1])**2+(z-TARGET[2])**2)-2.)
+    phi=np.minimum(phi,np.sqrt((x-TARGET[0])**2+(y-TARGET[1])**2+(z-TARGET[2])**2)-TARGET_RADIUS)
     if s['t']<SCISSION:
-        phi=np.minimum(phi,capsule(x,y,z,c,np.array([0.,0.,1.]),s['neck']))
+        phi=np.minimum(phi,capsule(x,y,z,c,NECK_END,s['neck']))
     if s['t']>=FUSION:
         phi=np.minimum(phi,capsule(x,y,z,c,TARGET,s['pore_radius']))
     return phi
@@ -146,9 +147,47 @@ def inspect_mesh(s,vertices,faces,level,spacing):
             'positive_point_gradient_fraction':float(np.mean(dot>0))}
 
 
+def prepare_motion(output,event,frames,fps):
+    """Sample the existing field controls and persistent actors at the requested teaching cadence."""
+    if frames < 3 or fps < 1:
+        raise ValueError('Use at least three playback frames and a positive frame rate')
+    start,end,boundary = (.11,.47,SCISSION) if event=='scission' else (.70,.94,FUSION)
+    samples=[]
+    for frame,t in enumerate(np.linspace(start,end,frames),1):
+        t=boundary if abs(t-boundary)<1e-12 else float(t)
+        s=state(t)
+        if (np.any(field(s,*s['cargo'].T)+CARGO_RADIUS>=-HALF)
+                or field(s,*s['ligand'])+.08>=-HALF or abs(field(s,*s['receptor']))>1e-8
+                or field(s,*(s['receptor']+.28*s['normal']))-.05<=HALF):
+            raise ValueError('Cargo or the sided receptor no longer fits at frame '+str(frame))
+        samples.append({'frame':frame,'time':t,'center':s['center'].tolist(),'radius':s['radius'],
+                        'neck_radius':s['neck'],'neck_connected':t<SCISSION,
+                        'pore_radius':s['pore_radius'],'pore_connected':t>=FUSION,
+                        **{k:s[k].tolist() for k in ('cargo','receptor','normal','ligand')}})
+    scope=Path(__file__).resolve().parents[1]/'assets/vesicle-uptake-scope.json'
+    record={'kind':'vesicle-topology-motion','version':1,'event':event,'fps':fps,'samples':samples,
+            'boundary_frame':next(row['frame'] for row in samples if row['time']>=boundary),
+            'units':'dimensionless authored schematic units','half_thickness':HALF,
+            'target_center':TARGET.tolist(),'target_radius':TARGET_RADIUS,'neck_end':NECK_END.tolist(),
+            'cargo_ids':CARGO_IDS,'cargo_radius':CARGO_RADIUS,'preparation_sha256':digest(__file__),
+            'source_scope_sha256':digest(scope),
+            'limits':'Teaching time. The connected and separated states are authored geometry. The transition does not resolve lipid rearrangement, protein machinery or experimental kinetics.'}
+    output.mkdir(parents=True,exist_ok=False)
+    (output/'source-scope.json').write_bytes(scope.read_bytes())
+    (output/'motion.json').write_text(json.dumps(record,indent=2)+'\n')
+    print(json.dumps({'event':event,'frames':frames,'boundary_frame':record['boundary_frame']}))
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
-    output=p.parse_args().output;output.mkdir(parents=True,exist_ok=False)
+    p.add_argument('--motion',choices=['scission','fusion'],help='Prepare an editable local motion interval instead of the static key set')
+    p.add_argument('--frames',type=int,default=97)
+    p.add_argument('--fps',type=int,default=24)
+    args=p.parse_args();output=args.output
+    if args.motion:
+        prepare_motion(output,args.motion,args.frames,args.fps)
+        return
+    output.mkdir(parents=True,exist_ok=False)
     times=np.unique(np.r_[np.linspace(0,1,33),.24,.34,.349,.35,.36,.43,.62,.69,.77,.799,.8,.801,.88,.89,.97])
     keys={0.,.24,.34,.35,.43,.62,.77,.8,.88,.97,1.};reports=[];snapshots=[];started=time.monotonic()
     for spacing,subset in [(.08,times),(.04,[.34,.35,.77,.799,.8,.801,.97])]:
