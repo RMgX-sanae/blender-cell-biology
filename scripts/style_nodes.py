@@ -164,14 +164,18 @@ def geometry_tree(obj, name):
     return tree, inp.outputs['Geometry'], out.inputs['Geometry']
 
 
-def point_object(name, coordinates, group, radii=None):
+def point_mesh(name, coordinates, radii=None):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(np.asarray(coordinates).tolist(), [], [])
     mesh.update()
     if radii is not None:
         attr = mesh.attributes.new('radius_scene', 'FLOAT', 'POINT')
-        attr.data.foreach_set('value', np.asarray(radii, dtype=float))
-    obj = bpy.data.objects.new(name, mesh)
+        attr.data.foreach_set('value', np.asarray(radii, dtype=np.float32))
+    return mesh
+
+
+def point_object(name, coordinates, group, radii=None):
+    obj = bpy.data.objects.new(name, point_mesh(name, coordinates, radii))
     group.objects.link(obj)
     obj['point_count'] = len(coordinates)
     return obj

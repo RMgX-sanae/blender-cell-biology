@@ -11,6 +11,8 @@ import bpy
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 
 def frame_bounds(data, scene):
     corners = data.view_frame(scene=scene)
@@ -166,6 +168,16 @@ def add_locator(scene, at, radius_fraction):
     scene['linked_view_locator'] = json.dumps({'at':at,'radius':radius_fraction})
 
 
+def save_view(scene, camera, role, directory):
+    scene.camera = camera
+    scene['linked_view_role'] = role
+    scene.render.filepath = '//' + role
+    target = directory / (role + '.blend')
+    result = bpy.ops.wm.save_as_mainfile(filepath=str(target), copy=True, relative_remap=True)
+    if 'FINISHED' not in result:
+        raise RuntimeError('Could not save ' + role)
+
+
 def build(brief, output):
     scene = bpy.context.scene
     source = Path(bpy.data.filepath)
@@ -242,15 +254,18 @@ def build(brief, output):
     output.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output.parent) as temporary:
         staging = Path(temporary)
-        for role, active in [('detail',detail),('overview',overview)]:
-            scene.camera = active
-            scene['linked_view_role'] = role
-            scene.render.filepath = '//' + role
-            if role == 'overview':
-                add_locator(scene,focus['overview_at'],radius)
-            result = bpy.ops.wm.save_as_mainfile(filepath=str(staging/(role+'.blend')),copy=True,relative_remap=True)
-            if 'FINISHED' not in result:
-                raise RuntimeError('Could not save '+role)
+        original_tree = scene.compositing_node_group
+        compositing = scene.render.use_compositing
+        add_locator(scene, focus['overview_at'], radius)
+        save_view(scene, overview, 'overview', staging)
+        scene.compositing_node_group = original_tree
+        scene.render.use_compositing = compositing
+        del scene['linked_view_locator']
+        if recipe.get('detail_spacefill') is not None:
+            from linked_spacefill import switch_to_spacefill
+            record['detail_representation'] = switch_to_spacefill(
+                scene, detail, focus, recipe['detail_spacefill'], brief.parent)
+        save_view(scene, detail, 'detail', staging)
         (staging/'handoff.json').write_text(json.dumps(record,indent=2,ensure_ascii=False)+'\n')
         if output.exists():
             raise FileExistsError(output)

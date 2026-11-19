@@ -164,13 +164,15 @@ def path(name, points, radius, mat, group, cyclic=False):
     return obj
 
 
+SPACEFILL_RADII_NM = {'C': .17, 'N': .155, 'O': .152, 'S': .18, 'P': .18}
+
+
 def load_chain(directory, chain, mat, group, name=None, representation='surface'):
     data = np.load(chain_file(directory, chain), allow_pickle=False)
     if representation == 'spacefill':
         parts = Parts()
-        radii = {'C': .17, 'N': .155, 'O': .152, 'S': .18, 'P': .18}
         for pos, element in zip(data['atoms'], data['elements']):
-            parts.ball(pos, radii.get(element, .17), seg=10, rings=7)
+            parts.ball(pos, SPACEFILL_RADII_NM.get(element, .17), seg=10, rings=7)
         obj = parts.object(name or f'Experimental chain {chain}', [mat], group)
         obj['evidence'] = 'experimental heavy-atom coordinates; conventional VDW radii; H omitted'
     else:

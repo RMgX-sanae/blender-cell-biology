@@ -16,7 +16,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 膜，受体朝哪边、如何分布 | 核定膜蛋白的生物装配与膜侧，按网格法线放置完整拷贝。记录密度、富集区和聚集尺度的测量依据或示意假设。[受体分布与建场](references/receptors-and-distributions.md)　[结构资产选择](references/molecular-asset-config.md) | 从正面看分布，从侧面看朝向。观察内部时优先布置前后不同的完整单体，保留膜两侧的区室关系。 |
 | 分子，哪些伙伴、位点或连接发生变化 | 默认联网核对实验复合物、必要配体及状态。只有单体时查同源模板或可靠界面约束。依任务选择刚体结合、局部拟合或已核定的坐标序列。[结合与组装](references/online-binding-research.md)　[单体候选](references/monomer-binding.md)　[局部端态](references/coordinate-edits.md)　[反应双视图](references/molecular-sequence-display.md) | 总览交代伙伴和方向，特写留给观众需要辨认的位点、底物和连接。保留结构比例与配体身份。 |
 
-跨尺度任务可以用多个镜头。在总览中标出焦点，切近后用对象本身和一个邻居辨认位置、朝向与语义色。每个镜头按自身的单位、取景和背景建模，放大示意与省略的结构写入项目说明。[从总览进入同一对象的特写](references/overview-detail.md)　[四种尺度的环境](references/cellular-environment.md)
+跨尺度任务可以用多个镜头。在总览中标出焦点，切近后用对象本身和一个邻居辨认位置、朝向与语义色。需要看清分子细节时，可将选中链的包络面切换为同源坐标的空间填充原子，保留周围亚基。每个镜头按自身的单位、取景和背景建模，放大示意与省略的结构写入项目说明。[从总览进入同一对象的特写](references/overview-detail.md)　[四种尺度的环境](references/cellular-environment.md)
 
 ## 从任务到 Blender 工程
 
@@ -24,7 +24,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 2. **落实美术方向。** 教学示意和写实表现均可选。有参考图时实际看图，将轮廓或表面表示、主次配色、材质、光源、镜头与合成分别落实到所选生成器。渲染引擎与合成器按项目选择。默认用符合尺度与区室的微结构作景深背景，主体、相邻关键结构和分隔线具有清楚的明度差。用同一构图比较正式尺寸像素。[参考图到场景](references/style-from-reference.md)　[材质灯光](references/material-and-lighting.md)　[渲染与合成](references/rendering-and-compositing.md)
 3. **建立可编辑几何。** 按本次镜头选择来源网格、装配实例、参数几何或受约束的候选。保持完整单体、各向同性比例、膜的拓扑和实体身份。固定朝向、单位和坐标后再布光。个体轮廓、微环境和拥挤程度应可解释；分子内部视图优先移开遮挡单体。[精细制作](references/production-workflow.md)　[内部视图](references/section-views.md)
 4. **按需要安排时间。** 静态模型直接选视角。分步教学安排可辨的事件并适当停留。连续片段保持接近、转向、落位与释放的衔接。明确要求循环时，检查首尾位置、运动和物质去向。各视图共享事件时点和方向。声称覆盖全过程时，逐项核对上游、执行、能量、产物与回收。演示时间和推定轨迹的依据写入项目记录。[机制深度](references/mechanistic-depth.md)　[运动交接](references/coordinate-motion.md)　[过程与动画](references/process-atlas.md)
-5. **重开工程看画面。** 检查正式尺寸的代表帧，看观众能否直接认出主体、连接或运动方向。中文默认宋体，英文与数字默认 Times New Roman。标签用简短自然的文字，画面只保留必要标签，来源脚注和模型限制留在工程说明。遇到遮挡、表面拉伸、同色粘连或过度虚化，回到对应几何、取景或灯光修正。动作问题只取变化区间的原速短预览，需要成片时再渲染全片。[视觉质量标准](references/quality-standard.md)　[抽帧与产物清理](references/review-and-retention.md)
+5. **重开工程看画面。** 沿用仍适用的验收记录，只抽查本次改动影响的画面。在正式尺寸的代表帧中，看观众能否认出主体、连接或运动方向。中文默认宋体，英文与数字默认 Times New Roman。标签用简短自然的文字，画面只保留必要标签，来源脚注和模型限制留在工程说明。遇到遮挡、表面拉伸、同色粘连或过度虚化，回到对应几何、取景或灯光修正。动作问题只取变化区间的原速短预览，需要成片时再渲染全片。[视觉质量标准](references/quality-standard.md)　[抽帧与产物清理](references/review-and-retention.md)
 
 可在项目中复制[场景说明模板](assets/scene-brief.json)，按需填写。静帧可删去时间和事件。在 `entities` 中记录关键对象的 `id`、`compartment`、`evidence` 与 `source_ids`，跨镜头沿用同一身份。每个参考特征写下对应的场景改动，为代表帧写下帧号和要看的现象。`review_frames` 可直接交给保存工程渲染器，`"saved"` 指工程保存时的当前帧。
 

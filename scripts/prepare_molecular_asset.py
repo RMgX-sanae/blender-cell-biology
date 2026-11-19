@@ -157,7 +157,7 @@ def main():
     if min(args.spacing, args.sigma, args.level) <= 0:
         raise SystemExit('Surface parameters must be positive.')
     source_sha256 = hashlib.sha256(args.structure.read_bytes()).hexdigest()
-    table = atom_table(args.structure)
+    table = atom_table(args.structure, include_insertion_codes=True)
     config = json.loads(args.config.read_text()) if args.config else None
     if config is not None:
         table, origin, basis = project_selection(table, config, source_sha256)
@@ -210,11 +210,13 @@ def main():
             distances = np.linalg.norm(coords[pairs[:, 0]] - coords[pairs[:, 1]], axis=1)
             bonds = pairs[distances > .4].astype(np.int32)
         asset_path = args.output / filenames[chain]
+        insertion_codes = [row[5] for row in rows]
+        extra = {'insertion_codes': np.array(insertion_codes)} if any(insertion_codes) else {}
         np.savez_compressed(asset_path, source_chain=np.array(chain),
                             vertices=vertices * .1, faces=faces, atoms=coords.astype(np.float32) * .1,
                             elements=np.array([r[1] for r in rows]), atom_names=names,
                             residue_numbers=np.array([r[3] for r in rows]),
-                            residue_names=residues, bonds=bonds)
+                            residue_names=residues, bonds=bonds, **extra)
         info = {'chain': chain, 'file': filenames[chain],
                 'sha256': hashlib.sha256(asset_path.read_bytes()).hexdigest(),
                 'atoms': len(rows), 'vertices': len(vertices),
