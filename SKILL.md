@@ -11,7 +11,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 
 | 镜头与问题 | 从哪里起步 | 在画面里核对什么 |
 |---|---|---|
-| 全细胞，细胞器在哪里、细胞有何极性 | 有同一标本的膜、核和标记时，共用原始坐标与变换。做教学形态时，用目标细胞的轮廓、区室和极性约束建模。需要把完整对象放入细胞时使用体素掩膜。[同源细胞](references/registered-cell-display.md)　[细胞形态](references/cells-and-organelles.md)　[体积分布](references/volume-distributions.md) | 先看轮廓、极性和相对位置，再看相邻细胞的形态、遮挡与疏密是否符合组织环境。 |
+| 全细胞，细胞器在哪里、细胞有何极性 | 有同一标本的膜、核和标记时，共用原始坐标与变换。做教学形态时，按参考确定长轴走向、两端厚薄和接触面。较长的细胞或细胞器可轻微弯曲。需要把完整对象放入细胞时使用体素掩膜。[同源细胞](references/registered-cell-display.md)　[细胞形态](references/cells-and-organelles.md)　[体积分布](references/volume-distributions.md) | 先看剪影能否表现细胞形态和极性，再看内部位置及相邻细胞的遮挡与疏密。 |
 | 细胞器，内部如何连接 | 从相应区室的显微图、分割或有依据的参数模型重建连续膜、腔与连接处。已有线粒体入口和可调整材质。[形态与拓扑](references/cells-and-organelles.md)　[细胞器材质与灯光](references/material-and-lighting.md#细胞与细胞器的迁移) | 选能看清内外膜和通道的视角，让周围胞质微结构随景深退后。 |
 | 膜，受体朝哪边、如何分布 | 核定膜蛋白的生物装配与膜侧，按网格法线放置完整拷贝。记录密度、富集区和聚集尺度的测量依据或示意假设。[受体分布与建场](references/receptors-and-distributions.md)　[结构资产选择](references/molecular-asset-config.md) | 从正面看分布，从侧面看朝向。观察内部时优先布置前后不同的完整单体，保留膜两侧的区室关系。 |
 | 分子，哪些伙伴、位点或连接发生变化 | 默认联网核对实验复合物、必要配体及状态。只有单体时查同源模板或可靠界面约束。依任务选择刚体结合、局部拟合或已核定的坐标序列。[结合与组装](references/online-binding-research.md)　[单体候选](references/monomer-binding.md)　[局部端态](references/coordinate-edits.md)　[反应双视图](references/molecular-sequence-display.md) | 总览交代伙伴和方向，特写留给观众需要辨认的位点、底物和连接。保留结构比例与配体身份。 |

@@ -15,6 +15,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from detail_scene import Parts, collection, material, mesh, path, save_and_render, studio
 from build_organelle_scene import build_mitochondrion
+from schematic_outline import curved_point, curve_surface
 
 
 def ellipsoid(name, center, radii, mat, group, cut=False, ripple=0):
@@ -80,7 +81,10 @@ def main():
                               settings=profile.get('surface_roles', {}).get(role))
         mats[name]['surface_role'] = role
     cell = collection('01 Cell membrane — deliberate quarter cutaway')
-    outer = ellipsoid('Plasma membrane outer face', (0, 0, 0), (7.25, 5.25, 3.5), mats['cell'], cell, cut=True)
+    cell_radii = (7.25, 5.25, 3.5)
+    outline = {'bend': .32, 'taper': .15}
+    outer = ellipsoid('Plasma membrane outer face', (0, 0, 0), cell_radii, mats['cell'], cell, cut=True)
+    curve_surface(outer, cell_radii, **outline)
     shell = outer.modifiers.new('Visible cut edge; membrane thickness exaggerated', 'SOLIDIFY')
     shell.thickness = .045
     shell.offset = -1
@@ -146,7 +150,8 @@ def main():
         obj = bpy.data.objects.new(f'Mitochondrion {i+1}', None)
         obj.instance_type, obj.instance_collection = 'COLLECTION', template
         mito_group.objects.link(obj)
-        obj.location, obj.scale = pos, (scale,)*3
+        obj.location = curved_point(pos, cell_radii, **outline)
+        obj.scale = (scale,)*3
         obj.rotation_euler.z = angle
     vesicles = collection('06 Endomembrane vesicles and single-membrane organelles')
     for i, (pos, radius, color) in enumerate([
@@ -157,7 +162,8 @@ def main():
     cytoskeleton = collection('07 Selected microtubules, cortical actin and centrosome')
     for i in range(16):
         theta = -1.35 + i * 2.7 / 15
-        end = np.array((6.6*math.cos(theta), 4.5*math.sin(theta), -.9 + .4*math.cos(theta)))
+        tip = (6.6*math.cos(theta), 4.5*math.sin(theta), -.9 + .4*math.cos(theta))
+        end = np.array(curved_point(tip, cell_radii, **outline))
         start = np.array((1.8, 1.1, .65))
         pts = []
         for t in np.linspace(0, 1, 80):
@@ -169,8 +175,9 @@ def main():
         pts = []
         phi = 1.67 + .08*band
         for theta in np.linspace(math.pi, math.tau, 200):
-            pts.append((7.03*math.sin(phi)*math.cos(theta), 5.04*math.sin(phi)*math.sin(theta),
-                        3.28*math.cos(phi) + .035*math.sin(theta*14+band)))
+            point = (7.03*math.sin(phi)*math.cos(theta), 5.04*math.sin(phi)*math.sin(theta),
+                     3.28*math.cos(phi) + .035*math.sin(theta*14+band))
+            pts.append(curved_point(point, cell_radii, **outline))
         path('Cortical actin bundle — illustrative subset', pts, .018, mats['actin'], cytoskeleton)
     centrioles = Parts()
     for orientation in (0,1):
@@ -183,9 +190,10 @@ def main():
                 if orientation: pnt += (.2,.26,.1)
                 centrioles.tube([pnt, pnt+direction], .018, sides=7)
     centrioles.object('Two centrioles — nine triplet motifs each', [mats['centrosome']], cytoskeleton)
-    studio(profile,args,{'position':(10,-19,16),'target':(0,0,-.25),'scale':18.5,'light_scale':.52})
+    studio(profile,args,{'position':(10.32,-18.4,16.5),'target':(.32,.6,.25),'scale':18.5,'light_scale':.52})
     save_and_render(args,{'scene':'Animal secretory-cell overview, schematic',
                           'coordinate_units':'1 Blender unit = 1 um; small structures exaggerated',
+                          'schematic_cell_outline':outline,
                           'er_ne':manifest,
                           'limitations':['Not a reconstruction of a named cell, cell line or species.',
                                          'Organelle sizes, counts, positions and cell outline are authored teaching choices.',

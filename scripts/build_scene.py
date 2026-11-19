@@ -11,6 +11,7 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from distributions import patch_points
+from schematic_outline import curve_surface
 
 PALETTE = {
     "membrane": (0.17, 0.54, 0.60, 1), "dna": (0.12, 0.31, 0.61, 1),
@@ -244,7 +245,9 @@ def setup():
 
 
 def make_cell():
-    shell("Plasma_membrane_cutaway", (0,0,0), (5,3.4,3.4))
+    axes = (5, 3.4, 3.4)
+    membrane = shell("Plasma_membrane_cutaway", (0,0,0), axes)
+    curve_surface(membrane, axes, bend=.32, taper=.15)
     shell("Nuclear_envelope_cutaway", (-1.5,0,0.4), (1.7,1.5,1.6), "nucleus")
     ball("Nucleolus_membraneless", (-1.6,0,0.6), 0.52, "protein")
     for i in range(5):
@@ -252,8 +255,11 @@ def make_cell():
         line(f"ER_cisterna_{i}", [(-3,0.8,z),(-2.4,1.3,z),(-1,1.8,z),(0.3,1.5,z)],0.12,"membrane")
     for i in range(4):
         line(f"Golgi_cisterna_{i}", [(1.1,0.2,0.2+i*.3),(2,0.45,0.5+i*.3),(2.8,0.25,0.2+i*.3)],.15,"golgi")
-    for i, pos in enumerate([(2.8,0,-1.3),(-2.4,-.3,-1.6),(2.5,.5,2)]):
+    mitochondria = [((2.8,0,-1.3), .34, .12), ((-2.4,-.3,-1.6), -.23, .07),
+                    ((2.5,.5,2), .19, -.10)]
+    for i, (pos, bend, taper) in enumerate(mitochondria):
         mito = ball(f"Mitochondrion_{i}",pos,(.82,.4,.4),"mitochondria")
+        curve_surface(mito, (1, 1, 1), bend=bend, taper=taper)
         mito["detail"] = "overview proxy; cristae and membrane topology omitted"
     for i, pos in enumerate([(3.8,.3,.2),(.6,-.2,-1.8),(-.2,.3,2.5)]):
         ball(f"Endolysosome_proxy_{i}", pos, .28, "motor")
