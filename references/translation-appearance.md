@@ -4,6 +4,24 @@
 
 9SPI 含大小写不同的链名。使用修复后的准备器生成 83 份独立链文件，并按 [链身份检查](data-import.md#链身份与文件系统大小写) 直接对照原始 mmCIF；不能沿用旧的 60 文件缓存。材质与动画重放通过不替代来源核对。
 
+### 衔接起始、终止和回收镜头
+
+用同一套分子坐标摆放来自不同标本的镜头，让观众在切换时认出小亚基一侧。以已有 9SPI 延伸工程的 `manifest.json` 为参照，先对齐完整的 18S 序列，再用双方已解析的同种碱基 C4′ 位置配准。密码子使用每份来源自己的作者编号。6YAL 的兔源起始复合物带有人 β-珠蛋白 mRNA。链 3 的 AUG（作者编号 52–54）和链 1 的起始 tRNA 可以同时建模。准备器逐碱基核对正占有率的核糖和碱基原子。5LZT 的 UGA 识别态中可见新生肽 54–68。另一标本 5LZU 提供野生型 eRF1 就位状态。5LZV 的 ABCE1 来自 eRF1(AAQ) 停滞构建体，亚基分离应依据另有功能证据的教学阶段。[β-珠蛋白起始复合物](https://www.rcsb.org/structure/6YAL) · [终止结构研究](https://pubmed.ncbi.nlm.nih.gov/27863242/) · [ABCE1 回收实验](https://pmc.ncbi.nlm.nih.gov/articles/PMC2951834/)
+
+```bash
+# 在同一 sources 目录保留以下五份原始 mmCIF 和相邻的 .source.json。
+# 对缺少的条目使用 fetch_structure.py（9SPI、6YAL、5LZT、5LZU、5LZV）。
+"$PYTHON" "$SKILL/scripts/register_translation_states.py" --sources "$PROJECT/sources" \
+  --elongation-manifest "$PROJECT/translation/manifest.json" --output "$PROJECT/registered"
+"$PYTHON" "$SKILL/scripts/prepare_molecular_asset.py" "$PROJECT/sources/6YAL.cif" \
+  --config "$PROJECT/registered/6YAL.json" --spacing 2.2 --sigma 2.6 --level 0.8 \
+  --output "$PROJECT/48s-initiation"
+```
+
+每个条目得到可直接传给聚合物准备器的链选择和刚体坐标系。`registration.json` 还保留相同坐标系下的伴随组分原子，单位为 nm。组装镜头时一并放入对应的核苷酸类似物、Mg 或 ABCE1 铁硫簇。起始或终止标本中的缺失肽段、动力学和水解构象继续以各自证据为准。此入口产出构建输入，镜头运动和产物去向另行编排。[条目、角色和适用边界](../assets/translation-route-sources.json)
+
+### 延伸特写的外观
+
 从 [翻译外观配置](../assets/style-translation-reference.json) 复制项目配置。它参考已经查看的 WEHI 图片中的暖色精细前景、冷色分子背景和深度层次；这些艺术参数不是原作者节点或测量的光学性质。保持 tRNA 的分子颜色身份，不能按当前所在 A/P/E 位点重新染色。
 
 ```bash

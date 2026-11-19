@@ -1,0 +1,39 @@
+{
+  "reference": {"pdb": "9SPI", "sha256": "970cf319fd4db14f2cc655f878185b18b7c7b1d328f7b7e19bbe6ba3eb00ff5a", "ssu_rna": "S2"},
+  "states": [
+    {
+      "pdb": "6YAL", "sha256": "9852b594fd0f9a87144434d26605208b662883be0fad3b4f75e26cf978615815", "ssu_rna": "2",
+      "chains": "all", "roles": {"mRNA": "3", "initiator_tRNA": "1", "eIF1A": "j", "eIF2": ["A", "B"], "ABCE1": "k"},
+      "codon": ["3", 52, "AUG"], "companions": [["k",701,"SF4"],["k",702,"SF4"],["k",703,"MG"],["k",704,"GNP"],["k",705,"GNP"]],
+      "scope": "Mammalian late 48S on beta-globin mRNA (human sequence, rabbit ribosomal preparation). Start-codon residues 52–54 have positive-occupancy base and ribose landmarks. ABCE1 and its modeled companions belong to this initiation specimen. Scanning, subunit joining and nucleotide turnover require separate evidence.",
+      "paper": "https://doi.org/10.1016/j.celrep.2020.03.061"
+    },
+    {
+      "pdb": "5LZT", "sha256": "2fefe3427c151cfcbc32e30efbfd3f95135b9519e6e7809770e8bb39e227a6a2", "ssu_rna": "9",
+      "chains": ["1","2","3","hh","ii","jj"], "roles": {"nascent_chain": "1", "P_tRNA": "2", "E_tRNA": "3", "mRNA": "hh", "eRF1": "ii", "eRF3": "jj"},
+      "codon": ["hh", 49, "UGA"], "companions": [["hh",100,"MG"],["jj",700,"GCP"],["jj",701,"MG"]],
+      "scope": "Mammalian stop recognition, human WT eRF1/eRF3 on a rabbit ribosome. Nascent peptide residues 54–68, C-terminal Val68. Bound GCP is a nonhydrolyzable analog. The coordinate gap to tRNA A76 does not give an experimental ester-bond length or reaction trajectory.",
+      "paper": "https://pubmed.ncbi.nlm.nih.gov/27863242/"
+    },
+    {
+      "pdb": "5LZU", "sha256": "865c38870d3092ed523abaf51f516a22668d3e6d99ada9ce3084d22ac84bbdfd", "ssu_rna": "9",
+      "chains": ["2","3","hh","ii"], "roles": {"P_tRNA": "2", "E_tRNA": "3", "mRNA": "hh", "eRF1": "ii"},
+      "codon": ["hh", 49, "UGA"], "companions": [["hh",100,"MG"]],
+      "scope": "Accommodated WT eRF1 and the P-site tRNA in a separately prepared specimen. No nascent-chain polymer is deposited in this entry. A missing chain establishes neither its exit path nor its timing.",
+      "paper": "https://pubmed.ncbi.nlm.nih.gov/27863242/"
+    },
+    {
+      "pdb": "5LZV", "sha256": "ffa910d8ec692012af945147081ee2feb9add53e67a9274ae19d40a300c494a9", "ssu_rna": "9",
+      "chains": ["1","2","3","hh","ii","jj"], "roles": {"nascent_chain": "1", "P_tRNA": "2", "E_tRNA": "3", "mRNA": "hh", "eRF1_AAQ": "ii", "ABCE1": "jj"},
+      "codon": ["hh", 49, "UGA"], "companions": [["hh",100,"MG"],["jj",600,"SF4"],["jj",601,"SF4"]],
+      "scope": "ABCE1 binding pose with both Fe–S clusters and the stalled eRF1(AAQ) construct. Subunit splitting after WT termination requires independent functional evidence.",
+      "paper": "https://pubmed.ncbi.nlm.nih.gov/27863242/"
+    }
+  ],
+  "mechanism_sources": {
+    "initiator_handoff_and_subunit_joining": "https://doi.org/10.1038/s41594-024-01378-4",
+    "elongation_and_termination_factors": "https://pubmed.ncbi.nlm.nih.gov/27863242/",
+    "ABCE1_splitting": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2951834/",
+    "release_from_recycled_40S": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4038429/"
+  }
+}
