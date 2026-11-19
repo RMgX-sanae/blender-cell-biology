@@ -93,12 +93,17 @@ def main():
             frames = selected_frames(args.frames, scene.frame_start, scene.frame_end)
     except (ValueError, OSError) as error:
         p.error(str(error))
+    render_scenes = [scene]
+    if scene.get('native_chapters') and scene.sequence_editor:
+        render_scenes.extend(dict.fromkeys(strip.scene for strip in scene.sequence_editor.strips
+                             if strip.type == 'SCENE' and strip.scene_input == 'CAMERA'))
     if args.width is not None and args.width<=0:p.error('Width must be positive')
     if args.samples is not None:
         if args.samples<=0:p.error('Samples must be positive')
-        if scene.render.engine=='CYCLES':scene.cycles.samples=args.samples
-        elif scene.render.engine=='BLENDER_EEVEE':scene.eevee.taa_render_samples=args.samples
-        else:p.error('Sample override supports Eevee and Cycles')
+        for shot in render_scenes:
+            if shot.render.engine=='CYCLES':shot.cycles.samples=args.samples
+            elif shot.render.engine=='BLENDER_EEVEE':shot.eevee.taa_render_samples=args.samples
+            else:p.error('Sample override supports Eevee and Cycles')
     if args.resume and args.exr:raise SystemExit('Resume validation currently supports PNG; export EXR to a fresh directory.')
     if args.directory.exists() and not args.resume:raise SystemExit('Choose a fresh render directory or explicitly request --resume.')
     args.directory.mkdir(parents=True,exist_ok=True)
@@ -123,9 +128,11 @@ def main():
             layer.use_pass_cryptomatte_object=True
             layer.pass_cryptomatte_depth=6
     if args.width:
-        ratio=scene.render.resolution_y/scene.render.resolution_x
-        scene.render.resolution_x=args.width
-        scene.render.resolution_y=round(args.width*ratio)
+        # A camera scene strip keeps its source pixel size when only the master shrinks.
+        scale=args.width/scene.render.resolution_x
+        for shot in render_scenes:
+            shot.render.resolution_x=round(shot.render.resolution_x*scale)
+            shot.render.resolution_y=round(shot.render.resolution_y*scale)
     if scene.render.engine=='CYCLES':
         prefs=bpy.context.preferences.addons['cycles'].preferences
         try:

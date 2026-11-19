@@ -1,0 +1,75 @@
+{
+  "name": "Mammalian Pol II transcription of a polyadenylated protein-coding RNA",
+  "scope": "A teaching synthesis. Human promoter complexes (5IY6/5IY8), a bovine polymerase on a synthetic elongation scaffold (5FLM), and mammalian biochemical/cellular evidence are separate sources. The gene length, elapsed time, RNA path and stage overlap are schematic.",
+  "coordinates": {
+    "closed": {
+      "pdb": "5IY6",
+      "sha256": "6398d41cfbd8fe153c372d03c17e57adfbb9ae360272fd72306a7f4393948242",
+      "url": "https://www.rcsb.org/structure/5IY6",
+      "use": "Human closed holo-PIC. All modeled polymer chains and deposited Mg/Zn retained in source coordinates."
+    },
+    "initial": {
+      "pdb": "5IY8",
+      "sha256": "67eea8af3f51bf969815d04bf28502c7ed98ae911f844d792c8e474e067a01d0",
+      "url": "https://www.rcsb.org/structure/5IY8",
+      "use": "Human initially transcribing holo-PIC. Its X/Y polymer coordinates are both DNA. The six-position teaching RNA guide is fitted from 5FLM, not deposited RNA."
+    },
+    "elongation": {
+      "pdb": "5FLM",
+      "sha256": "72d64ce4af38989cc97d7a040c220763b725fd0d8315f2f900a84004af55d320",
+      "url": "https://www.rcsb.org/structure/5FLM",
+      "use": "Bovine Pol II, synthetic nucleic acid scaffold. Chain P residues 15–20 supply a backbone guide, without transferring nucleotide identities to the distinct human promoter."
+    },
+    "cleavage": {
+      "pdb": "2I7V",
+      "sha256": "b7fb5086979ef3dc4f68fa187d9e96f989c97f5aaa578a79001afea74b53a8ba",
+      "url": "https://www.rcsb.org/structure/2I7V",
+      "use": "Human CPSF73 catalytic segment, with all four modeled Zn positions and the crystallization sulfate. Shown alongside the cleavage site as a scale-adjusted enzymatic landmark, not a complete active processing complex."
+    }
+  },
+  "studies": {
+    "promoter": {
+      "url": "https://doi.org/10.1038/nature17970",
+      "supports": "Human PIC closed, open and initial transcribing states. The sequence of prepared specimens does not supply an interpolatable trajectory."
+    },
+    "opening": {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC33249/",
+      "supports": "XPB/TFIIH ATP-dependent promoter opening and roles in efficient promoter escape."
+    },
+    "elongation": {
+      "url": "https://doi.org/10.1038/nature16482",
+      "supports": "Deposited mammalian elongation scaffold. Local C then U additions and two PPi fates reuse the editable teaching reconstruction."
+    },
+    "processing": {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35177537/",
+      "supports": "PAS-dependent mammalian pre-mRNA cleavage and polyadenylation. CPSF73 acts within the processing machinery. Poly(A) polymerase extends the upstream 3′ end using ATP; cleavage itself is not depicted as ATP hydrolysis."
+    },
+    "torpedo": {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5830926/",
+      "supports": "CPSF73-mediated cleavage gives the polymerase-associated downstream RNA a new 5′ end. XRN2 degrades it 5′ to 3′ and promotes efficient termination."
+    },
+    "release": {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6938672/",
+      "supports": "PAS-dependent pausing and allosteric effects cooperate with XRN2. The visual separation from DNA is illustrative; the approach of a marker is not a measured ejection mechanism."
+    },
+    "reuse": {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/10385623/",
+      "supports": "Human FCP1 can dephosphorylate Pol II and regenerate initiation-competent polymerase. Order shown for clarity; the phosphatase can also act on elongation complexes."
+    }
+  },
+  "energy_and_fates": [
+    "XPB uses ATP during the selected opening route. NTP incorporation releases PPi in the two explicit elongation cycles.",
+    "Following cleavage, ATP supplies AMP for the upstream poly(A) tail. The downstream fragment is degraded from its exposed 5′ end; loss of RNA contour represents degradation products returned to the nucleotide pool.",
+    "CTD phosphate symbols represent reversible phosphorylation, not the number, sites or order of all CTD modifications. Released polymerase returns to the initiation-competent pool. RNA maturation/export downstream of polyadenylation is outside this route."
+  ],
+  "visual_identity": {
+    "pol2": "Deep teal protein complex",
+    "coding_rna": "Coral upstream RNA body, local 3′ end and mature-side cleavage product",
+    "template": "Ivory DNA strand",
+    "other_dna": "Mauve DNA strand",
+    "downstream": "Gold downstream cleavage substrate",
+    "cpsf": "Mint catalytic CPSF73 segment",
+    "xrn2": "Mint-rimmed activity marker for XRN2, not a molecular surface"
+  },
+  "omissions": "The full gene, promoter-specific activators, enhancer control, cap, splicing, mRNA export and the full repertoire of alternative termination pathways are outside this basal coding-gene route. The RNA is a shared teaching identity across separate experimental constructs; intact native meshes are retained."
+}

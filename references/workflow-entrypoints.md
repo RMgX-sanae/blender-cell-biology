@@ -35,6 +35,7 @@
 | V 型 ATPase 的连续泵送 | [V-ATPase](vatpase-loop.md)：`prepare_vatpase.py` → `build_vatpase_scene.py` → `audit_vatpase.py` | **独立重建**：16 秒双视图循环；完整低分辨率周期及高分辨率关键帧 | 全部催化构象、质子水链、累积 pH 和膜电位 |
 | 生成局部反应端态，或衔接已核定的分子运动 | [局部拟合与同视角比较](coordinate-edits.md)　[运动交接](coordinate-motion.md) | 9NO7/9MTP 的底物补建、反应前的有限接近和单独拟合的环状候选通过指定几何检查。相同拟合入口在 3I7Z 已知手性中心做过恢复对照 | 候选的立体构型属模型假设。预反应姿态到环状候选之间的化学路径、水解与后续释放尚待验证 |
 | 转录中的核苷酸加入 | [精细制作流程](production-workflow.md) 的转录段：`prepare_transcription.py`、`build_transcription_scene.py`；第二轮用 `prepare_transcription_next.py`、`extend_transcription_scene.py`；[参考外观](transcription-appearance.md) | **既有片段及局部复验**：23 秒 C→U、81 个所选重原子的跨阶段账本；角色材质、完整 Pol II 背景、两轮颜色衔接与保护双语标签 | 起始、终止和完整天然中间态；第二轮构象是教学重构，外观迁移不扩大机制范围 |
+| 从启动子到 RNA 与 Pol II 的去向 | [哺乳动物 Pol II 转录](pol2-transcription-cycle.md)将起始、启动子逃逸、已有两轮延伸和 3′ 端加工接入原生场景轨道 | **单一教学路线**。剪切后，同一上游 RNA 加尾，下游片段从新生 5′ 端降解，Pol II 释放并恢复起始能力 | 人源起始和牛源延伸使用不同标本。基因长度、动作时间和终止位置为示意。其他启动子、聚合酶及终止方式需另选来源 |
 | 翻译的 tRNA 进入、肽转移和转位 | [精细制作流程](production-workflow.md) 的翻译段：`build_translation_scene.py` → `audit_translation.py`；[参考外观](translation-appearance.md) | **既有片段**：9SPI 衍生的局部底物运动，角色材质、完整 60S 背景与受保护双语标签 | 起始、终止、eEF1A/eEF2、GTP 水解和完整催化循环 |
 | DNA 复制叉与新链方向 | [精细制作流程](production-workflow.md) 的复制段：`prepare_replication.py` → `build_replication_scene.py`；[参考外观与对象材质槽](replication-appearance.md) | **既有片段**：连续/分段延伸示意，完整 CMG 位于独立背景层；支持角色材质及保护文字 | 起始、引物处理、连接与终止；不能当作完整复制机制 |
 | 中期后的染色体分离与胞质分裂 | [精细制作流程](production-workflow.md) 的分裂段：`prepare_division.py` → `build_division_scene.py` | **既有片段**：四条已复制染色体、连续收缩和整体分开 | 前期、核膜重建、中体、ESCRT 与分子级切断 |
