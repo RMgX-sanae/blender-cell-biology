@@ -16,7 +16,7 @@ description: Build editable Blender models and animations of cells, organelles, 
 | 膜，受体朝哪边、如何分布 | 核定膜蛋白的生物装配与膜侧，按网格法线放置完整拷贝。记录密度、富集区和聚集尺度的测量依据或示意假设。[受体分布与建场](references/receptors-and-distributions.md)　[结构资产选择](references/molecular-asset-config.md) | 从正面看分布，从侧面看朝向。观察内部时优先布置前后不同的完整单体，保留膜两侧的区室关系。 |
 | 分子，哪些伙伴、位点或连接发生变化 | 默认联网核对实验复合物、必要配体及状态。只有单体时查同源模板或可靠界面约束。依任务选择刚体结合、局部拟合或已核定的坐标序列。[结合与组装](references/online-binding-research.md)　[单体候选](references/monomer-binding.md)　[局部端态](references/coordinate-edits.md)　[反应双视图](references/molecular-sequence-display.md) | 总览交代伙伴和方向，特写留给观众需要辨认的位点、底物和连接。保留结构比例与配体身份。 |
 
-跨尺度任务可以用多个镜头。保留同一对象的身份、方向和语义色，为每个镜头单独定单位、取景和背景。放大示意的幅度和省略的结构写入项目说明。[四种尺度的环境](references/cellular-environment.md)
+跨尺度任务可以用多个镜头。在总览中标出焦点，切近后用对象本身和一个邻居辨认位置、朝向与语义色。每个镜头按自身的单位、取景和背景建模，放大示意与省略的结构写入项目说明。[从总览进入同一对象的特写](references/overview-detail.md)　[四种尺度的环境](references/cellular-environment.md)
 
 ## 从任务到 Blender 工程
 

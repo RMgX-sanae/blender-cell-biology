@@ -74,11 +74,17 @@ def main():
     p.add_argument('--resume',action='store_true',help='Reuse only matching scene/settings and fully validated PNG frames')
     args=p.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     scene=bpy.context.scene
+    locator_script = None
     if args.compositor:
         group=saved_compositor(scene,args.compositor)
         if group is None:raise SystemExit('Requested compositor branch is missing from this saved scene.')
         scene.compositing_node_group=group
         scene['selected_compositor']=args.compositor
+        if scene.get('linked_view_locator'):
+            import build_linked_views
+            locator = json.loads(scene['linked_view_locator'])
+            build_linked_views.add_locator(scene, locator['at'], locator['radius'])
+            locator_script = Path(build_linked_views.__file__)
     review = None
     try:
         if args.review_brief:
@@ -136,6 +142,8 @@ def main():
                'fps':scene.render.fps,'fps_base':scene.render.fps_base,
                'samples':scene.cycles.samples if scene.render.engine=='CYCLES' else scene.eevee.taa_render_samples if scene.render.engine=='BLENDER_EEVEE' else None,
                'compositor':scene.get('selected_compositor'),'exr':args.exr}
+    if locator_script:
+        signature['locator_script_sha256'] = hashlib.sha256(locator_script.read_bytes()).hexdigest()
     receipt=args.directory/'render-signature.json'
     if receipt.exists():
         if json.loads(receipt.read_text())!=signature:raise SystemExit('Cached scene/settings differ; use a fresh render directory.')
@@ -144,7 +152,7 @@ def main():
     receipt.write_text(json.dumps(signature,indent=2))
     started=time.monotonic();skipped=[];rendered=[]
     for frame in frames:
-        scene.frame_set(frame)
+        scene.frame_set(frame, subframe=scene.get('linked_view_subframe', 0.0))
         extension='exr' if args.exr else 'png'
         target=args.directory/f'frame_{frame:04}.{extension}'
         width=scene.render.resolution_x*scene.render.resolution_percentage//100
